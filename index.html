@@ -1,0 +1,803 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0c0e1b">
+<title>MEXT Ráfaga</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<style>
+/* ===== Tema 和紙 (claro) ===== */
+:root{--bg:#f6f0e4;--surface:#fffdf8;--surface2:#f2eadb;--text:#211b17;--muted:#74695e;--line:#e4d8c4;
+  --accent:#d63a2f;--accent2:#b07d12;--accent-t:#fff;--ok:#1d8a50;--okbg:#e2f3e8;--bad:#c9302c;--badbg:#fbe6e2;--warn:#b26b00;--warnbg:#fbefd9;--focus:#2457d6;
+  --glow:rgba(214,58,47,.18);--shadow:0 1px 2px rgba(60,40,20,.06),0 6px 20px rgba(60,40,20,.07);
+  --part:#0b8aa3;--jita:#7348d1;--ctr:#bb7400;--kanji:#d63a2f;--syn:#1c9459;--morph:#c23c7c;--mix:#211b17;--buf:#b26b00}
+/* ===== Tema 夜 (oscuro) ===== */
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0c0e1b;--surface:#161a2d;--surface2:#1f2440;--text:#f2efe8;--muted:#a2a5bc;--line:#2a2f4f;
+  --accent:#ff5a4e;--accent2:#ffc857;--accent-t:#1a0705;--ok:#3ddc84;--okbg:rgba(61,220,132,.13);--bad:#ff6b6b;--badbg:rgba(255,107,107,.13);--warn:#ffb347;--warnbg:rgba(255,179,71,.13);--focus:#8fb0ff;
+  --glow:rgba(255,90,78,.22);--shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.25);
+  --part:#3cc8e6;--jita:#ad90ff;--ctr:#ffb84d;--kanji:#ff6b5e;--syn:#4fe090;--morph:#ff7ab6;--mix:#f2efe8;--buf:#ffb347}}
+:root[data-theme="dark"]{--bg:#0c0e1b;--surface:#161a2d;--surface2:#1f2440;--text:#f2efe8;--muted:#a2a5bc;--line:#2a2f4f;
+  --accent:#ff5a4e;--accent2:#ffc857;--accent-t:#1a0705;--ok:#3ddc84;--okbg:rgba(61,220,132,.13);--bad:#ff6b6b;--badbg:rgba(255,107,107,.13);--warn:#ffb347;--warnbg:rgba(255,179,71,.13);--focus:#8fb0ff;
+  --glow:rgba(255,90,78,.22);--shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.25);
+  --part:#3cc8e6;--jita:#ad90ff;--ctr:#ffb84d;--kanji:#ff6b5e;--syn:#4fe090;--morph:#ff7ab6;--mix:#f2efe8;--buf:#ffb347}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;color:var(--text);background-color:var(--bg)}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP","Hiragino Sans","Yu Gothic UI","Meiryo",sans-serif;font-size:16px;line-height:1.45;min-height:100dvh;
+  background-image:radial-gradient(900px 420px at 50% -120px,var(--glow),transparent 70%),var(--pat,none);background-attachment:fixed}
+#app{max-width:780px;margin:0 auto;padding:14px 16px calc(28px + env(safe-area-inset-bottom))}
+button{font:inherit;color:inherit;cursor:pointer}
+.row{display:flex;align-items:center;gap:10px}
+.sp{flex:1}
+.muted{color:var(--muted)}
+.small{font-size:.82rem}
+.center{text-align:center}
+.hide{display:none!important}
+.stack>*+*{margin-top:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:var(--shadow)}
+h3{font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:22px 2px 10px;font-weight:700}
+.card h3{margin:0 0 10px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:10px 14px;min-height:44px}
+.icon-btn{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;font-size:1.1rem}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.kbd{font-family:ui-monospace,monospace;font-size:.75rem;border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:0 5px;color:var(--muted);background:var(--surface)}
+
+/* ===== Marca ===== */
+.brand{display:flex;align-items:center;gap:10px}
+.hanko{width:42px;height:42px;border-radius:10px;background:var(--accent);color:var(--accent-t);display:grid;place-items:center;font-weight:900;font-size:1.25rem;transform:rotate(-4deg);box-shadow:0 4px 14px var(--glow)}
+.brand b{display:block;font-size:1.15rem;letter-spacing:.02em}
+.brand small{color:var(--muted);font-size:.78rem}
+
+/* ===== Hero ===== */
+.hero{display:flex;align-items:center;gap:16px;margin-top:16px;padding:16px;border-radius:22px;background:linear-gradient(135deg,var(--surface),var(--surface2));border:1px solid var(--line);box-shadow:var(--shadow)}
+.ring{position:relative;flex:none;width:104px;height:104px}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .in{position:absolute;inset:0;display:grid;place-items:center;text-align:center;line-height:1}
+.ring .in b{font-size:1.9rem;font-weight:900;font-variant-numeric:tabular-nums;display:block}
+.ring .in small{font-size:.7rem;color:var(--muted)}
+.eyebrow{font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);font-weight:800}
+.hero .h{font-size:1.05rem;font-weight:700;margin:4px 0 10px}
+.pills{display:flex;flex-wrap:wrap;gap:6px}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:.8rem;font-weight:700;padding:4px 10px;border-radius:99px;background:var(--surface);border:1px solid var(--line);font-variant-numeric:tabular-nums}
+
+/* ===== Botón principal ===== */
+.start{position:relative;width:100%;margin-top:16px;border:0;border-radius:20px;padding:18px 20px;display:flex;align-items:center;gap:16px;text-align:left;color:#fff;
+  background:linear-gradient(120deg,#e8453a,#c4252b 55%,#8e1a3a);box-shadow:0 10px 30px var(--glow),inset 0 1px 0 rgba(255,255,255,.25);overflow:hidden}
+.start::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.22) 50%,transparent 70%);transform:translateX(-100%);animation:shine 3.2s ease-in-out infinite}
+@keyframes shine{0%,55%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.start .play{flex:none;width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.18);display:grid;place-items:center;font-size:1.4rem;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,.35)}50%{box-shadow:0 0 0 10px rgba(255,255,255,0)}}
+.start b{display:block;font-size:1.3rem}
+.start small{opacity:.85;font-size:.85rem}
+.start:active{transform:scale(.99)}
+
+/* ===== Modos ===== */
+.modes{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media (min-width:640px){.modes{grid-template-columns:repeat(4,1fr)}}
+.mode{position:relative;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:16px;padding:12px;min-height:104px;display:flex;flex-direction:column;gap:2px;box-shadow:var(--shadow);overflow:hidden;transition:transform .12s,border-color .12s}
+.mode:hover{transform:translateY(-2px);border-color:var(--c)}
+.mode:active{transform:scale(.98)}
+.mode.on{border-color:var(--c);box-shadow:0 0 0 1.5px var(--c),var(--shadow)}
+.glyph{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-weight:900;font-size:1.05rem;color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent);margin-bottom:6px;flex:none}
+.mode .mn{font-weight:800;font-size:.98rem}
+.mode .ms{font-size:.74rem;color:var(--muted);line-height:1.25}
+.mode .acc{position:absolute;top:12px;right:12px;font-size:.78rem;font-weight:800;font-variant-numeric:tabular-nums;color:var(--muted)}
+.mode .mb{position:absolute;left:0;bottom:0;height:3px;background:var(--c);opacity:.9}
+.mode .badge{position:absolute;top:10px;right:10px;min-width:22px;height:22px;padding:0 6px;border-radius:99px;background:var(--c);color:var(--bg);font-size:.75rem;font-weight:900;display:grid;place-items:center}
+
+/* ===== Medidores ===== */
+.meter{height:8px;background:var(--surface2);border-radius:99px;overflow:hidden}
+.meter i{display:block;height:100%;border-radius:99px;background:var(--ok);transition:width .6s}
+.meter i.warn{background:var(--warn)} .meter i.bad{background:var(--bad)} .meter i.none{background:var(--line)}
+.catrow{display:grid;grid-template-columns:auto 1fr auto;gap:4px 12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.catrow:first-of-type{border-top:0;padding-top:2px}
+.catrow .glyph{margin:0;grid-row:span 2}
+.catrow .meter,.catrow .sub{grid-column:2/-1}
+.catrow .sub{font-size:.75rem;color:var(--muted)}
+.pct{font-variant-numeric:tabular-nums;font-weight:800}
+
+/* ===== Ajustes ===== */
+details.card summary{cursor:pointer;font-weight:700;list-style:none;display:flex;align-items:center;gap:8px}
+details.card summary::-webkit-details-marker{display:none}
+details.card summary::after{content:"＋";margin-left:auto;color:var(--muted)}
+details[open].card summary::after{content:"－"}
+.set{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface2)}
+.seg button{border:0;background:transparent;padding:8px 12px;min-height:40px;font-size:.9rem}
+.seg button.on{background:var(--text);color:var(--bg);font-weight:700}
+
+/* ===== Drill ===== */
+.hud{display:flex;align-items:center;gap:10px;position:relative}
+.score{line-height:1}
+.score b{font-size:1.6rem;font-weight:900;font-variant-numeric:tabular-nums;display:block}
+.score small{font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.float{position:absolute;left:58px;top:-6px;font-weight:900;color:var(--accent2);font-size:1.1rem;pointer-events:none;animation:floatUp .9s ease-out forwards}
+@keyframes floatUp{0%{opacity:0;transform:translateY(8px) scale(.8)}20%{opacity:1;transform:translateY(0) scale(1.15)}100%{opacity:0;transform:translateY(-26px) scale(1)}}
+.combo{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:99px;font-weight:900;font-variant-numeric:tabular-nums;color:#2a1a00;background:linear-gradient(135deg,#ffe08a,#ffb547);box-shadow:0 4px 16px rgba(255,181,71,.35);animation:bump .3s}
+.combo.hot{color:#fff;background:linear-gradient(135deg,#ff8a3d,#ff3d5a);box-shadow:0 4px 20px rgba(255,61,90,.45)}
+@keyframes bump{0%{transform:scale(.8)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
+.tring{position:relative;width:48px;height:48px;flex:none}
+.tring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.tring span{position:absolute;inset:0;display:grid;place-items:center;font-weight:800;font-size:.85rem;font-variant-numeric:tabular-nums}
+.tring.low circle.fg{stroke:var(--accent)}
+.tring.low span{color:var(--accent)}
+.qcard{position:relative;margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:14px 16px 0;box-shadow:var(--shadow);overflow:hidden}
+.qcard::before{content:"";position:absolute;inset:0 0 auto 0;height:4px;background:var(--c)}
+.qcard .wm{position:absolute;right:-6px;bottom:-26px;font-size:7.5rem;font-weight:900;color:var(--c);opacity:.07;pointer-events:none;line-height:1}
+.qcard.pop{animation:okpulse .45s}
+@keyframes okpulse{0%{box-shadow:0 0 0 0 var(--ok)}100%{box-shadow:0 0 0 16px transparent}}
+.tags{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.tag{font-size:.74rem;font-weight:700;padding:3px 10px;border-radius:99px;background:color-mix(in srgb,var(--c,var(--muted)) 14%,transparent);color:var(--c,var(--muted))}
+.tag.buf{--c:var(--warn)}
+.tag.last{--c:var(--bad);animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.4}}
+.head{font-size:.84rem;color:var(--muted);text-align:center;margin-top:10px}
+.prompt{position:relative;font-size:1.6rem;line-height:1.95;padding:12px 6px 20px;text-align:center;overflow-wrap:anywhere}
+.prompt.long{font-size:1.25rem;text-align:left}
+.prompt u{text-decoration:none;background:linear-gradient(transparent 62%,color-mix(in srgb,var(--c) 30%,transparent) 62%);padding:0 2px;border-radius:2px}
+.blank{color:var(--c);font-weight:800;white-space:nowrap}
+ruby rt{font-size:.5em;color:var(--muted);font-weight:400}
+.qtimer{height:5px;background:var(--surface2);margin:0 -16px}
+.qtimer i{display:block;height:100%;width:100%;background:var(--ok);transition:background .3s}
+.qtimer i.mid{background:var(--warn)} .qtimer i.low{background:var(--bad)}
+.opts{display:grid;grid-template-columns:1fr;gap:10px;margin-top:14px}
+@media (min-width:640px){.opts:not(.long){grid-template-columns:1fr 1fr}}
+.opt{position:relative;display:flex;align-items:center;gap:14px;text-align:left;border:1.5px solid var(--line);background:var(--surface);border-radius:16px;padding:12px 14px;min-height:62px;font-size:1.32rem;line-height:1.6;box-shadow:var(--shadow);transition:transform .08s,border-color .12s,background .12s}
+.opt:hover{border-color:var(--c)}
+.opts.long .opt{font-size:1.05rem}
+.opt:active{transform:scale(.98)}
+.opt .k{flex:none;width:30px;height:30px;border-radius:9px;background:var(--surface2);color:var(--muted);font-size:.85rem;display:grid;place-items:center;font-weight:800;transition:background .12s,color .12s}
+.opt:hover .k{background:var(--c);color:var(--bg)}
+.opt.ok{border-color:var(--ok);background:var(--okbg);animation:pop .35s}
+.opt.ok .k{background:var(--ok);color:var(--bg)}
+.opt.bad{border-color:var(--bad);background:var(--badbg)}
+.opt.bad .k{background:var(--bad);color:var(--bg)}
+.opt.dim{opacity:.4;box-shadow:none}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.04)}100%{transform:scale(1)}}
+.opts.shake{animation:shake .38s}
+@keyframes shake{0%,100%{transform:none}20%{transform:translateX(-8px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(3px)}}
+.fb{display:flex;gap:12px;margin-top:14px;border-radius:18px;padding:14px;background:var(--surface);border:1.5px solid var(--bad);box-shadow:0 8px 26px var(--badbg);animation:rise .25s ease-out;cursor:pointer}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.fb .ic{flex:none;width:34px;height:34px;border-radius:50%;background:var(--bad);color:var(--bg);display:grid;place-items:center;font-weight:900}
+.fb .h{font-size:.92rem;color:var(--muted);margin-bottom:6px}
+.fb .h b{color:var(--text)}
+.fb .r1{font-weight:700;margin:0 0 4px}
+.fb .r2{margin:0;color:var(--muted)}
+.fb .n{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;font-size:.78rem;color:var(--muted)}
+.fb .go-on{margin-left:auto;font-weight:800;color:var(--text);background:var(--surface2);border-radius:99px;padding:6px 14px}
+
+/* ===== Final ===== */
+.endhero{position:relative;text-align:center;padding:26px 16px 20px;border-radius:24px;background:linear-gradient(160deg,var(--surface),var(--surface2));border:1px solid var(--line);box-shadow:var(--shadow);overflow:hidden}
+.stamp{width:108px;height:108px;margin:0 auto 10px;border:5px solid var(--accent);border-radius:50%;display:grid;place-items:center;color:var(--accent);font-size:3.1rem;font-weight:900;transform:rotate(-12deg);animation:stamp .5s cubic-bezier(.2,1.6,.4,1) both;box-shadow:inset 0 0 0 3px var(--surface),inset 0 0 0 5px var(--accent)}
+@keyframes stamp{0%{opacity:0;transform:rotate(-12deg) scale(2.2)}100%{opacity:1;transform:rotate(-12deg) scale(1)}}
+.stamp-l{font-weight:800;color:var(--accent);letter-spacing:.08em;font-size:.82rem}
+.big{font-size:3rem;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.1;margin-top:6px}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px;text-align:center}
+.kpi b{display:block;font-size:1.3rem;font-variant-numeric:tabular-nums}
+.kpi span{font-size:.72rem;color:var(--muted)}
+.cta{display:flex;gap:10px}
+.cta .start{margin-top:0;flex:2;padding:16px}
+.cta .btn{flex:1;border-radius:20px}
+.confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.confetti i{position:absolute;top:-12px;width:8px;height:14px;border-radius:2px;animation:fall 1.8s ease-in forwards}
+@keyframes fall{to{transform:translateY(420px) rotate(540deg);opacity:0}}
+
+/* ===== Listas ===== */
+.list{margin:0;padding:0;list-style:none}
+.list li{display:flex;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line);font-size:.95rem}
+.list li:first-child{border-top:0}
+.list .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dots{letter-spacing:2px;color:var(--warn);font-size:.8rem}
+
+.toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translate(-50%,10px);background:var(--text);color:var(--bg);padding:11px 18px;border-radius:14px;font-weight:700;font-size:.92rem;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:calc(100% - 32px);text-align:center;z-index:9;box-shadow:var(--shadow)}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.foot{margin-top:22px;text-align:center;font-size:.78rem;color:var(--muted);line-height:2}
+
+@media (max-width:420px){.prompt{font-size:1.38rem}.opt{font-size:1.18rem}.ring{width:92px;height:92px}.ring .in b{font-size:1.6rem}.hero{gap:12px;padding:14px}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<input id="imp" type="file" accept="application/json" class="hide">
+<script>
+"use strict";
+/* =========================================================
+   MEXT Ráfaga — micro-drills de 60–90 s para el examen MEXT
+   Capas: BANCO (datos) → GENERADORES (key → pregunta)
+          → MOTOR (selección, buffer de errores, SRS Leitner)
+          → UI (vistas + teclado) → PERSISTENCIA (localStorage)
+   ========================================================= */
+
+/* ---------- Categorías ---------- */
+const CATS={
+  part:{n:'で / に / へ / を',s:'Partículas de lugar',t:8},
+  jita:{n:'自動詞・他動詞',s:'Transitivo / intransitivo',t:10},
+  ctr:{n:'助数詞',s:'Contadores',t:8},
+  kanji:{n:'漢字',s:'Kanji del examen 2019',t:8},
+  syn:{n:'言い換え',s:'Paráfrasis (Sección II)',t:22},
+  morph:{n:'活用・時制',s:'Formas y tiempo verbal',t:10}
+};
+const HEADS={part:'Elige la partícula',jita:'¿Intransitivo (が) o transitivo (を)?',morph:'Elige la forma correcta',syn:'Elige la oración que significa casi lo mismo'};
+
+/* ---------- BANCO ESTÁTICO (o[0] = correcta; se barajan al mostrar) ----------
+   {k|r} = furigana · （　） = hueco · w = explicación específica si eliges esa opción */
+const BANK=[
+/* ===== Partículas で / に / へ / を ===== */
+{id:'p01',c:'part',q:'としょかん（　）{本|ほん}を よみます。',o:['で','に','へ','を'],x:'読む es una acción que ocurre DENTRO del lugar → で.\nに/へ solo con movimiento (行く/来る/帰る) o existencia (いる/ある).'},
+{id:'p02',c:'part',q:'あした ぎんこう（　）いきます。',o:['へ','で','を','が'],x:'行く = movimiento hacia un destino → へ (o に).\nで marcaría dónde HACES algo, no hacia dónde vas (tu fallo I-1).'},
+{id:'p03',c:'part',q:'うち（　）ばんごはんを たべます。',o:['で','に','へ','を'],x:'食べる no es movimiento: el lugar donde comes va con で.\nTrampa del 29 sep: うち suena a destino, pero manda el VERBO, no el sustantivo.'},
+{id:'p04',c:'part',q:'まいにち {学校|がっこう}（　）バスで いきます。',o:['に','で','を','が'],x:'学校 = destino de 行く → に. El で de バスで es el medio (en bus).\nNo copies la partícula vecina: cada sustantivo marca su propio rol.',w:{'で':'バスで ya es "en bus" (medio). 学校 es el destino del 行く → に.'}},
+{id:'p05',c:'part',q:'こうえん（　）あそびます。',o:['で','に','へ','が'],x:'遊ぶ = actividad que ocurre en el parque → で.\nEl verbo no implica ir hacia el parque, solo hacer algo allí.'},
+{id:'p06',c:'part',q:'{日本|にほん}（　）すんでいます。',o:['に','で','を','へ'],x:'住む marca el lugar con に (residencia = estado, no acción).\nExcepción clave: 住む / いる / ある llevan に aunque no haya movimiento.',w:{'で':'で + 住む es el error clásico: 住む siempre pide に (lo anotaste el 3 oct).'}},
+{id:'p07',c:'part',q:'へや（　）{入|はい}って ください。',o:['に','で','を','が'],x:'入る: el espacio al que entras va con に (punto de llegada).\nで sería "dentro del cuarto haz algo", no el acto de entrar.'},
+{id:'p08',c:'part',q:'はこ（　）ペンを {入|い}れました。',o:['に','で','が','を'],x:'入れる: Xに Yを 入れる — に = recipiente/destino, を = objeto movido.\nEs justo el に que omitiste el 6 oct.'},
+{id:'p09',c:'part',q:'デパート（　）くつを かいました。',o:['で','に','へ','を'],x:'買う ocurre en la tienda → で.\nComprar no desplaza al sujeto hacia ningún lado.'},
+{id:'p10',c:'part',q:'なつやすみに おきなわ（　）いきたいです。',o:['に','で','を','と'],x:'行きたい sigue siendo 行く: destino → に/へ.\nたい no cambia la partícula del lugar.'},
+{id:'p11',c:'part',q:'えき（　）ともだちに あいました。',o:['で','に','へ','を'],x:'会う ocurre en la estación → で. El に de ともだちに marca a la persona.\nLugar donde sucede un evento = で.'},
+{id:'p12',c:'part',q:'つくえの {上|うえ}（　）ねこが います。',o:['に','で','へ','を'],x:'いる/ある (existencia) marcan la ubicación con に.\nで exige una acción; existir no es una acción.'},
+{id:'p13',c:'part',q:'レストラン（　）はたらいています。',o:['で','に','へ','を'],x:'働く = acción en el lugar → で.\nContraste: 会社に つとめています (勤める pide に).'},
+{id:'p14',c:'part',q:'らいねん {日本|にほん}（　）べんきょうしたいです。',o:['で','に','へ','を'],x:'勉強する ocurre en Japón → で.\nIr a Japón = 日本に行く; estudiar en Japón = 日本で勉強する.'},
+{id:'p15',c:'part',q:'なんじに うち（　）かえりますか。',o:['に','で','を','が'],x:'帰る = movimiento de regreso → に/へ.\nで no puede marcar el destino de un verbo de movimiento.'},
+{id:'p16',c:'part',q:'この はし（　）わたって ください。',o:['を','で','に','へ'],x:'Lugar que ATRAVIESAS con verbo de movimiento → を (camino).\nわたる / とおる / あるく marcan el trayecto con を (lo viste en Tofugu).'},
+{id:'p17',c:'part',q:'つぎの えきで バス（　）おります。',o:['を','に','で','が'],x:'Bajar/salir de algo (降りる/出る) marca el punto de partida con を.\nに sería subir: バスに のります.'},
+{id:'p18',c:'part',q:'えきで でんしゃ（　）のります。',o:['に','で','を','へ'],x:'乗る: el vehículo al que subes = punto de llegada → に.\nContraste: でんしゃを おりる (bajar = punto de salida → を).'},
+{id:'p19',c:'part',q:'だいどころ（　）りょうりを つくります。',o:['で','に','を','へ'],x:'Cocinar ocurre en la cocina → で.\nを ya está ocupado por りょうり (el objeto).'},
+{id:'p20',c:'part',q:'としょかん（　）{本|ほん}を かえしに いきます。',o:['へ','で','を','が'],x:'El verbo FINAL es 行く: destino → へ. 返しに es el propósito (otro に).\nTrampa del 23 sep: pensar "devuelvo libros allí" → で.'},
+{id:'p21',c:'part',q:'{山田|やまだ}さんは いま {会議室|かいぎしつ}（　）います。',o:['に','で','を','へ'],x:'いる (existencia/ubicación) → に.\nSi dijera 会議室で はなしています, ahí sí で (acción).'},
+{id:'p22',c:'part',q:'きのう ともだちの いえ（　）パーティーが ありました。',o:['で','に','を','へ'],x:'ある de EVENTO (fiesta, examen, reunión) = algo que sucede → で.\nある de objetos → に. Mismo verbo, distinta partícula.'},
+{id:'p23',c:'part',q:'ここ（　）しゃしんを とらないで ください。',o:['で','に','を','へ'],x:'Tomar fotos = acción en este lugar → で.\nLa negación (ないで) no cambia la partícula de lugar.'},
+{id:'p24',c:'part',q:'きょうしつ（　）{出|で}て ください。',o:['を','に','で','が'],x:'出る: el lugar que ABANDONAS → を (o から).\nに/へ serían el destino: lo contrario.'},
+{id:'p25',c:'part',q:'わたしは まいあさ ７{時|じ}（　）おきます。',o:['に','で','を','へ'],x:'Hora exacta → に.\nで nunca marca tiempo puntual.'},
+{id:'p26',c:'part',q:'あした わたしの うち（　）きて ください。',o:['に','で','を','が'],x:'来る = movimiento hacia mi casa → に (destino).\nで sería "haz algo en mi casa".'},
+{id:'p27',c:'part',q:'あした どこ（　）あいましょうか。',o:['で','に','へ','を'],x:'会う ocurre en un lugar → で (punto de encuentro).\nNo hay desplazamiento en 会う: no lleva に/へ para el lugar.'},
+{id:'p28',c:'part',q:'この バスは くうこう（　）いきますか。',o:['に','で','を','が'],x:'行く + destino → に.\nで sería "en el aeropuerto", no "hacia".'},
+
+/* ===== Transitivo / intransitivo ===== */
+{id:'j01',c:'jita',q:'へやが くらいです。でんきを（　）ください。',o:['つけて','ついて','つけ','つけます'],x:'を = alguien actúa sobre la luz → transitivo つける; ください pide forma て: つけて.\nつく es intransitivo (se enciende sola): no admite を.',w:{'つけます':'ください NUNCA va con ます: siempre forma て (つけて). Tu patrón del 6 oct.'}},
+{id:'j02',c:'jita',q:'でんきを（　）ください。',o:['けして','きえて','けします','きえます'],x:'電気を → transitivo 消す; en forma て = 消して.\nきえる (apagarse solo) va con が: でんきが きえました (tu fallo I-4).',w:{'けします':'ください pide forma て: けして, no けします (patrón del 6 oct).'}},
+{id:'j03',c:'jita',q:'かぜで ドアが（　）。',o:['あきました','あけました','あけて','あいて'],x:'が + causa natural (viento) → intransitivo 開く: あきました.\nあける exige un agente que la abra con を.'},
+{id:'j04',c:'jita',q:'すみません、まどを（　）も いいですか。',o:['あけて','あいて','あけ','あけます'],x:'まどを → transitivo 開ける; 〜てもいい pide forma て: あけて.\nあいて (開く) no puede tener objeto con を.'},
+{id:'j05',c:'jita',q:'じゅぎょうが ９{時|じ}に（　）。',o:['はじまります','はじめます','はじめて','はじまって'],x:'じゅぎょうが (la clase empieza, sin agente) → intransitivo 始まる.\n始める necesita a alguien: 先生が じゅぎょうを はじめます.'},
+{id:'j06',c:'jita',q:'{先生|せんせい}が テストを（　）。',o:['はじめました','はじまりました','はじまって','はじめて'],x:'テストを (objeto) + agente 先生が → transitivo 始める.\n始まる no admite を: テストが はじまりました.'},
+{id:'j07',c:'jita',q:'みせが ８{時|じ}に（　）。',o:['しまります','しめます','しめて','しまって'],x:'みせが, sin agente → intransitivo 閉まる.\n閉める exige alguien: 私が 店を 閉めます.'},
+{id:'j08',c:'jita',q:'さむいですから、ドアを（　）ください。',o:['しめて','しまって','しめ','しめます'],x:'ドアを + ください → 閉める en forma て: しめて.\nください nunca va con ます.'},
+{id:'j09',c:'jita',q:'さいふに おかねが（　）います。',o:['はいって','いれて','はいり','いれ'],x:'おかねが + ている (estado resultante) → intransitivo 入る: はいっています.\n入れています = alguien está metiendo dinero (acción en curso).'},
+{id:'j10',c:'jita',q:'コーヒーに さとうを（　）か。',o:['いれます','はいります','いれて','はいって'],x:'さとうを → transitivo 入れる: Xに Yを 入れる.\n入る no lleva objeto: さとうが はいっています.'},
+{id:'j11',c:'jita',q:'あれ？ でんきが（　）。だれも いないのに。',o:['ついています','つけています','ついてください','つけてください'],x:'でんきが + ている = estado resultante (está encendida) → ついています.\nつけています = alguien la está encendiendo: choca con だれも いない.'},
+{id:'j12',c:'jita',q:'{停電|ていでん}で、でんきが（　）。',o:['きえました','けしました','きえて','けして'],x:'が + causa externa (apagón) → intransitivo 消える: きえました.\nけしました necesita a alguien que apague algo con を.'},
+{id:'j13',c:'jita',q:'ねる まえに、テレビを（　）。',o:['けします','きえます','きえません','つきます'],x:'テレビを → transitivo 消す: けします.\nきえる/つく son intransitivos: no pueden llevar を.'},
+{id:'j14',c:'jita',q:'まどが（　）いますね。しめましょうか。',o:['あいて','あけて','あいた','あけた'],x:'まどが + ている = estado visible (está abierta) → 開いて.\nRegla: が + 自動詞 + ている = resultado (tu matiz del 6 oct).'},
+{id:'j15',c:'jita',q:'きのう へやの でんきを（　）。',o:['つけました','つきました','つけます','つけて'],x:'きのう exige pasado (〜ました); を → transitivo つける → つけました.\nTu error del 6 oct: tiempo presente con 昨日.',w:{'つけます':'Transitivo bien, tiempo mal: きのう → つけました.'}},
+{id:'j16',c:'jita',q:'えいがは もう（　）よ。いそいで！',o:['はじまっています','はじめています','はじめて','はじめます'],x:'えいがは (sin agente) + もう + ている = ya empezó y sigue → 始まっています.\nはじめています = alguien está empezando algo: falta el objeto.'},
+{id:'j17',c:'jita',q:'どうぞ、へやに（　）ください。',o:['はいって','いれて','はいり','いれ'],x:'Tú entras (nadie mete nada) → intransitivo 入る: 入って ください.\n入れて requiere objeto: にもつを 入れて ください.'},
+{id:'j18',c:'jita',q:'この かみを はこに（　）ください。',o:['いれて','はいって','いれ','いれます'],x:'かみを + はこに → transitivo 入れる en forma て: いれて.\nEstructura completa: Xに Yを 入れる.'},
+{id:'j19',c:'jita',q:'あ、ドアが（　）。だれが しめましたか。',o:['しまりました','しめました','しめて','しまって'],x:'ドアが (sin agente visible) → intransitivo 閉まる: しまりました.\nLa 2ª oración usa しめました porque ahí sí hay agente (だれが).'},
+{id:'j20',c:'jita',q:'でんき（　）きえています。',o:['が','を','で','に'],x:'消える (intransitivo) → el sujeto lleva が.\nを solo con 消す: でんきを けします.'},
+{id:'j21',c:'jita',q:'まど（　）あけます。',o:['を','が','で','に'],x:'開ける (transitivo) → objeto con を.\nが solo con 開く: まどが あきます.'},
+{id:'j22',c:'jita',q:'じゅぎょう（　）はじまります。',o:['が','を','で','に'],x:'始まる (intransitivo) → が.\nを solo con 始める.'},
+{id:'j23',c:'jita',q:'エアコンを（　）ましょうか。',o:['つけ','つき','つけて','ついて'],x:'エアコンを → つける; 〜ましょう pide la raíz ます: つけましょう.\nつきましょう no tiene sentido: つく no admite を.'},
+{id:'j24',c:'jita',q:'かいぎを ３{時|じ}に（　）ましょう。',o:['はじめ','はじまり','はじめて','はじまって'],x:'かいぎを → transitivo 始める; raíz + ましょう: はじめましょう.\nはじまり + ましょう es imposible con を.'},
+{id:'j25',c:'jita',q:'かぎが（　）いますから、{入|はい}れません。',o:['しまって','しめて','あいて','あけて'],x:'かぎが + ている = estado: está cerrado con llave → しまっています.\nOjo: 入れません aquí = "no puedo entrar" (potencial de 入る).'},
+{id:'j26',c:'jita',q:'まいばん おふろに（　）から、ねます。',o:['はいって','いれて','はいり','いれ'],x:'おふろに 入る = bañarse (tú entras) → intransitivo, forma て + から.\nいれて necesitaría un objeto con を.'},
+
+/* ===== Formas y tiempo ===== */
+{id:'m01',c:'morph',q:'この ペンで（　）ください。',o:['かいて','かきます','かき','かいた'],x:'ください se une SIEMPRE a la forma て: 書く → 書いて.\nます + ください no existe: es tu patrón del 6 oct.'},
+{id:'m02',c:'morph',q:'きのう あさごはんを（　）。',o:['たべませんでした','たべません','たべない','たべて'],x:'きのう fija el pasado → 〜ませんでした.\nたべません es presente/futuro: choca con el marcador de tiempo.'},
+{id:'m03',c:'morph',q:'あした ともだちと えいがを（　）。',o:['みます','みました','みて','みませんでした'],x:'あした → no-pasado 〜ます.\nEl marcador de tiempo decide la forma antes que nada.'},
+{id:'m04',c:'morph',q:'この へやは（　）です。',o:['しずか','しずかな','しずかい','しずかの'],x:'な-adjetivo ante です va SIN な: しずかです.\nな solo aparece antes de un sustantivo: しずかな へや.'},
+{id:'m05',c:'morph',q:'（　）へやですね。',o:['しずかな','しずか','しずかい','しずかの'],x:'な-adjetivo + sustantivo → necesita な: しずかな へや.\nSin sustantivo detrás (しずかです) la な desaparece.'},
+{id:'m06',c:'morph',q:'きのうは とても（　）。',o:['さむかったです','さむいでした','さむかったでした','さむくでした'],x:'い-adj en pasado: quita い + かったです.\nさむいでした es el error típico: en い-adj です nunca se conjuga (Sistema 2).'},
+{id:'m07',c:'morph',q:'この カレーは あまり（　）。',o:['からくないです','からいじゃないです','からいないです','からくないでした'],x:'い-adj negativo: い → くないです.\nじゃない es para な-adj y sustantivos.'},
+{id:'m08',c:'morph',q:'わたしの まちは あまり（　）。',o:['べんりじゃありません','べんりくないです','べんりないです','べんりくありません'],x:'べんり es な-adj (no termina en い) → じゃありません.\nくない solo sirve a い-adjetivos.'},
+{id:'m09',c:'morph',q:'へやは あまり（　）。',o:['きれいじゃありません','きれくないです','きれいくないです','きれいないです'],x:'きれい termina en い pero es な-adj (excepción) → じゃありません.\nMismas trampas: ゆうめい, きらい.'},
+{id:'m10',c:'morph',q:'せんしゅうの テストは（　）。',o:['むずかしかったです','むずかしいでした','むずかしかったでした','むずかしくでした'],x:'い-adj pasado: むずかしい → むずかしかったです.\nです queda fija; el pasado vive en かった.'},
+{id:'m11',c:'morph',q:'いま {雨|あめ}が（　）。',o:['ふっています','ふります','ふりませんでした','ふって'],x:'いま + acción en curso → 〜ています.\nふります = llueve (habitual/futuro), no "está lloviendo ahora".'},
+{id:'m12',c:'morph',q:'あには いま とうきょうに（　）。',o:['すんでいます','すみます','すんで','すみませんでした'],x:'住む = "vivir en" se usa en 〜ています (estado actual).\nすみます sugiere "me mudaré a vivir" (cambio futuro).'},
+{id:'m13',c:'morph',q:'わたしは {日本|にほん}へ（　）です。',o:['いきたい','いくたい','いってたい','いきほしい'],x:'たい se une a la raíz ます: いき + たい.\nほしい es para OBJETOS (〜が ほしい), no para acciones.'},
+{id:'m14',c:'morph',q:'わたしは あたらしい くるまが（　）。',o:['ほしいです','したいです','ほしいます','ほしでした'],x:'Querer un objeto → 〜が ほしいです (ほしい es い-adj).\nしたい es para acciones (べんきょうしたい).'},
+{id:'m15',c:'morph',q:'あしたは やすみですから、はやく おき（　）も いいです。',o:['なくて','なかって','なくては','ない'],x:'〜なくても いい = no hace falta. Forma: ない → なくて + も.\nnai-forma en て siempre es なくて (como い-adj: ない → なくて).'},
+{id:'m16',c:'morph',q:'あしたまでに しゅくだいを（　）なりません。',o:['しなければ','しないで','しなくても','しても'],x:'〜なければ なりません = tener que (obligación).\nしなくても(いい) es lo opuesto: no hace falta.'},
+{id:'m17',c:'morph',q:'ここで たばこを（　）ください。',o:['すわないで','すわなくて','すわない','すわなかった'],x:'Pedir que NO se haga algo → 〜ないで ください.\nなくて no se une a ください.'},
+{id:'m18',c:'morph',q:'きのう どこへ（　）か。',o:['いきました','いきます','いって','いく'],x:'きのう → pasado: いきましたか.\nPrimero mira el marcador de tiempo, después el verbo.'},
+{id:'m19',c:'morph',q:'{父|ちち}は いま テレビを（　）。',o:['みています','みましょう','みませんでした','みて'],x:'いま + acción en progreso → 〜ています.\nみましょう es invitación ("veamos"), no describe a otra persona.'},
+{id:'m20',c:'morph',q:'{山田|やまだ}さんを（　）か。',o:['しっています','しります','しって','しりて'],x:'知る = "saber/conocer" se usa como estado: しっています.\nOjo: el negativo es しりません (sin ている).'},
+{id:'m21',c:'morph',q:'この {本|ほん}は（　）、やすいです。',o:['おもしろくて','おもしろいで','おもしろくで','おもしろいて'],x:'Unir い-adj a otra idea: い → くて.\nな-adj usa で: しずかで、きれいです.'},
+{id:'m22',c:'morph',q:'この まちは（　）、にぎやかです。',o:['きれいで','きれくて','きれいくて','きれいな'],x:'きれい es な-adj → se une con で: きれいで.\nくて es solo para い-adj de verdad.'},
+{id:'m23',c:'morph',q:'にわに いぬが（　）。',o:['います','あります','いります','あるます'],x:'Ser vivo que se mueve (persona/animal) → います.\nあります es para objetos y plantas.'},
+{id:'m24',c:'morph',q:'つくえの {上|うえ}に じしょが（　）。',o:['あります','います','ありです','いるます'],x:'Objeto inanimado → あります.\nいます solo para seres vivos que se mueven.'},
+{id:'m25',c:'morph',q:'A「きのう なにを しましたか。」 B「テニスを（　）。」',o:['しました','します','して','しません'],x:'Pregunta en pasado → respuesta en pasado.\nTu patrón del 11 ago: contestar en presente a pregunta en pasado.'},
+{id:'m26',c:'morph',q:'この ペンを（　）も いいですか。',o:['つかって','つかいます','つかう','つかい'],x:'Pedir permiso: forma て + も いいですか → つかって.\nつかう → つかって (う/つ/る → って).'},
+
+/* ===== Paráfrasis — Sección II ===== */
+{id:'s01',c:'syn',q:'わたしは くだものが すきです。',o:['わたしは りんごや バナナが すきです。','わたしは にくや さかなが すきです。','わたしは ジュースや おちゃが すきです。','わたしは パンや ケーキが すきです。'],x:'くだもの = fruta (りんご, バナナ, みかん).\nにく/さかな = proteína; のみもの = bebidas. (Fallo II-1 de tu línea base.)'},
+{id:'s02',c:'syn',q:'この もんだいは むずかしいです。',o:['この もんだいは やさしくないです。','この もんだいは かんたんです。','この もんだいは おもしろいです。','この もんだいは ながいです。'],x:'むずかしい = difícil = やさしくない (no es fácil).\nかんたん/やさしい = fácil: es lo contrario. (Fallo II-3.)'},
+{id:'s03',c:'syn',q:'あしたは むりです。',o:['あしたは できません。','あしたは できます。','あしたは ひまです。','あしたは だいじょうぶです。'],x:'むり = imposible → できません.\nひま / だいじょうぶ indican que SÍ hay disponibilidad. (Fallo II-4.)'},
+{id:'s04',c:'syn',q:'てを あらいました。',o:['てを みずで きれいに しました。','てを あげました。','てを ふきました。','てを けがしました。'],x:'あらう = lavar (con agua) → dejar limpio.\nふく = secar frotando; あげる = levantar. (Fallo II-7.)'},
+{id:'s05',c:'syn',q:'しゅくだいは ほとんど おわりました。',o:['しゅくだいは だいたい おわりました。','しゅくだいは ぜんぜん おわっていません。','しゅくだいは すこしだけ おわりました。','しゅくだいは ぜんぶ おわりました。'],x:'ほとんど = casi todo ≈ だいたい.\nぜんぶ = 100%; すこし = poco: ambos cambian la cantidad. (Fallo I-7.)'},
+{id:'s06',c:'syn',q:'ともだちを ははに しょうかいしました。',o:['ははに「この ひとは わたしの ともだちです」と いいました。','ともだちに ははの しゃしんを みせました。','ははと ともだちの いえへ いきました。','ともだちに ははの なまえを ききました。'],x:'しょうかいする = presentar a alguien (decir quién es).\nXを Yに しょうかいする: X es presentado A Y. (Fallo I-9.)'},
+{id:'s07',c:'syn',q:'らいねん {日本|にほん}へ いく つもりです。',o:['らいねん 日本へ いこうと おもっています。','らいねん 日本へ いったことが あります。','らいねん 日本へ いかなければ なりません。','らいねん 日本へ いきたくないです。'],x:'〜つもりです = tengo la intención ≈ 〜ようと おもっています.\nなければならない = obligación, no plan propio. (Fallo II-8.)'},
+{id:'s08',c:'syn',q:'{先生|せんせい}に にほんごを おしえて いただきました。',o:['先生が にほんごを おしえて くれました。','わたしが 先生に にほんごを おしえました。','先生は にほんごを ならいました。','わたしは 先生に にほんごを おしえて あげました。'],x:'Xに Vて いただく = recibí de X el favor (humilde) ≈ Xが Vて くれる.\nQuien actúa es el profesor; yo recibo. (Fallo II-10.)'},
+{id:'s09',c:'syn',q:'きょうは いそがしいです。',o:['きょうは じかんが ありません。','きょうは ひまです。','きょうは やすみです。','きょうは げんきです。'],x:'いそがしい = ocupado = sin tiempo.\nひま = libre: es el antónimo.'},
+{id:'s10',c:'syn',q:'この へやは せまいです。',o:['この へやは ひろくないです。','この へやは くらくないです。','この へやは あかるいです。','この へやは たかいです。'],x:'せまい = estrecho/pequeño = ひろくない.\nくらい / あかるい hablan de luz, no de tamaño.'},
+{id:'s11',c:'syn',q:'{父|ちち}は ぎんこうに つとめています。',o:['父は ぎんこうで はたらいています。','父は ぎんこうへ いきました。','父は ぎんこうで おかねを かりました。','父は ぎんこうの ちかくに すんでいます。'],x:'Xに つとめる = trabajar (estar empleado) en X ≈ Xで はたらく.\nOjo partícula: つとめる → に, はたらく → で.'},
+{id:'s12',c:'syn',q:'この みせは ゆうめいです。',o:['この みせは みんなが しっています。','この みせは だれも しりません。','この みせは あたらしいです。','この みせは やすいです。'],x:'ゆうめい = famoso = todos lo conocen.\nだれも しりません es el opuesto exacto.'},
+{id:'s13',c:'syn',q:'あにの しゅみは しゃしんです。',o:['あには しゃしんを とるのが すきです。','あには しゃしんを うっています。','あには しゃしんが きらいです。','あにの しごとは しゃしんです。'],x:'しゅみ = pasatiempo = lo que te gusta hacer (〜のが すき).\nしごと = trabajo: no es lo mismo que hobby.'},
+{id:'s14',c:'syn',q:'けさ {雨|あめ}が ふりました。',o:['きょうの あさ 雨が ふりました。','きのうの よる 雨が ふりました。','あしたの あさ 雨が ふります。','きょうの よる 雨が ふりました。'],x:'けさ = esta mañana = きょうの あさ.\nゆうべ = anoche (きのうの よる): par que se confunde.'},
+{id:'s15',c:'syn',q:'おととい えいがを みました。',o:['ふつか まえに えいがを みました。','きのう えいがを みました。','みっか まえに えいがを みました。','あさって えいがを みます。'],x:'おととい = anteayer = hace 2 días (ふつか まえ).\nあさって = pasado mañana: misma distancia, sentido opuesto.'},
+{id:'s16',c:'syn',q:'ゆっくり たべて ください。',o:['いそがないで たべて ください。','はやく たべて ください。','たくさん たべて ください。','すこし たべて ください。'],x:'ゆっくり = despacio, sin prisa = いそがないで.\nはやく es lo contrario; たくさん/すこし hablan de cantidad.'},
+{id:'s17',c:'syn',q:'わたしは りょうしんと すんでいます。',o:['わたしは ちちと ははと すんでいます。','わたしは あにと あねと すんでいます。','わたしは そふと そぼと すんでいます。','わたしは ともだち ふたりと すんでいます。'],x:'りょうしん = padres (父 + 母).\nきょうだい = hermanos; そふ・そぼ = abuelos.'},
+{id:'s18',c:'syn',q:'わたしは さかなが きらいです。',o:['わたしは さかなが すきではありません。','わたしは さかなを よく たべます。','わたしは さかなが だいすきです。','わたしは さかなを たべたことが ありません。'],x:'きらい = no gustar = すきではない.\nたべたことがない habla de experiencia, no de gusto.'},
+{id:'s19',c:'syn',q:'この くつは たかいです。',o:['この くつは やすくないです。','この くつは おおきいです。','この くつは あたらしいです。','この くつは ひくいです。'],x:'たかい (precio) = caro = やすくない.\nひくい es antónimo de たかい solo en altura.'},
+{id:'s20',c:'syn',q:'きのう デパートで かいものを しました。',o:['きのう デパートで いろいろな ものを かいました。','きのう デパートで はたらきました。','きのう デパートへ いきませんでした。','きのう デパートで ともだちに あいました。'],x:'かいものを する = ir de compras = comprar cosas.\nLas demás cambian la acción o la niegan.'},
+{id:'s21',c:'syn',q:'この みちは あぶないです。',o:['この みちは あんぜんではありません。','この みちは せまくないです。','この みちは きれいです。','この みちは あたらしいです。'],x:'あぶない = peligroso = no seguro (あんぜんではない).\nせまい/きれい describen el camino, no el riesgo.'},
+{id:'s22',c:'syn',q:'この ことばを わすれないで ください。',o:['この ことばを おぼえていて ください。','この ことばを おしえて ください。','この ことばを わすれて ください。','この ことばを かいて ください。'],x:'わすれないで = no olvides = おぼえていて (mantenlo en la memoria).\nおしえる = enseñar/decir, no recordar.'},
+{id:'s23',c:'syn',q:'この みせは いつも こんでいます。',o:['この みせは いつも ひとが おおいです。','この みせは いつも ひとが すくないです。','この みせは いつも しまっています。','この みせは いつも やすいです。'],x:'こむ (こんでいる) = estar lleno de gente.\nすいている es lo contrario: vacío.'},
+{id:'s24',c:'syn',q:'これは わたしの そふの しゃしんです。',o:['これは わたしの ちちの ちちの しゃしんです。','これは わたしの ちちの あにの しゃしんです。','これは わたしの ははの あねの しゃしんです。','これは わたしの あにの こどもの しゃしんです。'],x:'そふ = abuelo = padre de tu padre (o de tu madre).\nおじ = tío (hermano del padre/madre): no es lo mismo.'},
+{id:'s25',c:'syn',q:'あには りょうりが じょうずです。',o:['あには りょうりを つくるのが うまいです。','あには りょうりが へたです。','あには りょうりが すきではありません。','あには りょうりを たべるのが すきです。'],x:'じょうず = hábil = うまい.\nへた = torpe; すき habla de gusto, no de habilidad.'},
+{id:'s26',c:'syn',q:'この しゅくだいは かんたんです。',o:['この しゅくだいは やさしいです。','この しゅくだいは むずかしいです。','この しゅくだいは ながいです。','この しゅくだいは つまらないです。'],x:'かんたん = fácil/sencillo = やさしい.\nOjo: やさしい también es "amable"; aquí es "fácil".'}
+];
+
+/* ---------- Contadores (generados) ---------- */
+const CTR={
+  hon:{k:'本',r:'ほん',d:'objetos largos y delgados'},
+  mai:{k:'枚',r:'まい',d:'objetos planos y delgados (hojas, ropa, platos)'},
+  satsu:{k:'冊',r:'さつ',d:'cosas encuadernadas (libros, cuadernos, revistas)'},
+  nin:{k:'人',r:'にん',d:'personas'}
+};
+const LAPIZ={satsu:'Útil escolar ≠ 冊: manda la FORMA. Largo y delgado → 本 (tu error del 23 sep).'};
+// [objeto, contador, lugar, trampas por contador elegido]
+const OBJ=[
+  ['えんぴつ','hon','つくえの {上|うえ}に',LAPIZ],
+  ['かさ','hon','げんかんに'],
+  ['ボールペン','hon','かばんに',LAPIZ],
+  ['バナナ','hon','テーブルに'],
+  ['ネクタイ','hon','へやに',{mai:'ネクタイ es tela, pero larga y delgada → 本. シャツ sí es 枚.'}],
+  ['{木|き}','hon','にわに'],
+  ['ビールの びん','hon','れいぞうこに'],
+  ['かみ','mai','つくえの {上|うえ}に'],
+  ['きって','mai','ひきだしに'],
+  ['シャツ','mai','へやに',{hon:'Ropa plana de arriba (シャツ) → 枚. 本 sería para corbatas o paraguas.'}],
+  ['おさら','mai','テーブルに'],
+  ['しゃしん','mai','かべに',{satsu:'Una foto es una hoja plana → 枚. 冊 sería un álbum encuadernado.'}],
+  ['はがき','mai','つくえの {上|うえ}に'],
+  ['チケット','mai','かばんに'],
+  ['{本|ほん}','satsu','つくえの {上|うえ}に',{hon:'本 (libro) se LEE ほん, pero se CUENTA con 冊: 本を ２冊.'}],
+  ['ノート','satsu','かばんに',{mai:'枚 es hoja suelta; ノート = páginas encuadernadas → 冊 (fallo I-6 de tu línea base).'}],
+  ['じしょ','satsu','たなに'],
+  ['ざっし','satsu','テーブルに',{mai:'Revista = muchas páginas unidas → 冊, no 枚.'}],
+  ['まんが','satsu','へやに'],
+  ['きょうかしょ','satsu','かばんに'],
+  ['{学生|がくせい}','nin','きょうしつに'],
+  ['{子|こ}ども','nin','こうえんに'],
+  ['おきゃくさん','nin','みせに'],
+  ['ともだち','nin','パーティーに']
+];
+const NUM=['','いち','に','さん','よん','ご','ろく','なな','はち','きゅう','じゅう'];
+const GEM={1:'いっ',6:'ろっ',8:'はっ',10:'じゅっ'};
+const FW=n=>String(n).replace(/\d/g,d=>'０１２３４５６７８９'[d]);
+const fakeGem=n=>GEM[n]||(NUM[n].length>1?NUM[n].slice(0,-1):NUM[n])+'っ';
+function ctrReading(c,n){
+  if(c==='hon')return GEM[n]?GEM[n]+'ぽん':n===3?'さんぼん':NUM[n]+'ほん';
+  if(c==='satsu')return(n===1||n===8||n===10)?GEM[n]+'さつ':NUM[n]+'さつ';
+  if(c==='mai')return NUM[n]+'まい';
+  return({1:'ひとり',2:'ふたり',4:'よにん'})[n]||NUM[n]+'にん';
+}
+function ctrWrong(c,n){
+  const N=NUM[n],F=fakeGem(n);let a;
+  if(c==='hon')a=[N+'ほん',N+'ぼん',N+'ぽん',F+'ぽん',F+'ほん'];
+  else if(c==='satsu')a=[N+'さつ',N+'ざつ',F+'さつ',F+'ざつ',N+'っさつ'];
+  else if(c==='mai')a=[F+'まい',N+'ばい',N+'ぱい'].concat(n===4?['しまい']:n===9?['くまい']:[]);
+  else a=({1:['いちにん','ひとにん','いちり'],2:['ににん','ふたにん','にり'],4:['よんにん','しにん','よったり']})[n]||[N+'じん',F+'にん',N+'り'].concat(n===9?['くにん']:[]);
+  const ok=new Set([ctrReading(c,n),'はちほん','はちさつ','しちにん']);
+  return shuffle([...new Set(a)].filter(x=>!ok.has(x))).slice(0,3);
+}
+const CRULE={
+  hon:'本: 1·6·8·10 → っぽん; 3 → ぼん; resto ほん (いっぽん, さんぼん, ろっぽん, はっぽん, じゅっぽん).',
+  satsu:'冊: solo 1·8·10 se contraen → いっさつ, はっさつ, じゅっさつ. Nunca ざつ.',
+  mai:'枚 no cambia nunca: número + まい. 4 = よんまい, 7 = ななまい, 9 = きゅうまい.',
+  nin:'人: 1 ひとり y 2 ふたり (wago), 4 よにん; desde 3 es número + にん.'
+};
+const CP_OBJ={hon:['えんぴつ','あります'],satsu:['ノート','あります'],mai:['きって','あります'],nin:['{学生|がくせい}','います']};
+const CP_NS={hon:[1,2,3,4,6,8,10],satsu:[1,3,8,10,4],mai:[4,7,9],nin:[1,2,3,4,7,9]};
+
+/* ---------- Kanji (examen 2019 + mazo base) ----------
+   s: oración con @ donde va la palabra · rc: lecturas trampa · kc: kanji trampa · h: pista */
+const K=[
+{w:'朝',r:'あさ',m:'mañana',s:'まいにち @ ６じに おきます。',rc:['ひる','よる','あき'],kc:['昼','明','期'],h:'朝 (あさ) = mañana · 昼 (ひる) = mediodía · 夜 (よる) = noche.'},
+{w:'昼',r:'ひる',m:'mediodía',s:'@ごはんを たべましょう。',rc:['よる','あさ','ひと'],kc:['書','昔','届'],h:'昼 = 尺 + 旦 (sol al mediodía). 書 (かく) lleva 聿 arriba.'},
+{w:'魚',r:'さかな',m:'pez / pescado',s:'わたしは @が すきです。',rc:['とり','さけ','たまご'],kc:['角','黒','魯'],h:'魚: ⺈ cabeza, 田 cuerpo, 灬 cola.'},
+{w:'秋',r:'あき',m:'otoño',s:'@は すずしいです。',rc:['あさ','なつ','ふゆ'],kc:['私','科','和'],h:'秋 = 禾 (grano) + 火 (fuego): cosecha y hojas rojas. 私 lleva 厶, no 火.'},
+{w:'南',r:'みなみ',m:'sur',s:'えきの @に こうえんが あります。',rc:['きた','にし','ひがし'],kc:['商','幸','東'],h:'北 きた · 南 みなみ · 東 ひがし · 西 にし.'},
+{w:'国',r:'くに',m:'país',s:'あなたの @は どこですか。',rc:['こく','いえ','まち'],kc:['困','図','固'],h:'Solo, 国 = くに; こく aparece en compuestos (外国 = がいこく). 困 lleva 木.'},
+{w:'鳥',r:'とり',m:'pájaro',s:'@が ないています。',rc:['しま','とら','うし'],kc:['島','烏','馬'],h:'鳥 tiene el "ojo" (un trazo dentro); 烏 (cuervo) no, porque es todo negro. 島 = isla.'},
+{w:'住んで',r:'すんで',m:'vivir (住む)',s:'とうきょうに @ います。',rc:['じゅうんで','やすんで','よんで'],kc:['往んで','注んで','柱んで'],h:'住 = 亻 (persona) + 主 (dueño): la persona que habita. 注 lleva 氵 (agua).'},
+{w:'黄色い',r:'きいろい',m:'amarillo',s:'@ かさを かいました。',rc:['こういろい','きいいろい','おういろい'],kc:['横色い','黄邑い','寅色い'],h:'黄色い = き + いろい. 横 (よこ) lleva 木 a la izquierda.'},
+{w:'花',r:'はな',m:'flor',s:'きれいな @ですね。',rc:['はね','かお','はか'],kc:['化','茶','草'],h:'花 = 艹 (hierba) + 化. Sin 艹 queda 化, otra cosa.'},
+{w:'学校',r:'がっこう',m:'escuela',s:'あした @へ いきます。',rc:['かっこう','がくこう','がっこ'],kc:['学交','字校','学枚'],h:'がっこう: が sonora + っ. かっこう = apariencia (tu lapsus か/が del 10 sep). 校 lleva 木.'},
+{w:'先生',r:'せんせい',m:'profesor',s:'@に ききました。',rc:['せんせ','せいせん','さきせい'],kc:['先性','洗生','光生'],h:'せんせい: la い final se escribe aunque suene せんせー.'},
+{w:'毎日',r:'まいにち',m:'todos los días',s:'@ にほんごを べんきょうします。',rc:['まいひ','まいび','ごとにち'],kc:['母日','海日','毎目'],h:'毎 = 𠂉 sobre 母. 日 (sol) ≠ 目 (ojo, 2 rayas internas).'},
+{w:'今日',r:'きょう',m:'hoy',s:'@は あついですね。',rc:['きのう','あした','いまひ'],kc:['令日','今目','会日'],h:'今日 = きょう (lectura especial). 昨日 = きのう, 明日 = あした.'},
+{w:'昨日',r:'きのう',m:'ayer',s:'@ えいがを みました。',rc:['きょう','あした','さくひ'],kc:['作日','咋日','昨目'],h:'昨 = 日 + 乍. 作 (つくる) lleva 亻. 昨日 → verbo en pasado.'},
+{w:'夜',r:'よる',m:'noche',s:'@ おそく かえりました。',rc:['ひる','よい','あさ'],kc:['液','校','夕'],h:'夜 = よる. 液 (líquido) lleva 氵. 夕 (ゆう) = atardecer.'},
+{w:'雨',r:'あめ',m:'lluvia',s:'@が ふっています。',rc:['ゆき','あま','あね'],kc:['両','雪','南'],h:'雨: gotas bajo el techo. 雪 = 雨 + ヨ (nieve).'},
+{w:'電車',r:'でんしゃ',m:'tren',s:'@で がっこうへ いきます。',rc:['てんしゃ','でんじゃ','でんしや'],kc:['雷車','電東','電軍'],h:'電 = 雨 + 电. しゃ con ゃ pequeña: でんしゃ, no でんしや.'},
+{w:'天気',r:'てんき',m:'clima',s:'きょうは いい @ですね。',rc:['でんき','てんけ','あまき'],kc:['夫気','天汽','大気'],h:'天気 (てんき) = clima; 電気 (でんき) = luz. Solo cambia て/で.'},
+{w:'会社',r:'かいしゃ',m:'empresa',s:'ちちは @に つとめています。',rc:['がいしゃ','あいしゃ','かいじゃ'],kc:['会杜','今社','合社'],h:'社 = ネ (altar) + 土. 杜 lleva 木: árbol, no empresa.'},
+{w:'休みます',r:'やすみます',m:'descansar / faltar',s:'あした がっこうを @。',rc:['きゅうみます','すみます','よみます'],kc:['体みます','林みます','伏みます'],h:'休 = 亻 + 木 (persona apoyada en un árbol). 体 (からだ) = 亻 + 本.'},
+{w:'読みます',r:'よみます',m:'leer',s:'まいばん ほんを @。',rc:['どくみます','かみます','やすみます'],kc:['続みます','説みます','話みます'],h:'読 = 言 + 売. 続 (つづく) lleva 糸.'},
+{w:'書いて',r:'かいて',m:'escribir',s:'なまえを @ ください。',rc:['しょいて','きいて','かって'],kc:['昼いて','筆いて','害いて'],h:'書 = 聿 (pincel) + 日. 昼 (ひる) es 尺 + 旦.'},
+{w:'見ます',r:'みます',m:'ver',s:'よる テレビを @。',rc:['けんます','きます','ねます'],kc:['貝ます','目ます','兄ます'],h:'見 = 目 + 儿 (piernas). 貝 (かい) termina en ハ.'},
+{w:'聞きます',r:'ききます',m:'escuchar / preguntar',s:'おんがくを @。',rc:['もんきます','かきます','いきます'],kc:['間きます','問きます','開きます'],h:'聞 = 門 + 耳 (oreja en la puerta). 間 = 門+日 · 問 = 門+口 · 開 = 門+开.'},
+{w:'入ります',r:'はいります',m:'entrar',s:'へやに @。',rc:['いります','にゅうります','いれます'],kc:['人ります','八ります','込ります'],h:'入: el trazo izquierdo es corto. 人: el izquierdo es largo.'},
+{w:'出ます',r:'でます',m:'salir',s:'７じに うちを @。',rc:['だします','しゅつます','でります'],kc:['山ます','由ます','凸ます'],h:'出ます (でます) = salir (自). 出します (だします) = sacar/enviar (他).'},
+{w:'白い',r:'しろい',m:'blanco',s:'@ シャツを かいました。',rc:['くろい','はくい','あおい'],kc:['百い','自い','日い'],h:'白 = 日 + trazo arriba. 百 = 一 + 白. 自 tiene 3 rayas internas.'},
+{w:'高い',r:'たかい',m:'caro / alto',s:'この とけいは @です。',rc:['こうい','ながい','あかい'],kc:['京い','亭い','商い'],h:'高 = torre de varios pisos. 京 (capital) termina en 小.'},
+{w:'新しい',r:'あたらしい',m:'nuevo',s:'@ くつを かいました。',rc:['しんしい','あらたしい','あたしい'],kc:['親しい','新らしい','辛しい'],h:'Okurigana: 新しい, no 新らしい. 親しい = したしい (cercano).'},
+{w:'東',r:'ひがし',m:'este',s:'えきの @に デパートが あります。',rc:['にし','きた','みなみ'],kc:['車','束','柬'],h:'東 = 木 + 日: el sol saliendo entre árboles. 車 = vehículo.'},
+{w:'買いました',r:'かいました',m:'comprar',s:'デパートで くつを @。',rc:['ばいました','かえりました','あいました'],kc:['貝いました','員いました','質いました'],h:'買 = 罒 (red) + 貝 (concha = dinero antiguo).'},
+{w:'店',r:'みせ',m:'tienda',s:'あの @は やすいです。',rc:['みち','いえ','まち'],kc:['広','序','庄'],h:'店 = 广 (techo) + 占. 広 (ひろい) = 广 + 厶.'},
+{w:'来ます',r:'きます',m:'venir',s:'あした ともだちが @。',rc:['くます','らいます','こます'],kc:['米ます','末ます','未ます'],h:'来る: くる → きます → こない. La vocal cambia en cada forma.'},
+{w:'行きます',r:'いきます',m:'ir',s:'らいしゅう にほんへ @。',rc:['こうきます','ぎょうきます','いくます'],kc:['往きます','街きます','待きます'],h:'行 = 彳 + 亍 (cruce de caminos). 待 (まつ) lleva 寺.'},
+{w:'水',r:'みず',m:'agua',s:'@を のみます。',rc:['すい','みづ','こおり'],kc:['氷','永','木'],h:'Solo, 水 = みず (すい es on: 水曜日). 氷 (hielo) tiene un punto extra.'}
+];
+
+/* ---------- Utilidades ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+function rb(s){
+  return esc(s)
+    .replace(/\{([^|}]+)\|([^}]+)\}/g,(m,k,r)=>S.settings.furi?`<ruby>${k}<rt>${r}</rt></ruby>`:k)
+    .replace(/（　）/g,'<span class="blank">（　　）</span>')
+    .replace(/\[([^\]]+)\]/g,'<u>$1</u>');
+}
+const plain=s=>String(s).replace(/\{([^|}]+)\|[^}]+\}/g,'$1').replace(/[\[\]]/g,'');
+const strip=h=>h.replace(/<rt>.*?<\/rt>/g,'').replace(/<[^>]+>/g,'').replace(/&amp;/g,'&');
+function today(d=new Date()){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function daysTo(iso){const t=new Date();t.setHours(0,0,0,0);return Math.round((new Date(iso+'T00:00:00')-t)/864e5)}
+
+/* ---------- Persistencia ---------- */
+const LS_KEY='mextRafaga.v1';
+function fresh(){return{v:1,items:{},buffer:{},cats:{},sessions:[],days:{},best:{score:0,combo:0},settings:{dur:75,pressure:true,furi:true,theme:'auto',mode:'mix'}}}
+function load(){
+  try{const s=JSON.parse(localStorage.getItem(LS_KEY));if(s&&s.v===1){const f=fresh();s.settings=Object.assign(f.settings,s.settings);return Object.assign(f,s)}}catch(e){}
+  return fresh();
+}
+function save(){try{localStorage.setItem(LS_KEY,JSON.stringify(S))}catch(e){}}
+let S=(()=>{try{return typeof localStorage!=='undefined'?load():fresh()}catch(e){return fresh()}})();
+
+/* ---------- Generadores: key → pregunta ----------
+   s:<id> estático · cc:<i> categoría contador · cp:<c>/<n> lectura contador · kr:<w> leer kanji · kw:<w> escribir kanji */
+const BY_ID=Object.fromEntries(BANK.map(b=>[b.id,b]));
+const K_BY=Object.fromEntries(K.map(k=>[k.w,k]));
+function finalize(q){shuffle(q.opts);q.correct=q.opts.findIndex(o=>o.ok);q.time=CATS[q.cat].t;return q}
+function build(key){
+  const i=key.indexOf(':'),t=key.slice(0,i),a=key.slice(i+1);
+  if(t==='s'){const it=BY_ID[a];return finalize({key,cat:it.c,head:HEADS[it.c],html:rb(it.q),long:it.c==='syn',
+    opts:it.o.map((o,j)=>({v:o,h:rb(o),ok:j===0})),x:it.x.split('\n'),w:it.w||{}})}
+  if(t==='cc'){
+    const [obj,c,place,trap]=OBJ[+a],n=rnd(2,9),people=c==='nin';
+    const s=people?`${place} ${obj}が ${FW(n)}（　）います。`:(Math.random()<.5?`${place} ${obj}が ${FW(n)}（　）あります。`:`${obj}を ${FW(n)}（　）かいました。`);
+    const w={};for(const k in CTR)if(k!==c)w[k]=(trap&&trap[k])||`${CTR[k].k} es para ${CTR[k].d}: no encaja con ${plain(obj)}.`;
+    return finalize({key,cat:'ctr',head:'Elige el contador',html:rb(s),
+      opts:Object.keys(CTR).map(k=>({v:k,h:`${CTR[k].k}<span class="muted small">（${CTR[k].r}）</span>`,ok:k===c})),
+      x:[`${plain(obj)} → ${CTR[c].d} → ${CTR[c].k}（${CTR[c].r}）.`,'Atajo: 本 = largo · 枚 = plano · 冊 = encuadernado · 人 = personas.'],w});
+  }
+  if(t==='cp'){
+    const [c,ns]=a.split('/'),n=+ns,ok=ctrReading(c,n),[obj,verb]=CP_OBJ[c];
+    return finalize({key,cat:'ctr',head:'¿Cómo se lee lo subrayado?',html:rb(`${obj}が [${FW(n)}${CTR[c].k}] ${verb}。`),
+      opts:[{v:ok,h:ok,ok:true}].concat(ctrWrong(c,n).map(v=>({v,h:v,ok:false}))),x:[`${FW(n)}${CTR[c].k} → ${ok}.`,CRULE[c]],w:{}});
+  }
+  const k=K_BY[a];
+  if(t==='kr')return finalize({key,cat:'kanji',head:'Lectura de lo subrayado',html:rb(k.s.replace('@','['+k.w+']')),
+    opts:[{v:k.r,h:k.r,ok:true}].concat(k.rc.map(v=>({v,h:v,ok:false}))),x:[`${k.w} = ${k.r} (${k.m}).`,k.h],w:{}});
+  return finalize({key,cat:'kanji',head:'Kanji correcto para lo subrayado',html:rb(k.s.replace('@','['+k.r+']')),
+    opts:[{v:k.w,h:k.w,ok:true}].concat(k.kc.map(v=>({v,h:v,ok:false}))),x:[`${k.r} (${k.m}) se escribe ${k.w}.`,k.h],w:{}});
+}
+const ALL_KEYS=[].concat(
+  BANK.map(b=>'s:'+b.id),
+  OBJ.map((o,i)=>'cc:'+i),
+  ...Object.keys(CP_NS).map(c=>CP_NS[c].map(n=>`cp:${c}/${n}`)),
+  K.map(k=>'kr:'+k.w),K.map(k=>'kw:'+k.w)
+);
+function catOf(key){const t=key.slice(0,key.indexOf(':'));return t==='s'?BY_ID[key.slice(2)].c:(t==='cc'||t==='cp')?'ctr':'kanji'}
+function label(key){return strip(build(key).html).replace(/\s+/g,' ').trim()}
+
+/* ---------- Motor: SRS Leitner + buffer de errores ---------- */
+const IV=[0,5*60e3,864e5,3*864e5,7*864e5,21*864e5];
+function catRecent(c){const r=(S.cats[c]||{}).r||[];return r.length<5?null:r.reduce((a,b)=>a+b,0)/r.length}
+function poolFor(mode){
+  if(mode==='buf')return Object.keys(S.buffer).filter(k=>ALL_KEYS.includes(k));
+  if(mode==='mix')return ALL_KEYS.slice();
+  return ALL_KEYS.filter(k=>catOf(k)===mode);
+}
+let sess=null;
+function pickNext(){
+  const due=sess.sched.filter(s=>s.at<=sess.qi).sort((a,b)=>a.at-b.at)[0];
+  if(due){sess.sched.splice(sess.sched.indexOf(due),1);return due.key}
+  const pool=sess.pool,now=Date.now(),avoid=new Set(sess.recent.slice(-Math.min(6,Math.floor(pool.length/2))));
+  const scheduled=new Set(sess.sched.map(s=>s.key));
+  let tot=0;const ws=pool.map(k=>{
+    if(avoid.has(k)||scheduled.has(k))return 0;
+    const acc=catRecent(catOf(k)),wk=1+2*(1-(acc==null?.5:acc)),it=S.items[k];
+    const w=!it?1.2*wk:it.due<=now?(it.box===0?4:2)*wk:.25*wk;tot+=w;return w;
+  });
+  if(tot<=0){const c=pool.filter(k=>k!==sess.recent[sess.recent.length-1]);return (c.length?c:pool)[rnd(0,(c.length?c:pool).length-1)]}
+  let r=Math.random()*tot;for(let i=0;i<pool.length;i++){r-=ws[i];if(r<=0&&ws[i]>0)return pool[i]}
+  return pool[pool.length-1];
+}
+function schedule(key,gap){sess.sched=sess.sched.filter(s=>s.key!==key);sess.sched.push({key,at:sess.qi+gap})}
+
+function startSession(mode){
+  const pool=poolFor(mode);
+  if(!pool.length){toast(mode==='buf'?'Buffer vacío: no tienes errores pendientes 🎉':'Sin reactivos');return}
+  S.settings.mode=mode;save();
+  sess={mode,pool,qi:0,left:S.settings.dur*1000,score:0,combo:0,maxCombo:0,n:0,ok:0,byCat:{},sched:[],recent:[],freed:0,cur:null,state:'q',qEl:0,qLim:0};
+  // errores pendientes de esta categoría: se intercalan cada 2 preguntas
+  Object.keys(S.buffer).filter(k=>pool.includes(k)).sort(()=>Math.random()-.5).forEach((k,i)=>sess.sched.push({key:k,at:mode==='buf'?i:1+i*2}));
+  view='drill';next();
+}
+function next(){
+  const key=pickNext();sess.recent.push(key);
+  sess.cur=build(key);sess.cur.buf=S.buffer[key]?S.buffer[key].s:null;
+  sess.qEl=0;sess.qLim=S.settings.pressure?sess.cur.time*1000*Math.max(.6,1-.04*sess.combo):0;
+  sess.state='q';sess.chosen=null;renderDrill();
+}
+function answer(idx){
+  if(!sess||sess.state!=='q')return;
+  const q=sess.cur,ok=idx===q.correct,now=Date.now(),ms=Math.round(sess.qEl);
+  sess.state='fb';sess.chosen=idx;sess.qi++;sess.n++;
+  const it=S.items[q.key]||(S.items[q.key]={n:0,ok:0,box:0,due:0,miss:0});
+  it.n++;if(ok){it.ok++;it.box=Math.min(5,it.box+1)}else{it.miss++;it.box=0}it.due=now+IV[it.box];it.last=now;
+  const c=S.cats[q.cat]||(S.cats[q.cat]={n:0,ok:0,ms:0,r:[]});
+  c.n++;c.ms+=ms;c.r.push(ok?1:0);if(c.r.length>40)c.r.shift();if(ok)c.ok++;
+  const sc=sess.byCat[q.cat]||(sess.byCat[q.cat]={n:0,ok:0});sc.n++;if(ok)sc.ok++;
+  const d=S.days[today()]||(S.days[today()]={n:0,ok:0,s:0});d.n++;if(ok)d.ok++;
+  const b=S.buffer[q.key];let freed=false;
+  if(!ok){S.buffer[q.key]={s:0,f:(b?b.f:0)+1,t:now};schedule(q.key,rnd(2,3));if(sess.mode==='buf'&&!sess.pool.includes(q.key))sess.pool.push(q.key)}
+  else if(b){b.s++;if(b.s>=3){delete S.buffer[q.key];freed=true;sess.freed++;sess.pool=sess.mode==='buf'?sess.pool.filter(k=>k!==q.key):sess.pool}else schedule(q.key,rnd(3,4))}
+  if(ok){
+    sess.ok++;sess.combo++;sess.maxCombo=Math.max(sess.maxCombo,sess.combo);
+    const mult=1+Math.min(4,Math.floor(sess.combo/3))*.5,bonus=sess.qLim?Math.round(5*Math.max(0,1-sess.qEl/sess.qLim)):0;
+    sess.gain=Math.round(10*mult)+bonus;sess.score+=sess.gain;
+  }else{sess.combo=0;sess.gain=0}
+  save();vibrate(ok?12:[40,40,40]);
+  if(freed)toast('✓ Liberado del buffer: 3 aciertos seguidos');
+  renderDrill();
+  if(ok){const qi=sess.qi;setTimeout(()=>{if(sess&&sess.state==='fb'&&sess.qi===qi)cont()},380)}
+}
+function cont(){
+  if(!sess||sess.state!=='fb')return;
+  if(sess.left<=0||(sess.mode==='buf'&&!sess.pool.length))return endSession();
+  next();
+}
+function endSession(){
+  if(!sess)return;
+  if(sess.n>0){
+    S.sessions.push({d:Date.now(),m:sess.mode,n:sess.n,ok:sess.ok,score:sess.score,combo:sess.maxCombo});
+    if(S.sessions.length>200)S.sessions.shift();
+    const d=S.days[today()]||(S.days[today()]={n:0,ok:0,s:0});d.s++;
+    sess.record=sess.score>S.best.score;
+    S.best.score=Math.max(S.best.score,sess.score);S.best.combo=Math.max(S.best.combo,sess.maxCombo);save();
+  }
+  sess.state='end';view='end';render();
+}
+function vibrate(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
+
+/* ---------- Bucle de tiempo ---------- */
+let lastT=0;
+const RC=2*Math.PI*20; // circunferencia del anillo del temporizador (r=20)
+function tick(t){
+  const dt=Math.min(100,t-(lastT||t));lastT=t;
+  if(view==='drill'&&sess&&sess.state==='q'&&!document.hidden){
+    sess.left=Math.max(0,sess.left-dt);sess.qEl+=dt;
+    if(sess.qLim&&sess.qEl>=sess.qLim)answer(-1);
+    updateClock();
+  }
+  requestAnimationFrame(tick);
+}
+function updateClock(){
+  const fg=$('#tfg'),tx=$('#ttx'),tr=$('#tring'),qt=$('#qt'),lt=$('#lastTag');
+  const f=sess.left/(S.settings.dur*1000);
+  if(fg)fg.style.strokeDashoffset=RC*(1-f);
+  if(tx)tx.textContent=Math.ceil(sess.left/1000);
+  if(tr)tr.classList.toggle('low',sess.left<10000);
+  if(qt){const p=sess.qLim&&sess.state==='q'?Math.max(0,1-sess.qEl/sess.qLim):0;qt.style.width=(100*p)+'%';qt.className=p<.25?'low':p<.5?'mid':''}
+  if(lt&&sess.left<=0)lt.classList.remove('hide');
+}
+
+/* ---------- UI ---------- */
+let view='home';
+const CUI={part:{g:'へ'},jita:{g:'他'},ctr:{g:'本'},kanji:{g:'漢'},syn:{g:'≒'},morph:{g:'形'},mix:{g:'混'},buf:{g:'復'}};
+const MODES=[['mix','Mezcla','Prioriza tus débiles'],['part','で/に/へ','Partículas de lugar'],['jita','自・他','Transitivo / intransitivo'],['ctr','助数詞','Contadores'],
+  ['kanji','漢字','Kanji del 2019'],['syn','言い換え','Paráfrasis · Sección II'],['morph','活用・時制','Formas y tiempo'],['buf','Errores','Buffer pendiente']];
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('on'),1900)}
+function seigaiha(bg,st){
+  const c=(x,y)=>[19,14,9,4].map(r=>`<circle cx='${x}' cy='${y}' r='${r}'/>`).join('');
+  return `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='40' height='20'><g fill='${bg}' stroke='${st}' stroke-width='1'>${c(20,0)}${c(0,10)}${c(40,10)}${c(20,20)}</g></svg>`)}")`;
+}
+function applyTheme(){
+  const r=document.documentElement;
+  if(S.settings.theme==='auto')r.removeAttribute('data-theme');else r.setAttribute('data-theme',S.settings.theme);
+  if(!applyTheme.done){applyTheme.done=1;const L=seigaiha('#f6f0e4','#ece1cd'),D=seigaiha('#0c0e1b','#151a31'),st=document.createElement('style');
+    st.textContent=`:root{--pat:${L}}@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--pat:${D}}}:root[data-theme="dark"]{--pat:${D}}`;document.head.appendChild(st)}
+}
+function streak(){let n=0;const d=new Date();if(!S.days[today(d)])d.setDate(d.getDate()-1);while(S.days[today(d)]&&S.days[today(d)].n>0){n++;d.setDate(d.getDate()-1)}return n}
+function meterCls(p){return p==null?'none':p<.6?'bad':p<.8?'warn':''}
+function catAcc(c){const r=catRecent(c),st=S.cats[c];return r!=null?r:st&&st.n?st.ok/st.n:null}
+const glyph=c=>`<span class="glyph" style="--c:var(--${c})">${CUI[c].g}</span>`;
+
+function catRows(){
+  return Object.keys(CATS).map(c=>{
+    const st=S.cats[c],p=catAcc(c),rec=catRecent(c);
+    return `<div class="catrow">${glyph(c)}<div><b>${CATS[c].n}</b> <span class="muted small">${CATS[c].s}</span></div>
+      <div class="pct">${p==null?'<span class="muted small">—</span>':Math.round(p*100)+'%'}</div>
+      <div class="meter"><i class="${meterCls(p)}" style="width:${p==null?100:Math.max(3,p*100)}%"></i></div>
+      <div class="sub">${st&&st.n?`${st.n} resp. · total ${Math.round(100*st.ok/st.n)}% · ${(st.ms/st.n/1000).toFixed(1)} s/resp.${rec!=null?' · barra = últimas '+st.r.length:''}`:'Sin datos todavía'}</div>
+    </div>`}).join('');
+}
+function renderHome(){
+  const td=S.days[today()]||{n:0,ok:0},bufN=Object.keys(S.buffer).length,m=S.settings.mode;
+  const exam=daysTo('2027-07-15'),cp=daysTo('2026-11-26'),total=daysTo('2027-07-15')-daysTo('2026-07-29');
+  const prog=Math.min(1,Math.max(0,1-exam/total)),C=2*Math.PI*44,mode=MODES.find(x=>x[0]===m)||MODES[0];
+  $('#app').innerHTML=`
+    <div class="row"><div class="brand"><span class="hanko">朱</span><div><b>MEXT Ráfaga</b><small>Modo aburrimiento · 60–90 s</small></div></div><span class="sp"></span>
+      <button class="icon-btn" data-act="stats" aria-label="Estadísticas" title="Estadísticas (S)">📊</button></div>
+    <section class="hero">
+      <div class="ring" aria-label="${exam} días para el examen">
+        <svg viewBox="0 0 100 100"><defs><linearGradient id="g1" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#ffb547"/><stop offset="1" stop-color="var(--accent)"/></linearGradient></defs>
+          <circle cx="50" cy="50" r="44" fill="none" stroke="var(--surface2)" stroke-width="9"/>
+          <circle cx="50" cy="50" r="44" fill="none" stroke="url(#g1)" stroke-width="9" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-prog)}"/></svg>
+        <div class="in"><div><b>${exam}</b><small>días</small></div></div>
+      </div>
+      <div>
+        <div class="eyebrow">試験 · 15 jul 2027</div>
+        <div class="h">${cp>0?`Checkpoint Fase 1 (50%) en <span style="color:var(--accent)">${cp} días</span>`:'Fase 2 en marcha'}</div>
+        <div class="pills"><span class="pill">🔥 ${streak()} días</span><span class="pill">✓ ${td.n} hoy${td.n?' · '+Math.round(100*td.ok/td.n)+'%':''}</span><span class="pill" style="color:var(--warn)">↻ ${bufN}</span></div>
+      </div>
+    </section>
+    <button class="start" data-act="start"><span class="play">▶</span><span><b>Ráfaga de ${S.settings.dur} s</b><small>${mode[1]} · Enter</small></span></button>
+    <h3>Elige tu debilidad</h3>
+    <div class="modes">${MODES.map(([k,n,s])=>{
+      const p=CATS[k]?catAcc(k):null;
+      return `<button class="mode ${k===m?'on':''}" data-mode="${k}" style="--c:var(--${k})">
+        <span class="glyph">${CUI[k].g}</span><span class="mn">${n}</span><span class="ms">${k==='buf'?(bufN?bufN+' por liberar':'Vacío 🎉'):s}</span>
+        ${k==='buf'&&bufN?`<span class="badge">${bufN}</span>`:p!=null?`<span class="acc">${Math.round(p*100)}%</span>`:''}
+        ${p!=null?`<span class="mb" style="width:${p*100}%"></span>`:''}</button>`}).join('')}</div>
+    <h3>Precisión por debilidad</h3>
+    <div class="card">${catRows()}</div>
+    <h3>Ajustes</h3>
+    <details class="card"><summary>⚙️ Duración, presión, furigana, tema y respaldo</summary><div class="stack" style="margin-top:14px">
+      <div class="set"><span>Duración</span><span class="seg">${[60,75,90].map(d=>`<button data-dur="${d}" class="${S.settings.dur===d?'on':''}">${d}s</button>`).join('')}</span></div>
+      <div class="set"><span>Tiempo por pregunta</span><span class="seg"><button data-press="1" class="${S.settings.pressure?'on':''}">Sí</button><button data-press="0" class="${!S.settings.pressure?'on':''}">No</button></span></div>
+      <div class="set"><span>Furigana</span><span class="seg"><button data-furi="1" class="${S.settings.furi?'on':''}">Sí</button><button data-furi="0" class="${!S.settings.furi?'on':''}">No</button></span></div>
+      <div class="set"><span>Tema</span><span class="seg">${[['auto','Auto'],['light','和紙'],['dark','夜']].map(([k,n])=>`<button data-theme="${k}" class="${S.settings.theme===k?'on':''}">${n}</button>`).join('')}</span></div>
+      <div class="row" style="flex-wrap:wrap"><button class="btn" data-act="export">Exportar respaldo</button><button class="btn" data-act="import">Importar</button><span class="sp"></span><button class="btn" data-act="reset" style="color:var(--bad)">Borrar todo</button></div>
+    </div></details>
+    <div class="foot"><span class="kbd">Enter</span> empezar · <span class="kbd">1</span>–<span class="kbd">4</span> responder · <span class="kbd">Enter</span> seguir · <span class="kbd">Esc</span> salir · <span class="kbd">S</span> estadísticas<br>Agrega <span class="kbd">#go</span> a la URL para arrancar directo</div>`;
+}
+function renderDrill(){
+  const q=sess.cur,fb=sess.state==='fb',ok=fb&&sess.chosen===q.correct,c=q.cat;
+  const mult=1+Math.min(4,Math.floor(sess.combo/3))*.5;
+  const cm=sess.combo>=3?`<span class="combo ${sess.combo>=9?'hot':''}">🔥 ${sess.combo} · ×${mult.toFixed(1)}</span>`:'';
+  let fbHtml='';
+  if(fb&&!ok){
+    const ch=sess.chosen>=0?q.opts[sess.chosen]:null,right=q.opts[q.correct],l2=ch&&q.w[ch.v]?q.w[ch.v]:q.x[1];
+    fbHtml=`<div class="fb" role="alert"><span class="ic">${ch?'✗':'⏱'}</span><div style="flex:1;min-width:0">
+      <div class="h">${ch?`Elegiste <b lang="ja">${ch.h}</b> → correcta <b lang="ja" style="color:var(--ok)">${right.h}</b>`:`Se acabó el tiempo → correcta <b lang="ja" style="color:var(--ok)">${right.h}</b>`}</div>
+      <p class="r1">${esc(q.x[0])}</p><p class="r2">${esc(l2)}</p>
+      <div class="n"><span class="tag buf">↻ al buffer · 0/3</span><span class="go-on">Seguir ⏎</span></div></div></div>`;
+  }
+  $('#app').innerHTML=`
+    <div class="hud"><button class="icon-btn" data-act="quit" aria-label="Salir">✕</button>
+      <div class="score"><b>${sess.score}</b><small>puntos</small></div>${fb&&ok&&sess.gain?`<span class="float">+${sess.gain}</span>`:''}
+      <span class="sp"></span>${cm}
+      <div class="tring" id="tring" aria-label="Tiempo restante"><svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" fill="none" stroke="var(--surface2)" stroke-width="5"/>
+        <circle id="tfg" class="fg" cx="24" cy="24" r="20" fill="none" stroke="var(--text)" stroke-width="5" stroke-linecap="round" stroke-dasharray="${RC}" stroke-dashoffset="0"/></svg><span id="ttx"></span></div>
+    </div>
+    <div class="qcard ${fb&&ok?'pop':''}" style="--c:var(--${c})"><span class="wm" aria-hidden="true">${CUI[c].g}</span>
+      <div class="tags"><span class="tag">${CUI[c].g} ${CATS[c].n}</span>${q.buf!=null?`<span class="tag buf">↻ repaso ${q.buf}/3</span>`:''}<span class="tag last ${sess.left>0?'hide':''}" id="lastTag">ÚLTIMA</span><span class="sp"></span><span class="muted small">#${sess.qi+(fb?0:1)}</span></div>
+      <div class="head">${q.head}</div>
+      <div class="prompt ${q.long?'long':''}" lang="ja">${q.html}</div>
+      <div class="qtimer"><i id="qt"></i></div>
+    </div>
+    <div class="opts ${q.long?'long':''} ${fb&&!ok?'shake':''}" lang="ja" style="--c:var(--${c})">${q.opts.map((o,i)=>{
+      const cls=fb?(i===q.correct?'ok':i===sess.chosen?'bad':'dim'):'';
+      return `<button class="opt ${cls}" data-ans="${i}" ${fb?'tabindex="-1"':''}><span class="k">${i+1}</span><span>${o.h}</span></button>`}).join('')}</div>
+    ${fbHtml}`;
+  updateClock();
+}
+function grade(a){return a>=.9?['優','EXCELENTE']:a>=.75?['良','BIEN']:a>=.6?['可','PASA']:['再','OTRA VEZ']}
+function renderEnd(){
+  const a=sess.n?sess.ok/sess.n:0,[g,gl]=grade(a),bufN=Object.keys(S.buffer).length;
+  const conf=sess.record&&sess.score>0?`<div class="confetti">${Array.from({length:26},(_,i)=>`<i style="left:${Math.random()*100}%;background:${['#ff5a4e','#ffc857','#3cc8e6','#ad90ff','#4fe090'][i%5]};animation-delay:${Math.random()*.5}s"></i>`).join('')}</div>`:'';
+  $('#app').innerHTML=`<div class="stack">
+    <div class="endhero">${conf}
+      <div class="stamp" lang="ja">${g}</div><div class="stamp-l">${gl}${sess.record&&sess.score>0?' · 🏆 NUEVO RÉCORD':''}</div>
+      <div class="big" id="endScore">0</div><div class="muted small">puntos</div>
+      <div class="kpis"><div class="kpi"><b>${Math.round(a*100)}%</b><span>${sess.ok}/${sess.n} correctas</span></div><div class="kpi"><b>🔥 ${sess.maxCombo}</b><span>mejor combo</span></div><div class="kpi"><b>${sess.freed}</b><span>liberados</span></div></div>
+    </div>
+    <div class="card"><h3>Esta ronda</h3>${Object.keys(sess.byCat).map(c=>{const b=sess.byCat[c],p=b.ok/b.n;return `<div class="catrow">${glyph(c)}<div><b>${CATS[c].n}</b></div><div class="pct">${b.ok}/${b.n}</div><div class="meter"><i class="${meterCls(p)}" style="width:${Math.max(3,p*100)}%"></i></div></div>`}).join('')||'<span class="muted">Sin respuestas</span>'}</div>
+    <div class="muted small center">${bufN?`↻ ${bufN} reactivo(s) en el buffer: abrirán tu próxima ráfaga.`:'Buffer vacío. ✨'}</div>
+    <div class="cta"><button class="start" data-act="again"><span class="play">↻</span><span><b>Otra ráfaga</b><small>Enter</small></span></button><button class="btn" data-act="home">Inicio</button></div>
+  </div>`;
+  const el=$('#endScore'),to=sess.score,t0=performance.now();
+  (function up(t){const p=Math.min(1,(t-t0)/700);el.textContent=Math.round(to*(1-Math.pow(1-p,3)));if(p<1)requestAnimationFrame(up)})(t0);
+}
+function renderStats(){
+  const buf=Object.entries(S.buffer).sort((a,b)=>b[1].f-a[1].f);
+  const miss=Object.entries(S.items).filter(([k,v])=>v.miss>0&&ALL_KEYS.includes(k)).sort((a,b)=>b[1].miss-a[1].miss).slice(0,8);
+  const ss=S.sessions.slice(-10).reverse(),seen=Object.keys(S.items).filter(k=>ALL_KEYS.includes(k)).length;
+  $('#app').innerHTML=`<div class="stack">
+    <div class="row"><button class="icon-btn" data-act="home" aria-label="Inicio">←</button><b style="font-size:1.15rem">Estadísticas</b><span class="sp"></span><span class="kbd">Esc</span></div>
+    <div class="kpis"><div class="kpi"><b>${S.best.score}</b><span>🏆 récord</span></div><div class="kpi"><b>${S.best.combo}</b><span>🔥 mejor combo</span></div><div class="kpi"><b>${seen}/${ALL_KEYS.length}</b><span>reactivos vistos</span></div></div>
+    <div class="card"><h3>Precisión por debilidad</h3>${catRows()}</div>
+    <div class="card"><h3>↻ Buffer de errores (${buf.length})</h3>${buf.length?`<ul class="list">${buf.map(([k,v])=>`<li>${glyph(catOf(k))}<span class="t" lang="ja">${esc(label(k))}</span><span class="dots">${'●'.repeat(v.s)}${'○'.repeat(3-v.s)}</span></li>`).join('')}</ul>`:'<span class="muted">Vacío. Lo que falles entra aquí hasta acertarlo 3 veces seguidas.</span>'}</div>
+    <div class="card"><h3>Más fallados</h3>${miss.length?`<ul class="list">${miss.map(([k,v])=>`<li>${glyph(catOf(k))}<span class="t" lang="ja">${esc(label(k))}</span><span class="muted small">${v.miss}✗ / ${v.n}</span></li>`).join('')}</ul>`:'<span class="muted">Todavía nada.</span>'}</div>
+    <div class="card"><h3>Últimas ráfagas</h3>${ss.length?`<ul class="list">${ss.map(s=>`<li>${glyph(s.m)}<span class="t">${new Date(s.d).toLocaleString('es',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</span><span class="muted small">${s.ok}/${s.n} · <b style="color:var(--text)">${s.score}</b></span></li>`).join('')}</ul>`:'<span class="muted">Sin sesiones.</span>'}</div>
+  </div>`;
+}
+function render(){applyTheme();if(view==='home')renderHome();else if(view==='drill')renderDrill();else if(view==='end')renderEnd();else renderStats();if(view!=='drill')window.scrollTo(0,0)}
+
+/* ---------- Eventos ---------- */
+function exportData(){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));
+  a.download=`mext-rafaga-respaldo-${today()}.json`;document.body.appendChild(a);a.click();a.remove();
+}
+function onClick(e){
+  const t=e.target.closest('button');
+  if(!t){if(view==='drill'&&sess&&sess.state==='fb'&&e.target.closest('.fb'))cont();return}
+  const d=t.dataset;
+  if(d.ans!=null){if(sess.state==='q')answer(+d.ans);else cont();return}
+  if(d.mode){S.settings.mode=d.mode;save();startSession(d.mode);if(view==='home')render();return}
+  if(d.dur){S.settings.dur=+d.dur;save();render();return}
+  if(d.press){S.settings.pressure=d.press==='1';save();render();return}
+  if(d.furi){S.settings.furi=d.furi==='1';save();render();return}
+  if(d.theme){S.settings.theme=d.theme;save();render();return}
+  switch(d.act){
+    case 'start':case 'again':startSession(S.settings.mode);break;
+    case 'home':view='home';sess=null;render();break;
+    case 'stats':view='stats';render();break;
+    case 'quit':endSession();break;
+    case 'export':exportData();break;
+    case 'import':$('#imp').click();break;
+    case 'reset':if(confirm('¿Borrar todo el progreso? Exporta un respaldo antes si lo quieres conservar.')){S=fresh();save();render();toast('Progreso borrado')}break;
+  }
+}
+function onKey(e){
+  if(e.ctrlKey||e.metaKey||e.altKey)return;
+  const k=e.key;
+  if(view==='drill'&&sess){
+    if(sess.state==='q'&&/^[1-4]$/.test(k)&&+k<=sess.cur.opts.length){e.preventDefault();answer(+k-1)}
+    else if(sess.state==='fb'&&(k==='Enter'||k===' '||k==='ArrowRight')){e.preventDefault();cont()}
+    else if(k==='Escape')endSession();
+  }else if(view==='home'){if(k==='Enter'&&!(e.target.closest&&e.target.closest('button'))){e.preventDefault();startSession(S.settings.mode)}else if(k==='s')(view='stats',render())}
+  else if(view==='end'){if(k==='Enter'){e.preventDefault();startSession(S.settings.mode)}else if(k==='Escape'){view='home';sess=null;render()}}
+  else if(view==='stats'&&k==='Escape'){view='home';render()}
+}
+if(typeof document!=='undefined'){
+  document.addEventListener('click',onClick);
+  document.addEventListener('keydown',onKey);
+  $('#imp').addEventListener('change',e=>{
+    const f=e.target.files[0];if(!f)return;const r=new FileReader();
+    r.onload=()=>{try{const d=JSON.parse(r.result);if(d.v!==1)throw 0;S=Object.assign(fresh(),d);save();render();toast('Respaldo importado')}catch(err){toast('Archivo no válido')}};
+    r.readAsText(f);e.target.value='';
+  });
+  render();requestAnimationFrame(tick);
+  if(location.hash==='#go')startSession(S.settings.mode);
+  // PWA: funciona offline tras la primera visita y pide que Android no borre los datos
+  if(location.protocol.startsWith('http')&&'serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+  try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+}
+</script>
+</body>
+</html>

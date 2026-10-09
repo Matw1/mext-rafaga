@@ -1,0 +1,20 @@
+{
+  "name": "MEXT Ráfaga",
+  "short_name": "Ráfaga",
+  "description": "Micro-drills de japonés de 60–90 s para el examen MEXT.",
+  "lang": "es",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0c0e1b",
+  "theme_color": "#0c0e1b",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Ráfaga inmediata", "url": "./index.html#go", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] }
+  ]
+}

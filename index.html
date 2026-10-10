@@ -201,6 +201,46 @@ button.pill{cursor:pointer;font-family:inherit}
 .syncbox{display:grid;gap:10px;padding:12px;border-radius:14px;background:var(--surface2)}
 .syncbox label{display:grid;gap:4px;font-size:.85rem;color:var(--muted)}
 .syncbox input{font:inherit;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px;width:100%}
+/* ===== Estudio diario: sobrio, sin gamificación ===== */
+.tabs{display:flex;gap:6px;padding:4px;margin-bottom:14px;border-radius:14px;background:var(--surface2);border:1px solid var(--line)}
+.tabs button{flex:1;border:0;background:transparent;border-radius:10px;padding:10px;min-height:44px;font-weight:700;color:var(--muted)}
+.tabs button.on{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+.estudio{line-height:1.6}.estudio .stack>*+*{margin-top:12px}
+.estat{font-size:.82rem;margin:6px 0 14px;color:var(--muted)}.estat[data-s="warn"]{color:var(--warn)}.estat[data-s="bad"]{color:var(--bad)}
+.ecard{display:flex;flex-direction:column;gap:4px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px;min-height:64px}
+.ecard b{font-size:1.02rem}.ehoy{border-left:4px solid var(--part)}.eempty{cursor:default}
+.echip{align-self:flex-start;font-size:.72rem;font-weight:700;padding:2px 9px;border-radius:99px;background:var(--surface2);color:var(--muted)}
+.echip[data-st="Publicada"]{color:var(--part)}.echip[data-st="Entregada"]{color:var(--warn)}.echip[data-st="Corregida"]{color:var(--ok)}
+.etitle{display:block;font-size:1.1rem;overflow-wrap:anywhere}
+.ebar{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:12px -16px;padding:10px 16px;background:var(--bg);border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.esec{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.ehead{display:flex;align-items:flex-start;gap:10px;justify-content:space-between;margin-bottom:6px}.ehead b{display:block}
+.ek{display:block;font-size:.72rem;font-weight:700;letter-spacing:.04em;color:var(--muted)}
+.esec[data-k="tarea"]{border-left:4px solid var(--jita)}.esec[data-k="practica"]{border-left:4px solid var(--ctr)}.esec[data-k="fuera"]{border-left:4px solid var(--syn)}
+.efb{border-left:4px solid var(--ok);background:var(--okbg)}
+.econs summary{cursor:pointer;font-weight:700;padding:2px 0}.econs .ek{display:inline}
+.ebody p{margin:6px 0}.ebody h4{margin:12px 0 4px;font-size:.95rem}.ebody ul,.ebody ol{margin:6px 0;padding-left:22px}
+.ebody blockquote{margin:8px 0;padding:6px 12px;border-left:3px solid var(--line);color:var(--muted)}
+.ebody code,.ebody pre{font-family:ui-monospace,monospace;background:var(--surface2);border-radius:6px;padding:1px 5px}.ebody pre{padding:10px;overflow:auto}
+.ebody hr{border:0;border-top:1px solid var(--line);margin:12px 0}.ebody a{color:var(--focus)}
+.eintro{padding:0 2px 6px}.ekids{padding-left:12px;color:var(--muted);font-size:.92rem}
+.ecall{display:flex;gap:10px;padding:10px 12px;border-radius:10px;background:var(--surface2);margin:8px 0}
+.etw{overflow-x:auto;margin:8px 0}.etw table{border-collapse:collapse;min-width:100%;font-size:.92rem}.etw td,.etw th{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}.etw th{background:var(--surface2)}
+.etimer{flex:none;border:1px solid var(--line);background:var(--surface2);border-radius:99px;padding:6px 14px;min-height:40px;font-variant-numeric:tabular-nums;font-weight:700}
+.etimer.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+.eitem{padding:10px 0;border-top:1px solid var(--line)}.eitem:first-child{border-top:0}
+.eprompt{display:flex;gap:10px;margin-bottom:8px}.enum{flex:none;width:24px;height:24px;border-radius:7px;background:var(--surface2);display:grid;place-items:center;font-size:.8rem;font-weight:700;color:var(--muted)}
+.estudio textarea,.estudio input[type="text"]{width:100%;font:inherit;font-size:1.1rem;line-height:1.6;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:46px}
+.estudio textarea{resize:vertical;field-sizing:content;min-height:72px}
+.estudio textarea:focus,.estudio input[type="text"]:focus{outline:2px solid var(--focus);outline-offset:1px}
+.estudio textarea:disabled,.estudio input:disabled{opacity:.75}
+.echeck{display:flex;gap:10px;align-items:flex-start;min-height:40px}.echeck input,.eduda input[type="checkbox"]{width:20px;height:20px;margin-top:3px;flex:none}
+.eduda{margin-top:8px;font-size:.88rem;color:var(--muted)}.eduda label{display:inline-flex;gap:8px;align-items:center;min-height:36px}.eduda input[type="text"]{margin-top:6px;font-size:.95rem}
+.eactions{display:flex;flex-direction:column;gap:10px;margin:18px 0 8px}.eactions .btn{width:100%;min-height:50px;font-weight:700}
+.eprimary{background:var(--text);color:var(--bg);border-color:var(--text)}
+.esub{display:flex;margin:0 0 14px}.esub button{flex:1}
+.ebuscar{width:100%;font:inherit;font-size:1rem;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:46px;margin-bottom:6px}
+.eref summary .ek{display:block;margin-bottom:2px}
 .foot{margin-top:22px;text-align:center;font-size:.78rem;color:var(--muted);line-height:2}
 
 @media (max-width:420px){.prompt{font-size:1.38rem}.opt{font-size:1.18rem}.ring{width:92px;height:92px}.ring .in b{font-size:1.6rem}.hero{gap:12px;padding:14px}}
@@ -637,7 +677,7 @@ function startSession(mode){
   const pool=poolFor(mode);
   if(!pool.length){toast(mode==='buf'?'Buffer vacío: no tienes errores pendientes 🎉':'Sin reactivos');return}
   S.settings.mode=mode;save();
-  sess={mode,pool,qi:0,left:S.settings.dur*1000,score:0,combo:0,maxCombo:0,n:0,ok:0,byCat:{},sched:[],recent:[],freed:0,cur:null,state:'q',qEl:0,qLim:0};
+  sess={id:rid()+Date.now().toString(36),mode,pool,qi:0,left:S.settings.dur*1000,score:0,combo:0,maxCombo:0,n:0,ok:0,byCat:{},sched:[],recent:[],freed:0,cur:null,state:'q',qEl:0,qLim:0};
   // errores pendientes de esta categoría: se intercalan cada 2 preguntas
   Object.keys(S.buffer).filter(k=>pool.includes(k)).sort(()=>Math.random()-.5).forEach((k,i)=>sess.sched.push({key:k,at:mode==='buf'?i:1+i*2}));
   view='drill';next();
@@ -654,7 +694,9 @@ function answer(idx){
   sess.state='fb';sess.chosen=idx;sess.qi++;sess.n++;
   const sc=sess.byCat[q.cat]||(sess.byCat[q.cat]={n:0,ok:0});sc.n++;if(ok)sc.ok++;
   const wasBuf=!!S.buffer[q.key];
-  const freed=!!addLocal({t:now,k:'a',q:q.key,o:ok?1:0,ms}).freed;
+  // detalle para el instructor: qué salió, qué respondió y cuál era la correcta
+  const txt=x=>strip(x.replace(/<u>(.*?)<\/u>/g,'【$1】')).replace(/\s+/g,' ').trim();
+  const freed=!!addLocal({t:now,k:'a',q:q.key,o:ok?1:0,ms,sid:sess.id,pr:txt(q.html).slice(0,200),ch:idx>=0?txt(q.opts[idx].h):'(se acabó el tiempo)',co:txt(q.opts[q.correct].h)}).freed;
   if(!ok){schedule(q.key,rnd(2,3));if(sess.mode==='buf'&&!sess.pool.includes(q.key))sess.pool.push(q.key)}
   else if(freed){sess.freed++;if(sess.mode==='buf')sess.pool=sess.pool.filter(k=>k!==q.key)}
   else if(wasBuf)schedule(q.key,rnd(3,4));
@@ -680,7 +722,7 @@ function endSession(){
     const now=new Date(),off=-now.getTimezoneOffset(),pad=n=>String(Math.abs(n)).padStart(2,'0');
     const iso=today(now)+'T'+pad(now.getHours())+':'+pad(now.getMinutes())+':'+pad(now.getSeconds())+(off>=0?'+':'-')+pad(Math.trunc(off/60))+':'+pad(off%60);
     const by={};for(const c in sess.byCat)by[c]=[sess.byCat[c].ok,sess.byCat[c].n];
-    addLocal({t:now.getTime(),k:'s',m:sess.mode,n:sess.n,ok:sess.ok,sc:sess.score,cb:sess.maxCombo,fr:sess.freed,bc:Object.keys(S.buffer).length,by,iso,dn:S.dev.name});
+    addLocal({t:now.getTime(),k:'s',sid:sess.id,m:sess.mode,n:sess.n,ok:sess.ok,sc:sess.score,cb:sess.maxCombo,fr:sess.freed,bc:Object.keys(S.buffer).length,by,iso,dn:S.dev.name});
     save();
   }
   sess.state='end';view='end';render();
@@ -744,7 +786,7 @@ function renderHome(){
   const td=S.days[today()]||{n:0,ok:0},bufN=Object.keys(S.buffer).length,m=S.settings.mode;
   const exam=daysTo('2027-07-15'),cp=daysTo('2026-11-26'),total=daysTo('2027-07-15')-daysTo('2026-07-29');
   const prog=Math.min(1,Math.max(0,1-exam/total)),C=2*Math.PI*44,mode=MODES.find(x=>x[0]===m)||MODES[0];
-  $('#app').innerHTML=`
+  $('#app').innerHTML=`${tabsHtml('juego')}
     <div class="row"><div class="brand"><span class="hanko">朱</span><div><b>MEXT Ráfaga</b><small>Modo aburrimiento · 60–90 s</small></div></div><span class="sp"></span>
       <button class="icon-btn" data-act="stats" aria-label="Estadísticas" title="Estadísticas (S)">📊</button></div>
     <section class="hero">
@@ -848,7 +890,288 @@ function renderStats(){
     <div class="card"><h3>Últimas ráfagas</h3>${ss.length?`<ul class="list">${ss.map(s=>`<li>${glyph(s.m)}<span class="t">${new Date(s.d).toLocaleString('es',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</span><span class="muted small">${s.ok}/${s.n} · <b style="color:var(--text)">${s.score}</b></span></li>`).join('')}</ul>`:'<span class="muted">Sin sesiones.</span>'}</div>
   </div>`;
 }
-function render(){applyTheme();if(view==='home')renderHome();else if(view==='drill')renderDrill();else if(view==='end')renderEnd();else renderStats();if(view!=='drill')window.scrollTo(0,0)}
+let lastView=null,lastOpen=null;
+function render(){applyTheme();const y=window.scrollY;if(view==='home')renderHome();else if(view==='drill')renderDrill();else if(view==='end')renderEnd();else if(view==='estudio')renderEstudio();else if(view==='sesion')renderSesion();else renderStats();
+  if(view!=='drill'&&(view!==lastView||eOpen!==lastOpen))window.scrollTo(0,0);else if(view==='sesion'||view==='estudio')window.scrollTo(0,y);lastView=view;lastOpen=eOpen}
+
+/* =========================================================
+   ESTUDIO DIARIO CON EL INSTRUCTOR (solo japonés)
+   Sección aparte del juego: sin puntos ni rachas. El instructor escribe la sesión
+   en Notion → el Worker la entrega → aquí se resuelve, se cronometra y se entrega.
+   Almacenamiento propio: 'mextRafaga.estudio.v1'.
+   ========================================================= */
+const E_KEY='mextRafaga.estudio.v1';
+let E={ses:{},work:{},outbox:[],lastFetch:0};
+let eState='off',eBusy=false,eOpen=null; // eOpen = id de la sesión abierta
+function eLoad(){try{const d=JSON.parse(localStorage.getItem(E_KEY));if(d&&d.ses)E=Object.assign({ses:{},work:{},outbox:[],lastFetch:0},d)}catch(e){}}
+function eSave(){try{localStorage.setItem(E_KEY,JSON.stringify(E))}catch(e){}}
+const eWork=id=>E.work[id]||(E.work[id]={ans:{},tim:{},sent:null});
+
+/* ---------- Lectura del formato del instructor ---------- */
+const E_MARKS=[[/^📘/,'consulta'],[/^✍️|^✍/,'tarea'],[/^⚡/,'practica'],[/^✅/,'fuera'],[/^🧑‍🏫|^👨‍🏫|^👩‍🏫/,'feedback'],[/^📤/,'entrega']];
+const E_LABEL={consulta:'📘 Consulta',tarea:'✍️ Tarea',practica:'⚡ Práctica',fuera:'✅ Fuera de la app',feedback:'🧑‍🏫 Retroalimentación'};
+const ptxt=rt=>(rt||[]).map(r=>r.t).join('');
+function eParse(blocks){
+  const out={intro:[],secs:[],feedback:[]};let cur=null;
+  for(const b of blocks||[]){
+    if(b.type==='heading_1'||b.type==='heading_2'){
+      const text=ptxt(b.rt).trim(),mk=E_MARKS.find(([re])=>re.test(text));
+      const kind=mk?mk[1]:'texto';
+      let title=text.replace(/^(\p{Extended_Pictographic}|️|‍|\s)+/u,'');
+      title=title.replace(/^(Consulta|Tarea|Práctica|Practica|Fuera de la app|Retroalimentación|Entrega)\s*[:：]?\s*/i,'');
+      const mm=title.match(/\s*[·\-–(]\s*(\d+)\s*min\)?\s*$/i);
+      if(mm)title=title.slice(0,mm.index).trim();
+      cur={id:b.id,kind,title,min:mm?+mm[1]:null,blocks:[],items:[],head:text};
+      if(kind==='feedback')out.feedback.push(cur);else out.secs.push(cur);
+      continue;
+    }
+    if(!cur){out.intro.push(b);continue}
+    const interactive=cur.kind==='tarea'||cur.kind==='practica'||cur.kind==='fuera';
+    const isItem=interactive&&(b.type==='numbered_list_item'||b.type==='bulleted_list_item'||b.type==='to_do');
+    if(isItem){cur.items.push(b);cur.blocks.push({type:'_item',idx:cur.items.length-1})}else cur.blocks.push(b);
+  }
+  return out;
+}
+
+/* ---------- Render de bloques (seguro: todo se escapa) ---------- */
+function eRich(rt){
+  return (rt||[]).map(r=>{let s=esc(r.t).replace(/\n/g,'<br>');
+    if(r.c)s=`<code>${s}</code>`;if(r.b)s=`<b>${s}</b>`;if(r.i)s=`<i>${s}</i>`;if(r.s)s=`<s>${s}</s>`;if(r.u)s=`<u class="eu">${s}</u>`;
+    if(r.h&&/^https?:\/\//.test(r.h))s=`<a href="${esc(r.h)}" target="_blank" rel="noopener">${s}</a>`;return s}).join('');
+}
+function eBlocks(list){
+  let h='',i=0;
+  while(i<list.length){
+    const b=list[i];
+    if(b.type==='bulleted_list_item'||b.type==='numbered_list_item'){
+      const tag=b.type==='bulleted_list_item'?'ul':'ol';let li='';
+      while(i<list.length&&list[i].type===b.type){li+=`<li>${eRich(list[i].rt)}${list[i].kids?eBlocks(list[i].kids):''}</li>`;i++}
+      h+=`<${tag}>${li}</${tag}>`;continue;
+    }
+    switch(b.type){
+      case 'paragraph':h+=b.rt&&b.rt.length?`<p>${eRich(b.rt)}</p>`:'';break;
+      case 'heading_1':case 'heading_2':case 'heading_3':h+=`<h4>${eRich(b.rt)}</h4>`;break;
+      case 'to_do':h+=`<p>${b.checked?'☑':'☐'} ${eRich(b.rt)}</p>`;break;
+      case 'quote':h+=`<blockquote>${eRich(b.rt)}</blockquote>`;break;
+      case 'callout':h+=`<div class="ecall"><span>${esc(b.icon||'💡')}</span><div>${eRich(b.rt)}${b.kids?eBlocks(b.kids):''}</div></div>`;break;
+      case 'code':h+=`<pre lang="ja">${esc(ptxt(b.rt))}</pre>`;break;
+      case 'divider':h+='<hr>';break;
+      case 'toggle':h+=`<details><summary>${eRich(b.rt)}</summary>${b.kids?eBlocks(b.kids):''}</details>`;break;
+      case 'table':{const rows=b.kids||[];h+=`<div class="etw"><table>${rows.map((r,ri)=>`<tr>${(r.cells||[]).map(c=>ri===0&&b.header?`<th>${eRich(c)}</th>`:`<td>${eRich(c)}</td>`).join('')}</tr>`).join('')}</table></div>`;break}
+      default:if(b.rt&&b.rt.length)h+=`<p>${eRich(b.rt)}</p>`;
+    }
+    if(b.kids&&!['toggle','callout','table'].includes(b.type))h+=`<div class="ekids">${eBlocks(b.kids)}</div>`;
+    i++;
+  }
+  return h;
+}
+
+/* ---------- Cronómetros: guardan la hora de inicio, sobreviven al cierre ---------- */
+const eMs=t=>t?(t.acc||0)+(t.start?Date.now()-t.start:0):0;
+const eFmt=ms=>{const s=Math.floor(ms/1000),h=Math.floor(s/3600),m=Math.floor(s%3600/60),ss=s%60;return(h?h+':'+String(m).padStart(2,'0'):m)+':'+String(ss).padStart(2,'0')};
+function eRunning(w){for(const[k,t]of Object.entries(w.tim))if(t.start)return k;return null}
+function eToggle(id,sec){
+  const w=eWork(id),now=Date.now(),run=eRunning(w);
+  if(run){const t=w.tim[run];t.acc=(t.acc||0)+now-t.start;t.start=null}
+  if(run!==sec){const t=w.tim[sec]||(w.tim[sec]={acc:0,start:null});t.start=now}
+  eSave();
+}
+function eStopAll(w){const run=eRunning(w);if(run){const t=w.tim[run];t.acc=(t.acc||0)+Date.now()-t.start;t.start=null}}
+function eTick(){
+  if(view!=='sesion'||!eOpen)return;const w=eWork(eOpen);let total=0;
+  document.querySelectorAll('[data-tm]').forEach(el=>{const ms=eMs(w.tim[el.dataset.tm]);el.textContent=eFmt(ms)});
+  for(const t of Object.values(w.tim))total+=eMs(t);
+  const tt=document.getElementById('eTotal');if(tt)tt.textContent=eFmt(total);
+}
+
+/* ---------- Sincronización con el Worker ---------- */
+function eHeaders(){return{'Authorization':'Bearer '+S.settings.syncKey,'Content-Type':'application/json'}}
+const eUrl=p=>S.settings.syncUrl.replace(/\/+$/,'')+p;
+async function ePost(p,body){
+  const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),15000);
+  try{const r=await fetch(eUrl(p),{method:'POST',headers:eHeaders(),body:JSON.stringify(body),signal:ctl.signal});
+    if(r.status===401)throw Object.assign(new Error('Clave inválida'),{badkey:1});
+    if(!r.ok)throw new Error((await r.json().catch(()=>({}))).error||('HTTP '+r.status));return r.json()}
+  finally{clearTimeout(to)}
+}
+async function eSync(manual){
+  if(!syncConfigured()){eState='off';eRefresh();return}
+  if(eBusy)return;
+  if(navigator.onLine===false){eState='offline';eRefresh();return}
+  eBusy=true;eState='busy';eRefresh();
+  try{
+    while(E.outbox.length){await ePost('/estudio/entrega',E.outbox[0]);E.outbox.shift();eSave()}
+    const known={};for(const s of Object.values(E.ses))if(s.blocks)known[s.id]=s.edited;
+    const r=await ePost('/estudio/lista',{known});
+    const next={};
+    for(const s of r.sesiones||[]){const old=E.ses[s.id];next[s.id]={...s,blocks:s.blocks||(old&&old.blocks)||null}}
+    const oldest=(r.sesiones||[]).reduce((m,s)=>!m||s.fecha<m?s.fecha:m,'');
+    for(const[id,s]of Object.entries(E.ses))if(!next[id]&&(E.work[id]||(r.sesiones||[]).length>=40&&s.fecha<oldest))next[id]=s; // conserva lo trabajado y lo antiguo
+    E.ses=next;E.lastFetch=Date.now();eState='ok';eSave();
+    if(manual)toast('Sesiones actualizadas');
+  }catch(err){eState=err.badkey?'badkey':(navigator.onLine===false||err.name==='TypeError'||err.name==='AbortError')?'offline':'error';eErr=err.message;if(manual)toast(eState==='offline'?'Sin conexión: se usará lo guardado':'No se pudo actualizar: '+err.message)}
+  finally{eBusy=false;if(view==='estudio'||(view==='sesion'&&!document.activeElement.matches('textarea,input')))render();else eRefresh()}
+}
+let eErr='';
+function eStatus(){
+  if(!syncConfigured())return['Sin conexión configurada · configura la nube en Ajustes del juego','warn'];
+  const p=E.outbox.length?` · ${E.outbox.length} entrega(s) en cola`:'';
+  if(eState==='busy')return['Actualizando…',''];
+  if(eState==='offline')return['Sin conexión · usando lo guardado'+p,'warn'];
+  if(eState==='badkey')return['Clave inválida (revisa Ajustes del juego)','bad'];
+  if(eState==='error')return['Error al actualizar: '+eErr+p,'bad'];
+  return[(E.lastFetch?'Actualizado '+new Date(E.lastFetch).toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'}):'Sin actualizar')+p,'ok'];
+}
+function eRefresh(){const el=document.getElementById('eStat');if(el){const[t,c]=eStatus();el.textContent=t;el.dataset.s=c}}
+
+/* ---------- Vistas ---------- */
+const eFecha=f=>new Date(f+'T12:00:00').toLocaleDateString('es',{weekday:'long',day:'numeric',month:'long'});
+const E_CHIP={Publicada:'Por hacer',Entregada:'Entregada',Corregida:'Corregida'};
+function eChip(s){const w=E.work[s.id],st=w&&w.sent&&s.estado==='Publicada'?'Entregada':s.estado;return `<span class="echip" data-st="${esc(st)}">${esc(E_CHIP[st]||st)}${w&&w.sent&&E.outbox.some(o=>o.page===s.id)?' · en cola':''}</span>`}
+function tabsHtml(on){return `<nav class="tabs" role="tablist"><button role="tab" aria-selected="${on==='juego'}" data-e="tab-juego" class="${on==='juego'?'on':''}">🎮 Juego</button><button role="tab" aria-selected="${on==='estudio'}" data-e="tab-estudio" class="${on==='estudio'?'on':''}">📝 Estudio</button></nav>`}
+let eSub='ses';
+function renderEstudio(){
+  if(eSub==='ref')return renderRef();
+  const list=Object.values(E.ses).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const hoy=list.find(s=>s.fecha===today())||list.find(s=>s.estado==='Publicada'&&!(E.work[s.id]&&E.work[s.id].sent));
+  const rest=list.filter(s=>s!==hoy);const[st,sc]=eStatus();
+  $('#app').innerHTML=`<div class="estudio">${tabsHtml('estudio')}
+    <div class="row"><h1 style="font-size:1.2rem">Estudio diario</h1><span class="sp"></span><button class="btn" data-e="refresh">Actualizar</button></div>
+    <div class="estat" id="eStat" data-s="${sc}">${esc(st)}</div>
+    ${eSubTabs()}
+    ${hoy?`<button class="ecard ehoy" data-e="open" data-id="${hoy.id}"><span class="muted small">${hoy.fecha===today()?'Hoy':'Pendiente'} · ${esc(eFecha(hoy.fecha))}</span><b>${esc(hoy.titulo||'Sesión')}</b>${eChip(hoy)}</button>`
+      :`<div class="ecard eempty"><b>Todavía no hay sesión para hoy.</b><span class="muted small">Cuando el instructor la publique en Notion, toca «Actualizar».</span></div>`}
+    ${rest.length?`<h3>Sesiones anteriores</h3><div class="elist">${rest.map(s=>`<button class="ecard" data-e="open" data-id="${s.id}"><span class="muted small">${esc(eFecha(s.fecha))}</span><b>${esc(s.titulo||'Sesión')}</b>${eChip(s)}</button>`).join('')}</div>`:''}
+  </div>`;
+}
+function eItemHtml(sid,sec,b,idx,locked){
+  const w=eWork(sid),a=w.ans[b.id]||{},dis=locked?'disabled':'';
+  const ja='lang="ja" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false"';
+  let field='';
+  if(sec.kind==='fuera')field=`<label class="echeck"><input type="checkbox" data-a="hecho" data-it="${b.id}" ${a.hecho?'checked':''} ${dis}> <span>${eRich(b.rt)}</span></label>`;
+  else{
+    field=`<div class="eprompt"><span class="enum">${idx+1}</span><div>${eRich(b.rt)}${b.kids?`<div class="ekids">${eBlocks(b.kids)}</div>`:''}</div></div>`+
+      (sec.kind==='tarea'?`<textarea rows="2" data-a="r" data-it="${b.id}" ${ja} ${dis} placeholder="Escribe tu respuesta">${esc(a.r||'')}</textarea>`
+        :`<input type="text" data-a="r" data-it="${b.id}" ${ja} ${dis} placeholder="Respuesta" value="${esc(a.r||'')}">`);
+  }
+  return `<div class="eitem">${field}
+    <div class="eduda"><label><input type="checkbox" data-a="duda" data-it="${b.id}" ${a.duda?'checked':''} ${dis}> Tengo duda</label>
+    ${a.duda?`<input type="text" data-a="nota" data-it="${b.id}" ${ja} ${dis} placeholder="¿Qué no te queda claro? (nota para el instructor)" value="${esc(a.nota||'')}">`:''}</div></div>`;
+}
+function renderSesion(){
+  const s=E.ses[eOpen];if(!s){view='estudio';return renderEstudio()}
+  const w=eWork(s.id),p=eParse(s.blocks),run=eRunning(w);
+  // Entregada o corregida (aquí o desde otro dispositivo): solo lectura
+  const remota=!w.sent&&s.estado!=='Publicada',locked=!!w.sent||remota;
+  const secHtml=sec=>{
+    if(sec.kind==='entrega')return remota?`<section class="esec"><div class="ehead"><div><span class="ek">📤 Tu entrega</span><b>${esc(sec.title)}</b></div></div><div class="ebody">${eBlocks(sec.blocks)}</div></section>`:'';
+    const inter=(sec.kind==='tarea'||sec.kind==='practica'||sec.kind==='fuera')&&!remota;
+    const body=sec.blocks.map(b=>b.type!=='_item'?eBlocks([b]):remota?eBlocks([sec.items[b.idx]]):eItemHtml(s.id,sec,sec.items[b.idx],b.idx,locked)).join('');
+    const timer=inter?`<button class="etimer ${run===sec.id?'on':''}" data-e="timer" data-sec="${sec.id}" ${locked?'disabled':''}>${run===sec.id?'⏸':'▶'} <span data-tm="${sec.id}">${eFmt(eMs(w.tim[sec.id]))}</span></button>`:'';
+    if(sec.kind==='consulta')return `<details class="esec econs" open><summary><span class="ek">${E_LABEL.consulta}</span> ${esc(sec.title)}</summary><div class="ebody">${body}</div></details>`;
+    return `<section class="esec" data-k="${sec.kind}"><div class="ehead"><div><span class="ek">${E_LABEL[sec.kind]||''}</span><b>${esc(sec.kind==='texto'?sec.head:sec.title)}</b>${sec.min?`<span class="muted small"> · sugerido ${sec.min} min</span>`:''}</div>${timer}</div><div class="ebody">${body}</div></section>`;
+  };
+  const tot=Object.values(w.tim).reduce((a,t)=>a+eMs(t),0);
+  $('#app').innerHTML=`<div class="estudio">
+    <div class="row"><button class="icon-btn" data-e="back" aria-label="Volver">←</button><div style="min-width:0"><div class="muted small">${esc(eFecha(s.fecha))}</div><b class="etitle">${esc(s.titulo||'Sesión')}</b></div><span class="sp"></span>${eChip(s)}</div>
+    <div class="ebar"><span>⏱ Total <b id="eTotal">${eFmt(tot)}</b></span>${run?`<span class="muted small">En curso: ${esc((p.secs.find(x=>x.id===run)||{}).title||'')}</span>`:'<span class="muted small">Toca ▶ en cada actividad para cronometrarla</span>'}</div>
+    ${p.feedback.length?p.feedback.map(f=>`<section class="esec efb"><div class="ehead"><div><span class="ek">${E_LABEL.feedback}</span><b>${esc(f.title||'del instructor')}</b></div></div><div class="ebody">${eBlocks(f.blocks)}</div></section>`).join(''):''}
+    ${p.intro.length?`<div class="ebody eintro">${eBlocks(p.intro)}</div>`:''}
+    ${p.secs.map(secHtml).join('')}
+    <div class="eactions">${remota?`<div class="muted small">Sesión ${esc((E_CHIP[s.estado]||s.estado).toLowerCase())}: tus respuestas están en «📤 Tu entrega».</div>`:locked?`<div class="muted small">Entregada el ${new Date(w.sent.at).toLocaleString('es',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}${E.outbox.some(o=>o.page===s.id)?' · se enviará cuando haya conexión':' · recibida'}</div>`
+      :`<button class="btn eprimary" data-e="entregar">Entregar</button>`}
+      ${remota?'':'<button class="btn" data-e="copiar">Copiar respuestas para el chat</button>'}</div>
+  </div>`;
+}
+
+/* ---------- Referencia: todo el material 📘 Consulta ya explicado ---------- */
+function eSubTabs(){return `<div class="seg esub"><button data-e="sub-ses" class="${eSub==='ses'?'on':''}">Sesiones</button><button data-e="sub-ref" class="${eSub==='ref'?'on':''}">📘 Referencia</button></div>`}
+function bText(list){let s='';for(const b of list||[]){s+=' '+ptxt(b.rt);if(b.cells)s+=' '+b.cells.map(ptxt).join(' ');if(b.kids)s+=bText(b.kids)}return s}
+function renderRef(){
+  const items=[];
+  for(const s of Object.values(E.ses).sort((a,b)=>b.fecha.localeCompare(a.fecha))){
+    if(!s.blocks)continue;
+    for(const sec of eParse(s.blocks).secs)if(sec.kind==='consulta')items.push({s,sec,q:(sec.title+' '+bText(sec.blocks)).toLowerCase()});
+  }
+  const[st,sc]=eStatus();
+  $('#app').innerHTML=`<div class="estudio">${tabsHtml('estudio')}
+    <div class="row"><h1 style="font-size:1.2rem">Estudio diario</h1><span class="sp"></span><button class="btn" data-e="refresh">Actualizar</button></div>
+    <div class="estat" id="eStat" data-s="${sc}">${esc(st)}</div>
+    ${eSubTabs()}
+    ${items.length?`<input type="search" id="eBuscar" class="ebuscar" placeholder="Buscar en el material (ej. で, contadores, 消す)" lang="ja" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <div class="muted small" id="eCuenta">${items.length} tema(s) explicados</div>
+    <div id="eRefList">${items.map((it,i)=>`<details class="esec econs eref" data-q="${esc(it.q)}"><summary><span class="ek">${esc(eFecha(it.s.fecha))} · ${esc(it.s.titulo||'')}</span> ${esc(it.sec.title||'Consulta')}</summary><div class="ebody">${eBlocks(it.sec.blocks)}</div></details>`).join('')}</div>`
+    :'<div class="ecard eempty"><b>Aún no hay material de consulta.</b><span class="muted small">Aquí se juntará automáticamente todo lo que el instructor marque como «📘 Consulta» en tus sesiones.</span></div>'}
+  </div>`;
+}
+function eFiltrar(v){
+  const q=v.trim().toLowerCase();let n=0;
+  document.querySelectorAll('.eref').forEach(d=>{const ok=!q||d.dataset.q.includes(q);d.style.display=ok?'':'none';if(ok)n++;if(q&&ok)d.open=true});
+  const c=document.getElementById('eCuenta');if(c)c.textContent=q?`${n} resultado(s)`:`${n} tema(s) explicados`;
+}
+
+/* ---------- Entrega ---------- */
+function eCollect(s){
+  const w=eWork(s.id),p=eParse(s.blocks),acts=[];let dudas=0,total=0;
+  for(const sec of p.secs){
+    if(!['tarea','practica','fuera'].includes(sec.kind))continue;
+    const ms=eMs(w.tim[sec.id]);total+=ms;
+    const items=sec.items.map(b=>{const a=w.ans[b.id]||{};if(a.duda)dudas++;return{p:ptxt(b.rt),r:a.r||'',duda:!!a.duda,nota:a.nota||'',hecho:!!a.hecho}});
+    acts.push({tipo:sec.kind,titulo:sec.title,min:Math.round(ms/60000),items});
+  }
+  return{acts,dudas,minutos:Math.round(total/60000)};
+}
+function eTexto(s,c){
+  const L=[`📤 Entrega — ${s.titulo} (${s.fecha}) · ${c.minutos} min${c.dudas?` · ${c.dudas} duda${c.dudas>1?'s':''}`:''}`];
+  for(const a of c.acts){
+    L.push('',`${E_LABEL[a.tipo]}: ${a.titulo} — ${a.min} min`);
+    a.items.forEach((it,i)=>{
+      if(a.tipo==='fuera')L.push(`${it.hecho?'[x]':'[ ]'} ${it.p}`);
+      else{L.push(`${i+1}. ${it.p}`,`→ ${it.r.trim()||'(sin respuesta)'}`)}
+      if(it.duda)L.push(`❓ Duda: ${it.nota||'(sin nota)'}`);
+    });
+  }
+  return L.join('\n');
+}
+async function eCopy(text){
+  try{await navigator.clipboard.writeText(text);toast('Copiado: pégalo en el chat del instructor');return}catch(e){}
+  const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();
+  try{document.execCommand('copy');toast('Copiado: pégalo en el chat del instructor')}catch(e){toast('No se pudo copiar')}ta.remove();
+}
+function eEntregar(){
+  const s=E.ses[eOpen];if(!s)return;const w=eWork(s.id);if(w.sent)return;
+  const c=eCollect(s),vacias=c.acts.reduce((n,a)=>n+a.items.filter(it=>a.tipo==='fuera'?!it.hecho:!it.r.trim()).length,0);
+  if(!confirm(`¿Entregar la sesión?\n\n${c.minutos} min registrados${c.dudas?` · ${c.dudas} duda(s)`:''}${vacias?`\n${vacias} actividad(es) sin responder o sin marcar`:''}\n\nDespués de entregar ya no podrás editar tus respuestas.`))return;
+  eStopAll(w);
+  const now=new Date(),c2=eCollect(s);
+  const payload={id:s.id+'-'+now.getTime().toString(36),page:s.id,fecha:s.fecha,enviada:now.toISOString(),
+    enviadaTxt:now.toLocaleString('es',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}),minutos:c2.minutos,dudas:c2.dudas,acts:c2.acts};
+  w.sent={at:now.getTime(),id:payload.id};E.outbox.push(payload);eSave();render();
+  toast(navigator.onLine===false?'Guardada: se enviará cuando vuelva la conexión':'Entregando…');eSync();
+}
+
+/* ---------- Eventos de la sección ---------- */
+function eClick(t){
+  const a=t.dataset.e;
+  if(a==='tab-juego'){view='home';render()}
+  else if(a==='tab-estudio'){view='estudio';render();eSync()}
+  else if(a==='refresh')eSync(true);
+  else if(a==='sub-ses'||a==='sub-ref'){eSub=a==='sub-ref'?'ref':'ses';render()}
+  else if(a==='open'){eOpen=t.dataset.id;view='sesion';render()}
+  else if(a==='back'){view='estudio';eOpen=null;render()}
+  else if(a==='timer'){eToggle(eOpen,t.dataset.sec);render()}
+  else if(a==='entregar')eEntregar();
+  else if(a==='copiar'){const s=E.ses[eOpen];if(s)eCopy(eTexto(s,eCollect(s)))}
+}
+let eSaveT=null;
+function eInput(el){
+  const it=el.dataset.it,k=el.dataset.a;if(!it||!eOpen)return;
+  const w=eWork(eOpen);if(w.sent)return;const a=w.ans[it]||(w.ans[it]={});
+  a[k]=el.type==='checkbox'?el.checked:el.value;
+  clearTimeout(eSaveT);eSaveT=setTimeout(eSave,300);
+  if(k==='duda'){eSave();render();const n=document.querySelector(`[data-a="nota"][data-it="${it}"]`);if(n&&el.checked)n.focus()}
+  if(k==='hecho')eSave();
+}
 
 /* ---------- Eventos ---------- */
 function exportData(){
@@ -858,6 +1181,7 @@ function exportData(){
 }
 function onClick(e){
   const t=e.target.closest('button');
+  if(t&&t.dataset.e){eClick(t);return}
   if(!t){if(view==='drill'&&sess&&sess.state==='fb'&&e.target.closest('.fb'))cont();return}
   const d=t.dataset;
   if(d.ans!=null){if(sess.state==='q')answer(+d.ans);else cont();return}
@@ -883,6 +1207,9 @@ function onClick(e){
 function onKey(e){
   if(e.ctrlKey||e.metaKey||e.altKey)return;
   const k=e.key;
+  if(e.target&&e.target.matches&&e.target.matches('input,textarea,select'))return;
+  if(view==='sesion'){if(k==='Escape'){view='estudio';eOpen=null;render()}return}
+  if(view==='estudio'){if(k==='Escape'){view='home';render()}return}
   if(view==='drill'&&sess){
     if(sess.state==='q'&&/^[1-4]$/.test(k)&&+k<=sess.cur.opts.length){e.preventDefault();answer(+k-1)}
     else if(sess.state==='fb'&&(k==='Enter'||k===' '||k==='ArrowRight')){e.preventDefault();cont()}
@@ -904,11 +1231,16 @@ if(typeof document!=='undefined'){
     r.readAsText(f);e.target.value='';
   });
   try{load()}catch(e){S=fresh();derivedReset(S)}
+  eLoad();
+  document.addEventListener('input',e=>{if(e.target.id==='eBuscar')return eFiltrar(e.target.value);if(e.target.dataset&&e.target.dataset.a&&e.target.type!=='checkbox')eInput(e.target)});
+  document.addEventListener('change',e=>{if(e.target.dataset&&e.target.dataset.a&&e.target.type==='checkbox')eInput(e.target)});
+  setInterval(eTick,1000);
   render();requestAnimationFrame(tick);
   syncNow();
-  addEventListener('online',()=>syncNow());
+  addEventListener('online',()=>{syncNow();eSync()});
+  eSync();
   addEventListener('offline',()=>{syncState=syncConfigured()?'offline':'off';refreshSync()});
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncNow()});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden){syncNow();if(view==='estudio')eSync()}else eSave()});
   setInterval(()=>{if(view==='home'||view==='stats')syncNow()},120000);
   if(location.hash==='#go')startSession(S.settings.mode);
   // PWA: funciona offline tras la primera visita y pide que Android no borre los datos

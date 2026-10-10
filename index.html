@@ -196,6 +196,11 @@ ruby rt{font-size:.5em;color:var(--muted);font-weight:400}
 
 .toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translate(-50%,10px);background:var(--text);color:var(--bg);padding:11px 18px;border-radius:14px;font-weight:700;font-size:.92rem;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:calc(100% - 32px);text-align:center;z-index:9;box-shadow:var(--shadow)}
 .toast.on{opacity:1;transform:translate(-50%,0)}
+.pill[data-s="ok"]{color:var(--ok)}.pill[data-s="warn"]{color:var(--warn)}.pill[data-s="bad"]{color:var(--bad)}.pill[data-s="muted"]{color:var(--muted)}
+button.pill{cursor:pointer;font-family:inherit}
+.syncbox{display:grid;gap:10px;padding:12px;border-radius:14px;background:var(--surface2)}
+.syncbox label{display:grid;gap:4px;font-size:.85rem;color:var(--muted)}
+.syncbox input{font:inherit;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px;width:100%}
 .foot{margin-top:22px;text-align:center;font-size:.78rem;color:var(--muted);line-height:2}
 
 @media (max-width:420px){.prompt{font-size:1.38rem}.opt{font-size:1.18rem}.ring{width:92px;height:92px}.ring .in b{font-size:1.6rem}.hero{gap:12px;padding:14px}}
@@ -464,15 +469,108 @@ const strip=h=>h.replace(/<rt>.*?<\/rt>/g,'').replace(/<[^>]+>/g,'').replace(/&a
 function today(d=new Date()){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function daysTo(iso){const t=new Date();t.setHours(0,0,0,0);return Math.round((new Date(iso+'T00:00:00')-t)/864e5)}
 
-/* ---------- Persistencia ---------- */
+/* ---------- Persistencia: registro de eventos ----------
+   La fuente de verdad es S.ev (cada respuesta 'a', cada ráfaga 's', snapshot heredado 'b').
+   items/buffer/cats/days/sessions/best son DERIVADOS: se reconstruyen reproduciendo los eventos
+   en orden (t, i). Así dos dispositivos que practicaron sin conexión se fusionan sin conflictos. */
 const LS_KEY='mextRafaga.v1';
-function fresh(){return{v:1,items:{},buffer:{},cats:{},sessions:[],days:{},best:{score:0,combo:0},settings:{dur:75,pressure:true,furi:true,theme:'auto',mode:'mix'}}}
-function load(){
-  try{const s=JSON.parse(localStorage.getItem(LS_KEY));if(s&&s.v===1){const f=fresh();s.settings=Object.assign(f.settings,s.settings);return Object.assign(f,s)}}catch(e){}
-  return fresh();
+const IV=[0,5*60e3,864e5,3*864e5,7*864e5,21*864e5];
+const rid=()=>Math.random().toString(36).slice(2,10);
+const isPhone=()=>typeof navigator!=='undefined'&&/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
+function fresh(){return{v:2,dev:{id:rid(),name:isPhone()?'Teléfono':'PC'},ev:[],outbox:[],cursor:0,lastSync:0,
+  settings:{dur:75,pressure:true,furi:true,theme:'auto',mode:'mix',syncUrl:'',syncKey:''}}}
+function derivedReset(s){s.items={};s.buffer={};s.cats={};s.days={};s.sessions=[];s.best={score:0,combo:0}}
+function dayOf(t){const d=S.days[today(new Date(t))];return d||(S.days[today(new Date(t))]={n:0,ok:0,s:0})}
+// Aplica un evento al estado derivado. Devuelve {freed} para la UI.
+function applyEvent(e){
+  if(e.k==='a'){
+    const it=S.items[e.q]||(S.items[e.q]={n:0,ok:0,box:0,due:0,miss:0}),ok=!!e.o;
+    it.n++;if(ok){it.ok++;it.box=Math.min(5,it.box+1)}else{it.miss++;it.box=0}it.due=e.t+IV[it.box];it.last=e.t;
+    const cat=catOf(e.q),c=S.cats[cat]||(S.cats[cat]={n:0,ok:0,ms:0,r:[]});
+    c.n++;c.ms+=e.ms||0;c.r.push(ok?1:0);if(c.r.length>40)c.r.shift();if(ok)c.ok++;
+    const d=dayOf(e.t);d.n++;if(ok)d.ok++;
+    const b=S.buffer[e.q];
+    if(!ok)S.buffer[e.q]={s:0,f:(b?b.f:0)+1,t:e.t};
+    else if(b){b.s++;b.t=e.t;if(b.s>=3){delete S.buffer[e.q];return{freed:true}}}
+    return{};
+  }
+  if(e.k==='s'){
+    S.sessions.push({d:e.t,m:e.m,n:e.n,ok:e.ok,score:e.sc,combo:e.cb});
+    dayOf(e.t).s++;S.best.score=Math.max(S.best.score,e.sc||0);S.best.combo=Math.max(S.best.combo,e.cb||0);
+    return{};
+  }
+  if(e.k==='b'){ // progreso anterior a la sincronización: se SUMA al de los demás dispositivos
+    const p=e.snap||{};
+    for(const[k,v]of Object.entries(p.items||{})){const it=S.items[k];
+      if(!it)S.items[k]={...v};else{it.n+=v.n;it.ok+=v.ok;it.miss+=v.miss;if((v.last||0)>(it.last||0))Object.assign(it,{box:v.box,due:v.due,last:v.last})}}
+    for(const[k,v]of Object.entries(p.buffer||{}))if(!S.buffer[k]||(v.t||0)>(S.buffer[k].t||0))S.buffer[k]={...v};
+    for(const[k,v]of Object.entries(p.cats||{})){const c=S.cats[k]||(S.cats[k]={n:0,ok:0,ms:0,r:[]});c.n+=v.n;c.ok+=v.ok;c.ms+=v.ms;c.r=c.r.concat(v.r||[]).slice(-40)}
+    for(const[k,v]of Object.entries(p.days||{})){const d=S.days[k]||(S.days[k]={n:0,ok:0,s:0});d.n+=v.n;d.ok+=v.ok;d.s+=v.s||0}
+    S.sessions=S.sessions.concat(p.sessions||[]);
+    if(p.best){S.best.score=Math.max(S.best.score,p.best.score||0);S.best.combo=Math.max(S.best.combo,p.best.combo||0)}
+    return{};
+  }
+  return{};
 }
-function save(){try{localStorage.setItem(LS_KEY,JSON.stringify(S))}catch(e){}}
-let S=(()=>{try{return typeof localStorage!=='undefined'?load():fresh()}catch(e){return fresh()}})();
+function evCmp(a,b){return a.t-b.t||(a.i<b.i?-1:a.i>b.i?1:0)}
+function rebuild(){derivedReset(S);S.ev.sort(evCmp);for(const e of S.ev)applyEvent(e);S.sessions.sort((a,b)=>a.d-b.d)}
+function addLocal(e){e.i=S.dev.id+'-'+e.t.toString(36)+'-'+rid().slice(0,4);e.d=S.dev.id;S.ev.push(e);S.outbox.push(e.i);return applyEvent(e)}
+function load(){
+  let s=null;try{s=JSON.parse(localStorage.getItem(LS_KEY))}catch(e){}
+  const f=fresh();
+  if(s&&s.v===2){s.settings=Object.assign(f.settings,s.settings);S=Object.assign(f,s)}
+  else{S=f;if(s&&s.v===1){ // migración del formato anterior a un único snapshot 'b'
+    Object.assign(S.settings,s.settings||{});
+    if(Object.keys(s.items||{}).length){const e={t:1,k:'b',snap:{items:s.items,buffer:s.buffer,cats:s.cats,days:s.days,sessions:s.sessions,best:s.best}};
+      e.i=S.dev.id+'-legacy';e.d=S.dev.id;S.ev.push(e);S.outbox.push(e.i)}}}
+  rebuild();if(!s||s.v!==2)save();return S;
+}
+function save(){try{const{items,buffer,cats,days,sessions,best,...p}=S;localStorage.setItem(LS_KEY,JSON.stringify(p))}catch(e){}}
+let S=fresh();derivedReset(S);
+
+/* ---------- Sincronización (Worker → D1 → Notion) ----------
+   Sin conexión todo funciona: los eventos esperan en S.outbox. Nunca se sincroniza durante una ráfaga. */
+let syncState='off',syncBusy=false;
+function syncConfigured(){return !!(S.settings.syncUrl&&S.settings.syncKey)}
+async function syncNow(manual){
+  if(!syncConfigured()){syncState='off';return}
+  if(syncBusy||(view==='drill'&&sess&&sess.state!=='end'))return;
+  if(typeof navigator!=='undefined'&&navigator.onLine===false){syncState='offline';refreshSync();return}
+  syncBusy=true;syncState='busy';refreshSync();
+  try{
+    let more=true,changed=false,guard=0;
+    while(more&&guard++<20){
+      const ids=new Set(S.outbox),out=S.ev.filter(e=>ids.has(e.i)).slice(0,1000);
+      const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),10000);
+      const r=await fetch(S.settings.syncUrl.replace(/\/+$/,'')+'/sync',{method:'POST',signal:ctl.signal,
+        headers:{'Authorization':'Bearer '+S.settings.syncKey,'Content-Type':'application/json'},
+        body:JSON.stringify({dev:S.dev.id,since:S.cursor,events:out})});
+      clearTimeout(to);
+      if(r.status===401){syncState='badkey';break}
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      const res=await r.json(),sent=new Set(out.map(e=>e.i));
+      S.outbox=S.outbox.filter(i=>!sent.has(i));
+      const have=new Set(S.ev.map(e=>e.i));
+      for(const e of res.events||[])if(!have.has(e.i)){S.ev.push(e);have.add(e.i);changed=true}
+      S.cursor=res.cursor||S.cursor;more=!!res.more||S.outbox.length>0;
+      syncState='ok';S.lastSync=Date.now();
+    }
+    if(changed&&!(view==='drill'&&sess&&sess.state!=='end'))rebuild();
+    save();if(manual)toast(syncState==='ok'?'☁ Sincronizado':'⚠ Clave inválida');
+  }catch(err){syncState=(navigator.onLine===false||err.name==='TypeError'||err.name==='AbortError')?'offline':'error';if(manual)toast('No se pudo sincronizar: '+(err.name==='AbortError'?'sin respuesta':err.message))}
+  finally{syncBusy=false;if(view!=='drill')render();else refreshSync()}
+}
+function syncLabel(){
+  if(!syncConfigured())return['☁︎ Sin nube','muted'];
+  const p=S.outbox.length;
+  if(syncState==='busy')return['☁ Sincronizando…',''];
+  if(syncState==='offline')return[`○ Sin conexión${p?' · '+p+' pend.':''}`,'warn'];
+  if(syncState==='badkey')return['⚠ Clave inválida','bad'];
+  if(syncState==='error')return[`⚠ Error de sync${p?' · '+p+' pend.':''}`,'bad'];
+  if(p)return[`☁ ${p} pendientes`,'warn'];
+  return['☁ Sincronizado','ok'];
+}
+function refreshSync(){const el=document.getElementById('syncPill');if(el){const[t,c]=syncLabel();el.textContent=t;el.dataset.s=c}}
 
 /* ---------- Generadores: key → pregunta ----------
    s:<id> estático · cc:<i> categoría contador · cp:<c>/<n> lectura contador · kr:<w> leer kanji · kw:<w> escribir kanji */
@@ -512,7 +610,6 @@ function catOf(key){const t=key.slice(0,key.indexOf(':'));return t==='s'?BY_ID[k
 function label(key){return strip(build(key).html).replace(/\s+/g,' ').trim()}
 
 /* ---------- Motor: SRS Leitner + buffer de errores ---------- */
-const IV=[0,5*60e3,864e5,3*864e5,7*864e5,21*864e5];
 function catRecent(c){const r=(S.cats[c]||{}).r||[];return r.length<5?null:r.reduce((a,b)=>a+b,0)/r.length}
 function poolFor(mode){
   if(mode==='buf')return Object.keys(S.buffer).filter(k=>ALL_KEYS.includes(k));
@@ -555,15 +652,12 @@ function answer(idx){
   if(!sess||sess.state!=='q')return;
   const q=sess.cur,ok=idx===q.correct,now=Date.now(),ms=Math.round(sess.qEl);
   sess.state='fb';sess.chosen=idx;sess.qi++;sess.n++;
-  const it=S.items[q.key]||(S.items[q.key]={n:0,ok:0,box:0,due:0,miss:0});
-  it.n++;if(ok){it.ok++;it.box=Math.min(5,it.box+1)}else{it.miss++;it.box=0}it.due=now+IV[it.box];it.last=now;
-  const c=S.cats[q.cat]||(S.cats[q.cat]={n:0,ok:0,ms:0,r:[]});
-  c.n++;c.ms+=ms;c.r.push(ok?1:0);if(c.r.length>40)c.r.shift();if(ok)c.ok++;
   const sc=sess.byCat[q.cat]||(sess.byCat[q.cat]={n:0,ok:0});sc.n++;if(ok)sc.ok++;
-  const d=S.days[today()]||(S.days[today()]={n:0,ok:0,s:0});d.n++;if(ok)d.ok++;
-  const b=S.buffer[q.key];let freed=false;
-  if(!ok){S.buffer[q.key]={s:0,f:(b?b.f:0)+1,t:now};schedule(q.key,rnd(2,3));if(sess.mode==='buf'&&!sess.pool.includes(q.key))sess.pool.push(q.key)}
-  else if(b){b.s++;if(b.s>=3){delete S.buffer[q.key];freed=true;sess.freed++;sess.pool=sess.mode==='buf'?sess.pool.filter(k=>k!==q.key):sess.pool}else schedule(q.key,rnd(3,4))}
+  const wasBuf=!!S.buffer[q.key];
+  const freed=!!addLocal({t:now,k:'a',q:q.key,o:ok?1:0,ms}).freed;
+  if(!ok){schedule(q.key,rnd(2,3));if(sess.mode==='buf'&&!sess.pool.includes(q.key))sess.pool.push(q.key)}
+  else if(freed){sess.freed++;if(sess.mode==='buf')sess.pool=sess.pool.filter(k=>k!==q.key)}
+  else if(wasBuf)schedule(q.key,rnd(3,4));
   if(ok){
     sess.ok++;sess.combo++;sess.maxCombo=Math.max(sess.maxCombo,sess.combo);
     const mult=1+Math.min(4,Math.floor(sess.combo/3))*.5,bonus=sess.qLim?Math.round(5*Math.max(0,1-sess.qEl/sess.qLim)):0;
@@ -582,13 +676,15 @@ function cont(){
 function endSession(){
   if(!sess)return;
   if(sess.n>0){
-    S.sessions.push({d:Date.now(),m:sess.mode,n:sess.n,ok:sess.ok,score:sess.score,combo:sess.maxCombo});
-    if(S.sessions.length>200)S.sessions.shift();
-    const d=S.days[today()]||(S.days[today()]={n:0,ok:0,s:0});d.s++;
     sess.record=sess.score>S.best.score;
-    S.best.score=Math.max(S.best.score,sess.score);S.best.combo=Math.max(S.best.combo,sess.maxCombo);save();
+    const now=new Date(),off=-now.getTimezoneOffset(),pad=n=>String(Math.abs(n)).padStart(2,'0');
+    const iso=today(now)+'T'+pad(now.getHours())+':'+pad(now.getMinutes())+':'+pad(now.getSeconds())+(off>=0?'+':'-')+pad(Math.trunc(off/60))+':'+pad(off%60);
+    const by={};for(const c in sess.byCat)by[c]=[sess.byCat[c].ok,sess.byCat[c].n];
+    addLocal({t:now.getTime(),k:'s',m:sess.mode,n:sess.n,ok:sess.ok,sc:sess.score,cb:sess.maxCombo,fr:sess.freed,bc:Object.keys(S.buffer).length,by,iso,dn:S.dev.name});
+    save();
   }
   sess.state='end';view='end';render();
+  syncNow();
 }
 function vibrate(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 
@@ -661,7 +757,7 @@ function renderHome(){
       <div>
         <div class="eyebrow">試験 · 15 jul 2027</div>
         <div class="h">${cp>0?`Checkpoint Fase 1 (50%) en <span style="color:var(--accent)">${cp} días</span>`:'Fase 2 en marcha'}</div>
-        <div class="pills"><span class="pill">🔥 ${streak()} días</span><span class="pill">✓ ${td.n} hoy${td.n?' · '+Math.round(100*td.ok/td.n)+'%':''}</span><span class="pill" style="color:var(--warn)">↻ ${bufN}</span></div>
+        <div class="pills"><span class="pill">🔥 ${streak()} días</span><span class="pill">✓ ${td.n} hoy${td.n?' · '+Math.round(100*td.ok/td.n)+'%':''}</span><span class="pill" style="color:var(--warn)">↻ ${bufN}</span><button class="pill" id="syncPill" data-act="syncpill" data-s="${syncLabel()[1]}">${syncLabel()[0]}</button></div>
       </div>
     </section>
     <button class="start" data-act="start"><span class="play">▶</span><span><b>Ráfaga de ${S.settings.dur} s</b><small>${mode[1]} · Enter</small></span></button>
@@ -680,6 +776,13 @@ function renderHome(){
       <div class="set"><span>Tiempo por pregunta</span><span class="seg"><button data-press="1" class="${S.settings.pressure?'on':''}">Sí</button><button data-press="0" class="${!S.settings.pressure?'on':''}">No</button></span></div>
       <div class="set"><span>Furigana</span><span class="seg"><button data-furi="1" class="${S.settings.furi?'on':''}">Sí</button><button data-furi="0" class="${!S.settings.furi?'on':''}">No</button></span></div>
       <div class="set"><span>Tema</span><span class="seg">${[['auto','Auto'],['light','和紙'],['dark','夜']].map(([k,n])=>`<button data-theme="${k}" class="${S.settings.theme===k?'on':''}">${n}</button>`).join('')}</span></div>
+      <div class="syncbox"><b>☁ Sincronización y Notion</b>
+        <div class="muted small">Comparte el progreso entre teléfono y PC y envía cada ráfaga a tu página de Notion. Sin conexión todo sigue funcionando y se envía después.</div>
+        <label>URL del Worker<input id="sUrl" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://mext-rafaga-sync.TU-CUENTA.workers.dev" value="${esc(S.settings.syncUrl)}"></label>
+        <label>Clave de la app<input id="sKey" type="password" autocomplete="off" spellcheck="false" placeholder="La misma que guardaste en el Worker" value="${esc(S.settings.syncKey)}"></label>
+        <div class="set"><span>Este dispositivo</span><span class="seg">${['Teléfono','PC'].map(n=>`<button data-dev="${n}" class="${S.dev.name===n?'on':''}">${n}</button>`).join('')}</span></div>
+        <div class="row" style="flex-wrap:wrap"><button class="btn" data-act="syncsave">Guardar y sincronizar</button><span class="muted small">${S.lastSync?'Última: '+new Date(S.lastSync).toLocaleString('es',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'Nunca sincronizado'} · ${S.outbox.length} pend.</span></div>
+      </div>
       <div class="row" style="flex-wrap:wrap"><button class="btn" data-act="export">Exportar respaldo</button><button class="btn" data-act="import">Importar</button><span class="sp"></span><button class="btn" data-act="reset" style="color:var(--bad)">Borrar todo</button></div>
     </div></details>
     <div class="foot"><span class="kbd">Enter</span> empezar · <span class="kbd">1</span>–<span class="kbd">4</span> responder · <span class="kbd">Enter</span> seguir · <span class="kbd">Esc</span> salir · <span class="kbd">S</span> estadísticas<br>Agrega <span class="kbd">#go</span> a la URL para arrancar directo</div>`;
@@ -750,7 +853,7 @@ function render(){applyTheme();if(view==='home')renderHome();else if(view==='dri
 /* ---------- Eventos ---------- */
 function exportData(){
   const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));
+  const{items,buffer,cats,days,sessions,best,...p}=S;a.href=URL.createObjectURL(new Blob([JSON.stringify(p)],{type:'application/json'}));
   a.download=`mext-rafaga-respaldo-${today()}.json`;document.body.appendChild(a);a.click();a.remove();
 }
 function onClick(e){
@@ -763,14 +866,18 @@ function onClick(e){
   if(d.press){S.settings.pressure=d.press==='1';save();render();return}
   if(d.furi){S.settings.furi=d.furi==='1';save();render();return}
   if(d.theme){S.settings.theme=d.theme;save();render();return}
+  if(d.dev){S.dev.name=d.dev;save();render();return}
   switch(d.act){
     case 'start':case 'again':startSession(S.settings.mode);break;
     case 'home':view='home';sess=null;render();break;
     case 'stats':view='stats';render();break;
     case 'quit':endSession();break;
     case 'export':exportData();break;
+    case 'syncpill':{const det=document.querySelector('details.card');if(!syncConfigured()&&det){det.open=true;det.scrollIntoView({behavior:'smooth'})}else syncNow(true);break}
+    case 'syncsave':S.settings.syncUrl=$('#sUrl').value.trim();S.settings.syncKey=$('#sKey').value.trim();save();
+      if(!syncConfigured()){toast('Sincronización desactivada');render()}else syncNow(true);break;
     case 'import':$('#imp').click();break;
-    case 'reset':if(confirm('¿Borrar todo el progreso? Exporta un respaldo antes si lo quieres conservar.')){S=fresh();save();render();toast('Progreso borrado')}break;
+    case 'reset':if(confirm(syncConfigured()?'¿Borrar el progreso de ESTE dispositivo? Lo que ya está en la nube se volverá a descargar al sincronizar.':'¿Borrar todo el progreso? Exporta un respaldo antes si lo quieres conservar.')){const keep=S.settings;S=fresh();S.settings=keep;derivedReset(S);save();render();toast('Progreso borrado');syncNow()}break;
   }
 }
 function onKey(e){
@@ -789,10 +896,20 @@ if(typeof document!=='undefined'){
   document.addEventListener('keydown',onKey);
   $('#imp').addEventListener('change',e=>{
     const f=e.target.files[0];if(!f)return;const r=new FileReader();
-    r.onload=()=>{try{const d=JSON.parse(r.result);if(d.v!==1)throw 0;S=Object.assign(fresh(),d);save();render();toast('Respaldo importado')}catch(err){toast('Archivo no válido')}};
+    r.onload=()=>{try{const d=JSON.parse(r.result);
+      if(d.v===2&&Array.isArray(d.ev)){const have=new Set(S.ev.map(e=>e.i));for(const e of d.ev)if(!have.has(e.i)){S.ev.push(e);S.outbox.push(e.i)}}
+      else if(d.v===1){const e={t:1,k:'b',snap:{items:d.items,buffer:d.buffer,cats:d.cats,days:d.days,sessions:d.sessions,best:d.best}};e.i=S.dev.id+'-imp-'+rid();e.d=S.dev.id;S.ev.push(e);S.outbox.push(e.i)}
+      else throw 0;
+      rebuild();save();render();toast('Respaldo importado y fusionado');syncNow()}catch(err){toast('Archivo no válido')}};
     r.readAsText(f);e.target.value='';
   });
+  try{load()}catch(e){S=fresh();derivedReset(S)}
   render();requestAnimationFrame(tick);
+  syncNow();
+  addEventListener('online',()=>syncNow());
+  addEventListener('offline',()=>{syncState=syncConfigured()?'offline':'off';refreshSync()});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncNow()});
+  setInterval(()=>{if(view==='home'||view==='stats')syncNow()},120000);
   if(location.hash==='#go')startSession(S.settings.mode);
   // PWA: funciona offline tras la primera visita y pide que Android no borre los datos
   if(location.protocol.startsWith('http')&&'serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});

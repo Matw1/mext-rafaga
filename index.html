@@ -241,6 +241,7 @@ button.pill{cursor:pointer;font-family:inherit}
 .esub{display:flex;margin:0 0 14px}.esub button{flex:1}
 .ebuscar{width:100%;font:inherit;font-size:1rem;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:46px;margin-bottom:6px}
 .eref summary .ek{display:block;margin-bottom:2px}
+.pdom{color:var(--part)}.prit{color:var(--jita)}
 .foot{margin-top:22px;text-align:center;font-size:.78rem;color:var(--muted);line-height:2}
 
 @media (max-width:420px){.prompt{font-size:1.38rem}.opt{font-size:1.18rem}.ring{width:92px;height:92px}.ring .in b{font-size:1.6rem}.hero{gap:12px;padding:14px}}
@@ -799,7 +800,7 @@ function renderHome(){
       <div>
         <div class="eyebrow">試験 · 15 jul 2027</div>
         <div class="h">${cp>0?`Checkpoint Fase 1 (50%) en <span style="color:var(--accent)">${cp} días</span>`:'Fase 2 en marcha'}</div>
-        <div class="pills"><span class="pill">🔥 ${streak()} días</span><span class="pill">✓ ${td.n} hoy${td.n?' · '+Math.round(100*td.ok/td.n)+'%':''}</span><span class="pill" style="color:var(--warn)">↻ ${bufN}</span><button class="pill" id="syncPill" data-act="syncpill" data-s="${syncLabel()[1]}">${syncLabel()[0]}</button></div>
+        <div class="pills">${dominioPill()}${ritmoPill()}<span class="pill">🔥 ${streak()} días</span><span class="pill">✓ ${td.n} hoy${td.n?' · '+Math.round(100*td.ok/td.n)+'%':''}</span><span class="pill" style="color:var(--warn)">↻ ${bufN}</span><button class="pill" id="syncPill" data-act="syncpill" data-s="${syncLabel()[1]}">${syncLabel()[0]}</button></div>
       </div>
     </section>
     <button class="start" data-act="start"><span class="play">▶</span><span><b>Ráfaga de ${S.settings.dur} s</b><small>${mode[1]} · Enter</small></span></button>
@@ -1010,7 +1011,7 @@ async function eSync(manual){
     E.ses=next;E.lastFetch=Date.now();eState='ok';eSave();
     if(manual)toast('Sesiones actualizadas');
   }catch(err){eState=err.badkey?'badkey':(navigator.onLine===false||err.name==='TypeError'||err.name==='AbortError')?'offline':'error';eErr=err.message;if(manual)toast(eState==='offline'?'Sin conexión: se usará lo guardado':'No se pudo actualizar: '+err.message)}
-  finally{eBusy=false;if(view==='estudio'||(view==='sesion'&&!document.activeElement.matches('textarea,input')))render();else eRefresh()}
+  finally{eBusy=false;const typing=document.activeElement&&document.activeElement.matches('textarea,input');if(view==='estudio'||((view==='home'||view==='sesion')&&!typing))render();else eRefresh()}
 }
 let eErr='';
 function eStatus(){
@@ -1082,6 +1083,38 @@ function renderSesion(){
       :`<button class="btn eprimary" data-e="entregar">Entregar</button>`}
       ${remota?'':'<button class="btn" data-e="copiar">Copiar respuestas para el chat</button>'}</div>
   </div>`;
+}
+
+/* ---------- Dominio de la fase (lo escribe el instructor en Notion) ---------- */
+function eDominio(){
+  let best=null;
+  for(const s of Object.values(E.ses)){
+    if(typeof s.dominio!=='number')continue;
+    if(!best||s.fecha>best.fecha||(s.fecha===best.fecha&&(s.edited||'')>(best.edited||'')))best=s;
+  }
+  if(!best)return null;
+  let v=best.dominio;if(v>0&&v<1)v*=100; // por si lo escribió como 0.42
+  return{fase:best.fase||'Fase',v:Math.max(0,Math.min(100,Math.round(v))),fecha:best.fecha};
+}
+function dominioPill(){
+  const d=eDominio();if(!d)return'';
+  return `<span class="pill pdom" title="Lo estima el instructor; no lo calcula la app">📈 Dominio ${esc(d.fase)}: ${d.v}% · instructor, ${esc(eFechaCorta(d.fecha))}</span>`;
+}
+const eFechaCorta=f=>new Date(f+'T12:00:00').toLocaleDateString('es',{day:'numeric',month:'short'}).replace('.','');
+/* Tiempo diario necesario: (meta − horas acumuladas que puso el instructor) ÷ días hasta el examen */
+function eRitmo(){
+  let best=null;
+  for(const s of Object.values(E.ses)){if(typeof s.horas!=='number')continue;if(!best||s.fecha>best.fecha||(s.fecha===best.fecha&&(s.edited||'')>(best.edited||'')))best=s}
+  if(!best)return null;
+  const meta=typeof best.meta==='number'&&best.meta>0?best.meta:500,dias=daysTo('2027-07-15');
+  if(dias<=0)return null;
+  const falta=Math.max(0,meta-best.horas),min=Math.ceil(falta*60/dias);
+  return{min,horas:best.horas,meta,dias,fecha:best.fecha};
+}
+function ritmoPill(){
+  const r=eRitmo();if(!r)return'';
+  const t=r.min>=60?`${Math.floor(r.min/60)} h ${r.min%60} min`:`${r.min} min`;
+  return `<span class="pill prit" title="${r.horas} h de ${r.meta} h (instructor, ${esc(eFechaCorta(r.fecha))}) · faltan ${r.dias} días">⏱ Debes estudiar ${t}/día</span>`;
 }
 
 /* ---------- Referencia: todo el material 📘 Consulta ya explicado ---------- */

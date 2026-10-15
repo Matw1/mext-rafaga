@@ -1008,7 +1008,7 @@ function eTick(){
 function eHeaders(){return{'Authorization':'Bearer '+S.settings.syncKey,'Content-Type':'application/json'}}
 const eUrl=p=>S.settings.syncUrl.replace(/\/+$/,'')+p;
 async function ePost(p,body){
-  const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),15000);
+  const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),45000); // el Worker espacia las consultas a Notion
   try{const r=await fetch(eUrl(p),{method:'POST',headers:eHeaders(),body:JSON.stringify(body),signal:ctl.signal});
     if(r.status===401)throw Object.assign(new Error('Clave inválida'),{badkey:1});
     if(!r.ok)throw new Error((await r.json().catch(()=>({}))).error||('HTTP '+r.status));return r.json()}
@@ -1021,10 +1021,19 @@ async function eSync(manual){
   eBusy=true;eState='busy';eRefresh();
   try{
     while(E.outbox.length){await ePost('/estudio/entrega',E.outbox[0]);E.outbox.shift();eSave()}
-    const known={};for(const s of Object.values(E.ses))if(s.blocks)known[s.id]=s.edited;
-    const r=await ePost('/estudio/lista',{known});
+    // El Worker baja las sesiones por partes (límite de consultas): repetimos mientras diga 'more'
+    let r,guard=0;
+    do{
+      const known={};for(const s of Object.values(E.ses))if(s.blocks&&s.edited)known[s.id]=s.edited;
+      r=await ePost('/estudio/lista',{known});
+      const parcial={...E.ses};
+      for(const s of r.sesiones||[]){const old=E.ses[s.id];
+        // si quedó pendiente, conserva lo guardado y su fecha de edición para volver a pedirla
+        parcial[s.id]=s.blocks?{...s}:{...s,blocks:old&&old.blocks||null,edited:old&&old.blocks?old.edited:null}}
+      E.ses=parcial;eSave();if(r.more&&view==='estudio')eRefresh();
+    }while(r.more&&++guard<30);
     const next={};
-    for(const s of r.sesiones||[]){const old=E.ses[s.id];next[s.id]={...s,blocks:s.blocks||(old&&old.blocks)||null}}
+    for(const s of r.sesiones||[])next[s.id]=E.ses[s.id];
     const oldest=(r.sesiones||[]).reduce((m,s)=>!m||s.fecha<m?s.fecha:m,'');
     for(const[id,s]of Object.entries(E.ses))if(!next[id]&&(E.work[id]||(r.sesiones||[]).length>=40&&s.fecha<oldest))next[id]=s; // conserva lo trabajado y lo antiguo
     E.ses=next;E.lastFetch=Date.now();eState='ok';eSave();

@@ -1205,10 +1205,13 @@ function renderRef(){
     ${eSubTabs()}
     ${items.length?`<input type="search" id="eBuscar" class="ebuscar" placeholder="Buscar en el material (ej. で, contadores, 消す)" lang="ja" autocapitalize="off" autocorrect="off" spellcheck="false">
     <div class="muted small" id="eCuenta">${items.length} tema(s) explicados</div>
-    <div id="eRefList">${items.map((it,i)=>`<details class="esec econs eref" data-q="${esc(it.q)}"><summary><span class="ek">${esc(eFecha(it.s.fecha))} · ${esc(it.s.titulo||'')}</span> ${esc(it.sec.title||'Consulta')}</summary><div class="ebody">${eBlocks(it.sec.blocks)}</div></details>`).join('')}</div>`
+    <div id="eRefList">${items.map((it,i)=>`<details class="esec econs eref" data-q="${esc(it.q)}"><summary><span class="ek">${esc(eFecha(it.s.fecha))} · ${esc(it.s.titulo||'')}</span> ${esc(it.sec.title||'Consulta')}</summary><div class="ebody">${eBlocks(sinTablas(it.sec.blocks))}</div></details>`).join('')}</div>`
     :'<div class="ecard eempty"><b>Aún no hay material de consulta.</b><span class="muted small">Aquí se juntará automáticamente todo lo que el instructor marque como «📘 Consulta» en tus sesiones.</span></div>'}
   </div>`;
 }
+/* Referencia = solo teoría escrita: cada tabla se reemplaza por un aviso (las tablas viven en Materia) */
+function sinTablas(list){return (list||[]).map(b=>b.type==='table'?{type:'paragraph',rt:[{t:'(La tabla está en 📊 Materia)',i:1}]}:b.kids?{...b,kids:sinTablas(b.kids)}:b)}
+
 /* ---------- Materia: solo las tablas de cada clase, por día ---------- */
 function eTables(list,out){for(const b of list||[]){if(b.type==='table')out.push(b);else if(b.kids)eTables(b.kids,out)}return out}
 function materiaDias(){

@@ -923,7 +923,10 @@ function render(){applyTheme();const y=window.scrollY;if(view==='home')renderHom
 const E_KEY='mextRafaga.estudio.v1';
 let E={ses:{},work:{},outbox:[],lastFetch:0};
 let eState='off',eBusy=false,eOpen=null; // eOpen = id de la sesión abierta
-function eLoad(){try{const d=JSON.parse(localStorage.getItem(E_KEY));if(d&&d.ses)E=Object.assign({ses:{},work:{},outbox:[],lastFetch:0},d)}catch(e){}}
+function eLoad(){try{const d=JSON.parse(localStorage.getItem(E_KEY));if(d&&d.ses)E=Object.assign({ses:{},work:{},outbox:[],lastFetch:0},d)}catch(e){}
+  // Versiones anteriores podían marcar como «al día» sesiones que solo bajaron a medias:
+  // se olvidan esas marcas una vez para volver a descargar todo (se conserva lo guardado mientras tanto).
+  if((E.cv||0)<2){for(const s of Object.values(E.ses))s.edited=null;E.cv=2;eSave()}}
 function eSave(){try{localStorage.setItem(E_KEY,JSON.stringify(E))}catch(e){}}
 const eWork=id=>E.work[id]||(E.work[id]={ans:{},tim:{},sent:null});
 

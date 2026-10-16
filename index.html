@@ -1326,6 +1326,16 @@ function eInput(el){
   if(k==='hecho')eSave();
 }
 
+/* ---------- Actualización de la app ---------- */
+let swReg=null,recargaPendiente=false;
+function buscarVersion(){try{swReg&&swReg.update()}catch(e){}}
+function intentarRecarga(){
+  if(!recargaPendiente)return;
+  const escribiendo=document.activeElement&&document.activeElement.matches('input,textarea');
+  if((view==='drill'&&sess&&sess.state!=='end')||escribiendo)return; // espera a que termines
+  recargaPendiente=false;eSave&&eSave();save();location.reload();
+}
+
 /* ---------- Eventos ---------- */
 function exportData(){
   const a=document.createElement('a');
@@ -1393,11 +1403,17 @@ if(typeof document!=='undefined'){
   addEventListener('online',()=>{syncNow();eSync()});
   eSync();
   addEventListener('offline',()=>{syncState=syncConfigured()?'offline':'off';refreshSync()});
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden){syncNow();if(view==='estudio')eSync()}else eSave()});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden){syncNow();eSync();buscarVersion()}else eSave()});
+  setInterval(()=>{if(!document.hidden&&view!=='drill')eSync()},180000);
   setInterval(()=>{if(view==='home'||view==='stats')syncNow()},120000);
   if(location.hash==='#go')startSession(S.settings.mode);
   // PWA: funciona offline tras la primera visita y pide que Android no borre los datos
-  if(location.protocol.startsWith('http')&&'serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+  if(location.protocol.startsWith('http')&&'serviceWorker' in navigator){
+    const habia=!!navigator.serviceWorker.controller;
+    navigator.serviceWorker.register('sw.js').then(r=>{swReg=r}).catch(()=>{});
+    navigator.serviceWorker.addEventListener('controllerchange',()=>{if(habia){recargaPendiente=true;intentarRecarga()}});
+    setInterval(intentarRecarga,5000);
+  }
   try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
 }
 </script>

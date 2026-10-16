@@ -251,6 +251,9 @@ button.pill{cursor:pointer;font-family:inherit}
 .emat summary{cursor:pointer;list-style:none}.emat summary::-webkit-details-marker{display:none}.emat summary .ek{display:block}
 .emtema{font-size:.8rem;font-weight:700;color:var(--muted);margin:12px 0 2px}
 .esub button{white-space:nowrap;padding:8px 6px}
+.echips{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap;align-self:flex-start}
+.enota{font-size:.72rem;font-weight:800;padding:2px 9px;border-radius:99px;background:var(--surface2);font-variant-numeric:tabular-nums}
+.enota[data-n="a"]{color:var(--ok)}.enota[data-n="b"]{color:var(--warn)}.enota[data-n="c"]{color:var(--bad)}
 .foot{margin-top:22px;text-align:center;font-size:.78rem;color:var(--muted);line-height:2}
 
 @media (max-width:420px){.prompt{font-size:1.38rem}.opt{font-size:1.18rem}.ring{width:92px;height:92px}.ring .in b{font-size:1.6rem}.hero{gap:12px;padding:14px}}
@@ -1059,7 +1062,13 @@ function eRefresh(){const el=document.getElementById('eStat');if(el){const[t,c]=
 /* ---------- Vistas ---------- */
 const eFecha=f=>new Date(f+'T12:00:00').toLocaleDateString('es',{weekday:'long',day:'numeric',month:'long'});
 const E_CHIP={Publicada:'Por hacer',Entregada:'Entregada',Corregida:'Corregida'};
-function eChip(s){const w=E.work[s.id],st=w&&w.sent&&s.estado==='Publicada'?'Entregada':s.estado;return `<span class="echip" data-st="${esc(st)}">${esc(E_CHIP[st]||st)}${w&&w.sent&&E.outbox.some(o=>o.page===s.id)?' · en cola':''}</span>`}
+function eChip(s){const w=E.work[s.id],st=w&&w.sent&&s.estado==='Publicada'?'Entregada':s.estado;return `<span class="echips"><span class="echip" data-st="${esc(st)}">${esc(E_CHIP[st]||st)}${w&&w.sent&&E.outbox.some(o=>o.page===s.id)?' · en cola':''}</span>${eNota(s)}</span>`}
+// Calificación 1–10 que pone el instructor: solo una referencia, la app no la usa para nada
+function eNota(s){
+  if(typeof s.nota!=='number'||s.nota<0)return'';
+  const v=Math.min(10,Math.round(s.nota*10)/10);
+  return `<span class="enota" data-n="${v>=8?'a':v>=6?'b':'c'}" title="Calificación del instructor (referencia)">${String(v).replace('.',',')}/10</span>`;
+}
 function tabsHtml(on){return `<nav class="tabs" role="tablist"><button role="tab" aria-selected="${on==='juego'}" data-e="tab-juego" class="${on==='juego'?'on':''}">🎮 Juego</button><button role="tab" aria-selected="${on==='estudio'}" data-e="tab-estudio" class="${on==='estudio'?'on':''}">📝 Estudio</button></nav>`}
 let eSub='ses';
 function renderEstudio(){

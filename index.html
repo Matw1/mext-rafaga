@@ -1028,10 +1028,10 @@ async function eSync(manual){
   try{
     while(E.outbox.length){await ePost('/estudio/entrega',E.outbox[0]);E.outbox.shift();eSave()}
     // El Worker baja las sesiones por partes (límite de consultas): repetimos mientras diga 'more'
-    let r,guard=0;
+    let r,guard=0;const ronda=rid()+Date.now().toString(36); // misma ronda en todas las vueltas
     do{
       const known={};for(const s of Object.values(E.ses))if(s.blocks&&s.edited)known[s.id]=s.edited;
-      r=await ePost('/estudio/lista',{known});
+      r=await ePost('/estudio/lista',{known,ronda,fresh:!!manual});
       const parcial={...E.ses};
       for(const s of r.sesiones||[]){const old=E.ses[s.id];
         // si quedó pendiente, conserva lo guardado y su fecha de edición para volver a pedirla

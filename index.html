@@ -1667,7 +1667,7 @@ function renderProg(){
   // 1) Calificación por sesión
   const todas=ses.filter(s=>typeof s.nota==='number'),notas=todas.slice(-14);
   const prom=todas.length?todas.reduce((a,s)=>a+Math.min(10,s.nota),0)/todas.length:null,nf=v=>String(Math.round(v*10)/10).replace('.',',');
-  html+=card('Calificación por sesión',prom==null?'La nota de 1 a 10 que pone el instructor':`Rojo < 7 · amarillo 7–8,5 · verde > 8,5 · <b style="color:${notaColor(prom)}">promedio ${nf(prom)}/10</b> (${todas.length} ${todas.length===1?'sesión':'sesiones'}) · línea punteada = promedio`,notas.length?barras(notas.map(s=>({v:Math.min(10,s.nota),c:notaColor(Math.min(10,s.nota)),label:eFechaCorta(s.fecha),tip:`${eFechaCorta(s.fecha)} · ${s.titulo} · ${nf(s.nota)}/10`})),{max:10,paso:2,fmt:nf,refV:prom,refTxt:'Prom. '+nf(prom),color:'var(--part)'})
+  html+=card('Calificación por sesión',prom==null?'La nota de 1 a 10 que pone el instructor':`<b style="color:${notaColor(prom)}">Promedio ${nf(prom)}/10</b> (${todas.length} ${todas.length===1?'sesión':'sesiones'})`,notas.length?barras(notas.map(s=>({v:Math.min(10,s.nota),c:notaColor(Math.min(10,s.nota)),label:eFechaCorta(s.fecha),tip:`${eFechaCorta(s.fecha)} · ${s.titulo} · ${nf(s.nota)}/10`})),{max:10,paso:2,fmt:nf,refV:prom,refTxt:'Prom. '+nf(prom),color:'var(--part)'})
     +tabla(['Fecha','Sesión','Nota'],todas.map(s=>[s.fecha,s.titulo,String(s.nota)]).concat([['','Promedio',nf(prom)]])):vacio('Aparecerá cuando el instructor ponga la Calificación en tus sesiones.'));
   // 2) Dominio de la fase actual
   const conDom=ses.filter(s=>typeof s.dominio==='number'),fase=conDom.length?conDom[conDom.length-1].fase:null,dom=conDom.filter(s=>s.fase===fase);

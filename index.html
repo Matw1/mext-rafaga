@@ -261,6 +261,10 @@ button.pill{cursor:pointer;font-family:inherit}
 .ecom{display:flex;gap:8px;margin-top:6px;padding:8px 10px;border-radius:10px;background:var(--surface);font-size:.95rem}
 .eresp{padding:8px 12px;border-radius:10px;background:var(--surface);border:1px solid var(--line);font-size:1.05rem}
 .ecuenta{margin-left:8px;font-size:.78rem;font-weight:800;color:var(--muted)}
+.emal{text-decoration:underline wavy var(--bad);text-decoration-thickness:2px;text-underline-offset:4px;color:var(--bad);font-weight:700}
+.ebien{color:var(--ok);font-weight:800;text-decoration:underline;text-underline-offset:4px}
+.efix{margin-top:6px;padding:8px 12px;border-radius:10px;background:var(--surface);border:1px dashed var(--ok);font-size:1.05rem}
+.efalta{color:var(--bad);font-weight:900;margin:0 1px}
 .foot{margin-top:22px;text-align:center;font-size:.78rem;color:var(--muted);line-height:2}
 
 @media (max-width:420px){.prompt{font-size:1.38rem}.opt{font-size:1.18rem}.ring{width:92px;height:92px}.ring .in b{font-size:1.6rem}.hero{gap:12px;padding:14px}}
@@ -1129,19 +1133,56 @@ function eBuscarGrupo(grupos,sec,orden){
   return grupos.find(g=>g.titulo&&g.titulo===eNorm(sec.title))||grupos[orden]||null;
 }
 const V_TXT={ok:'✓ Bien',bad:'✗ Revisar',mid:'◐ Casi'};
-function eVerdHtml(c){
+// «✗ 窓を閉めました — con 閉める…»: lo anterior al guion es la forma correcta que escribió el instructor
+function eSplitFix(c){
+  if(!c||(c.v!=='bad'&&c.v!=='mid'))return null;
+  const t=ptxt(c.rt).trim(),m=t.match(/^(.+?)\s+[—–]\s+([\s\S]*)$/)||t.match(/^(.+?)\s+-\s+([\s\S]*)$/);
+  if(!m)return null;
+  const fix=m[1].replace(/^(Casi|Correcto|Correcta)\s*[:：]\s*/i,'').replace(/^→\s*/,'').trim();
+  return fix?{fix,com:m[2].trim()}:null;
+}
+// Diferencias letra por letra (LCS) entre la respuesta y la forma correcta; los espacios no cuentan.
+function eDiff(a,b){
+  const A=[...a],B=[...b],n=A.length,m=B.length;
+  if(!n||!m||n*m>40000)return null;
+  const D=Array.from({length:n+1},()=>new Uint16Array(m+1));
+  for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)D[i][j]=A[i]===B[j]?D[i+1][j+1]+1:Math.max(D[i+1][j],D[i][j+1]);
+  const ops=[];let i=0,j=0; // '=' igual · '-' sobra/está mal en la respuesta · '+' falta en la respuesta
+  while(i<n&&j<m){if(A[i]===B[j]){ops.push(['=',A[i]]);i++;j++}else if(D[i+1][j]>=D[i][j+1])ops.push(['-',A[i++]]);else ops.push(['+',B[j++]])}
+  while(i<n)ops.push(['-',A[i++]]);while(j<m)ops.push(['+',B[j++]]);
+  const blanco=ch=>/s/.test(ch);
+  let sa='',sb='',ma=false,mb=false,falta=false,prev='';
+  for(const[o,ch]of ops){
+    if(o!=='-'&&ma){sa+='</span>';ma=false}
+    if(o!=='+'&&mb){sb+='</span>';mb=false}
+    if(o!=='+')falta=false;
+    if(o==='='){sa+=esc(ch);sb+=esc(ch)}
+    else if(o==='-'){if(!blanco(ch)&&!ma){sa+='<span class="emal">';ma=true}sa+=esc(ch)}
+    else{if(!blanco(ch)){if(!falta&&prev!=='-'){sa+='<span class="efalta" title="aquí falta algo">‸</span>'}falta=true;if(!mb){sb+='<span class="ebien">';mb=true}}sb+=esc(ch)}
+    if(!blanco(ch))prev=o;
+  }
+  return{a:sa+(ma?'</span>':''),b:sb+(mb?'</span>':'')};
+}
+function eVerdHtml(c,resp){
   if(!c)return'';
+  const sp=eSplitFix(c);
+  if(sp){
+    const d=resp&&[...resp].length>2?eDiff(resp,sp.fix):null; // en la ráfaga (una letra) no se subraya
+    return `${c.v?`<span class="everd" data-v="${c.v}">${V_TXT[c.v]}</span>`:''}<div class="efix">✏️ <span lang="ja">${d?d.b:esc(sp.fix)}</span></div>${sp.com||c.kids?`<div class="ecom"><span>🧑‍🏫</span><div>${esc(sp.com)}${c.kids?eBlocks(c.kids):''}</div></div>`:''}`;
+  }
   return `${c.v?`<span class="everd" data-v="${c.v}">${V_TXT[c.v]}</span>`:''}${(c.rt&&ptxt(c.rt).trim())||c.kids?`<div class="ecom"><span>🧑‍🏫</span><div>${eRich(c.rt)}${c.kids?eBlocks(c.kids):''}</div></div>`:''}`;
 }
 function eItemHtml(sid,sec,b,idx,locked,corr,remoto){
+  if(remoto===undefined&&locked&&corr){const a=eWork(sid).ans[b.id]||{};remoto={r:a.r||'',duda:!!a.duda,nota:a.nota||'',hecho:!!a.hecho}} // ya entregada aquí: misma vista corregida
   if(remoto!==undefined){ // sesión entregada desde otro dispositivo: respuesta tomada de 📤
     const r=remoto||{};
     const resp=sec.kind==='fuera'?`<p>${r.hecho?'☑':'☐'} ${eRich(b.rt)}</p>`
-      :`<div class="eprompt"><span class="enum">${idx+1}</span><div>${eRich(b.rt)}</div></div><div class="eresp" lang="ja">${r.r?esc(r.r):'<span class="muted">(sin respuesta)</span>'}</div>`;
-    return `<div class="eitem${corr&&corr.v?' v-'+corr.v:''}">${resp}${r.duda?`<div class="muted small">❓ Tu duda: ${esc(r.nota||'')}</div>`:''}${eVerdHtml(corr)}</div>`;
+      :`<div class="eprompt"><span class="enum">${idx+1}</span><div>${eRich(b.rt)}</div></div><div class="eresp" lang="ja">${r.r?eRespHtml(r.r,corr):'<span class="muted">(sin respuesta)</span>'}</div>`;
+    return `<div class="eitem${corr&&corr.v?' v-'+corr.v:''}">${resp}${r.duda?`<div class="muted small">❓ Tu duda: ${esc(r.nota||'')}</div>`:''}${eVerdHtml(corr,r.r)}</div>`;
   }
   return eItemHtmlBase(sid,sec,b,idx,locked).replace(/^<div class="eitem">/,`<div class="eitem${corr&&corr.v?' v-'+corr.v:''}">`).replace(/<\/div>$/,eVerdHtml(corr)+'</div>');
 }
+function eRespHtml(r,c){const sp=eSplitFix(c),d=sp&&[...r].length>2?eDiff(r,sp.fix):null;return d?d.a:esc(r)}
 function eItemHtmlBase(sid,sec,b,idx,locked){
   const w=eWork(sid),a=w.ans[b.id]||{},dis=locked?'disabled':'';
   const ja='lang="ja" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false"';

@@ -254,6 +254,13 @@ button.pill{cursor:pointer;font-family:inherit}
 .echips{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap;align-self:flex-start}
 .enota{font-size:.72rem;font-weight:800;padding:2px 9px;border-radius:99px;background:var(--surface2);font-variant-numeric:tabular-nums}
 .enota[data-n="a"]{color:var(--ok)}.enota[data-n="b"]{color:var(--warn)}.enota[data-n="c"]{color:var(--bad)}
+.eitem.v-ok,.eitem.v-bad,.eitem.v-mid{border-left:4px solid;padding-left:12px;border-radius:4px;margin:6px 0}
+.eitem.v-ok{border-color:var(--ok);background:var(--okbg)}.eitem.v-bad{border-color:var(--bad);background:var(--badbg)}.eitem.v-mid{border-color:var(--warn);background:var(--warnbg)}
+.everd{display:inline-block;margin-top:8px;font-size:.78rem;font-weight:800;padding:2px 10px;border-radius:99px;background:var(--surface)}
+.everd[data-v="ok"]{color:var(--ok)}.everd[data-v="bad"]{color:var(--bad)}.everd[data-v="mid"]{color:var(--warn)}
+.ecom{display:flex;gap:8px;margin-top:6px;padding:8px 10px;border-radius:10px;background:var(--surface);font-size:.95rem}
+.eresp{padding:8px 12px;border-radius:10px;background:var(--surface);border:1px solid var(--line);font-size:1.05rem}
+.ecuenta{margin-left:8px;font-size:.78rem;font-weight:800;color:var(--muted)}
 .foot{margin-top:22px;text-align:center;font-size:.78rem;color:var(--muted);line-height:2}
 
 @media (max-width:420px){.prompt{font-size:1.38rem}.opt{font-size:1.18rem}.ring{width:92px;height:92px}.ring .in b{font-size:1.6rem}.hero{gap:12px;padding:14px}}
@@ -934,11 +941,11 @@ function eSave(){try{localStorage.setItem(E_KEY,JSON.stringify(E))}catch(e){}}
 const eWork=id=>E.work[id]||(E.work[id]={ans:{},tim:{},sent:null});
 
 /* ---------- Lectura del formato del instructor ---------- */
-const E_MARKS=[[/^📘/,'consulta'],[/^✍️|^✍/,'tarea'],[/^⚡/,'practica'],[/^✅/,'fuera'],[/^🧑‍🏫|^👨‍🏫|^👩‍🏫/,'feedback'],[/^📤/,'entrega'],[/^🎮/,'juego']];
+const E_MARKS=[[/^📘/,'consulta'],[/^✍️|^✍/,'tarea'],[/^⚡/,'practica'],[/^✅/,'fuera'],[/^🧑‍🏫|^👨‍🏫|^👩‍🏫/,'feedback'],[/^📤/,'entrega'],[/^🎮/,'juego'],[/^🔍/,'correccion']];
 const E_LABEL={consulta:'📘 Consulta',tarea:'✍️ Tarea',practica:'⚡ Práctica',fuera:'✅ Fuera de la app',feedback:'🧑‍🏫 Retroalimentación'};
 const ptxt=rt=>(rt||[]).map(r=>r.t).join('');
 function eParse(blocks){
-  const out={intro:[],secs:[],feedback:[]};let cur=null;
+  const out={intro:[],secs:[],feedback:[],corr:[]};let cur=null;
   for(const b of blocks||[]){
     if(b.type==='heading_1'||b.type==='heading_2'){
       const text=ptxt(b.rt).trim(),mk=E_MARKS.find(([re])=>re.test(text));
@@ -948,7 +955,7 @@ function eParse(blocks){
       const mm=title.match(/\s*[·\-–(]\s*(\d+)\s*min\)?\s*$/i);
       if(mm)title=title.slice(0,mm.index).trim();
       cur={id:b.id,kind,title,min:mm?+mm[1]:null,blocks:[],items:[],head:text};
-      if(kind==='feedback')out.feedback.push(cur);else out.secs.push(cur);
+      if(kind==='feedback')out.feedback.push(cur);else if(kind==='correccion')out.corr.push(cur);else out.secs.push(cur);
       continue;
     }
     if(!cur){out.intro.push(b);continue}
@@ -1086,7 +1093,56 @@ function renderEstudio(){
     ${rest.length?`<h3>Sesiones anteriores</h3><div class="elist">${rest.map(s=>`<button class="ecard" data-e="open" data-id="${s.id}"><span class="muted small">${esc(eFecha(s.fecha))}</span><b>${esc(s.titulo||'Sesión')}</b>${eChip(s)}</button>`).join('')}</div>`:''}
   </div>`;
 }
-function eItemHtml(sid,sec,b,idx,locked){
+/* ---------- Corrección por consigna (la marca el instructor; la app solo la muestra) ---------- */
+// Título comparable: sin emoji, sin «Tarea:», sin «· N min», sin «— N min» ni «: 2/4».
+function eNorm(t){return String(t||'').replace(/^(\p{Extended_Pictographic}|\uFE0F|\u200D|\s)+/u,'').replace(/^(Consulta|Tarea|Práctica|Practica|Fuera de la app)\s*[:：]?\s*/i,'')
+  .replace(/\s*[—–-]\s*\d+\s*min\s*$/i,'').replace(/\s*[·(]\s*\d+\s*min\)?\s*$/i,'').replace(/\s*[:：]?\s*\d+\s*\/\s*\d+\s*$/,'').trim().toLowerCase()}
+const V_RE=[[/^(✓|✔️?|✅)\s*/u,'ok'],[/^(✗|✘|❌|×)\s*/u,'bad'],[/^(~|◐|△|🟡)\s*/u,'mid']];
+function eCorr(p){
+  const grupos=[];let g=null;
+  for(const sec of p.corr||[])for(const b of sec.blocks){
+    if(/^heading_/.test(b.type)){g={titulo:eNorm(ptxt(b.rt)),items:[]};grupos.push(g);continue}
+    if(b.type!=='numbered_list_item'&&b.type!=='bulleted_list_item')continue;
+    if(!g){g={titulo:'',items:[]};grupos.push(g)}
+    const t=ptxt(b.rt).trim(),m=V_RE.find(([re])=>re.test(t));
+    const rt=(b.rt||[]).map((r,i)=>i===0&&m?{...r,t:r.t.replace(m[0],'')}:r);
+    g.items.push({v:m?m[1]:null,rt,kids:b.kids||null});
+  }
+  return grupos;
+}
+function eEntregaAns(p){ // lee la última sección 📤 que escribió la app
+  const sec=(p.secs||[]).filter(s=>s.kind==='entrega').pop();if(!sec)return null;
+  const grupos=[];let g=null,it=null;
+  for(const b of sec.blocks){
+    const t=ptxt(b.rt).trim();
+    if(b.type==='heading_3'){g={titulo:eNorm(t),items:[]};grupos.push(g);it=null;continue}
+    if(!g)continue;
+    if(b.type==='paragraph'&&/^\d+\.\s/.test(t)){it={r:'',duda:false,nota:''};g.items.push(it);continue}
+    if(b.type==='quote'&&it){it.r=t==='(sin respuesta)'?'':t;continue}
+    if(b.type==='to_do'){it={hecho:!!b.checked};g.items.push(it);continue}
+    if(b.type==='callout'&&it&&/^Duda:/.test(t)){it.duda=true;it.nota=t.replace(/^Duda:\s*/,'');continue}
+  }
+  return grupos.length?grupos:null;
+}
+function eBuscarGrupo(grupos,sec,orden){
+  if(!grupos)return null;
+  return grupos.find(g=>g.titulo&&g.titulo===eNorm(sec.title))||grupos[orden]||null;
+}
+const V_TXT={ok:'✓ Bien',bad:'✗ Revisar',mid:'◐ Casi'};
+function eVerdHtml(c){
+  if(!c)return'';
+  return `${c.v?`<span class="everd" data-v="${c.v}">${V_TXT[c.v]}</span>`:''}${(c.rt&&ptxt(c.rt).trim())||c.kids?`<div class="ecom"><span>🧑‍🏫</span><div>${eRich(c.rt)}${c.kids?eBlocks(c.kids):''}</div></div>`:''}`;
+}
+function eItemHtml(sid,sec,b,idx,locked,corr,remoto){
+  if(remoto!==undefined){ // sesión entregada desde otro dispositivo: respuesta tomada de 📤
+    const r=remoto||{};
+    const resp=sec.kind==='fuera'?`<p>${r.hecho?'☑':'☐'} ${eRich(b.rt)}</p>`
+      :`<div class="eprompt"><span class="enum">${idx+1}</span><div>${eRich(b.rt)}</div></div><div class="eresp" lang="ja">${r.r?esc(r.r):'<span class="muted">(sin respuesta)</span>'}</div>`;
+    return `<div class="eitem${corr&&corr.v?' v-'+corr.v:''}">${resp}${r.duda?`<div class="muted small">❓ Tu duda: ${esc(r.nota||'')}</div>`:''}${eVerdHtml(corr)}</div>`;
+  }
+  return eItemHtmlBase(sid,sec,b,idx,locked).replace(/^<div class="eitem">/,`<div class="eitem${corr&&corr.v?' v-'+corr.v:''}">`).replace(/<\/div>$/,eVerdHtml(corr)+'</div>');
+}
+function eItemHtmlBase(sid,sec,b,idx,locked){
   const w=eWork(sid),a=w.ans[b.id]||{},dis=locked?'disabled':'';
   const ja='lang="ja" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false"';
   let field='';
@@ -1105,23 +1161,32 @@ function renderSesion(){
   const w=eWork(s.id),p=eParse(s.blocks),run=eRunning(w);
   // Entregada o corregida (aquí o desde otro dispositivo): solo lectura
   const remota=!w.sent&&s.estado!=='Publicada',locked=!!w.sent||remota;
+  const corr=eCorr(p),ent=remota?eEntregaAns(p):null;
+  const tareas=p.secs.filter(x=>x.kind==='tarea'||x.kind==='practica'),todas=p.secs.filter(x=>x.kind==='tarea'||x.kind==='practica'||x.kind==='fuera');
   const secHtml=sec=>{
     if(sec.kind==='juego')return''; // es material del juego, no de la sesión
-    if(sec.kind==='entrega')return remota?`<section class="esec"><div class="ehead"><div><span class="ek">📤 Tu entrega</span><b>${esc(sec.title)}</b></div></div><div class="ebody">${eBlocks(sec.blocks)}</div></section>`:'';
+    if(sec.kind==='entrega')return remota&&!ent?`<section class="esec"><div class="ehead"><div><span class="ek">📤 Tu entrega</span><b>${esc(sec.title)}</b></div></div><div class="ebody">${eBlocks(sec.blocks)}</div></section>`:'';
     const inter=(sec.kind==='tarea'||sec.kind==='practica'||sec.kind==='fuera')&&!remota;
-    const body=sec.blocks.map(b=>b.type!=='_item'?eBlocks([b]):remota?eBlocks([sec.items[b.idx]]):eItemHtml(s.id,sec,sec.items[b.idx],b.idx,locked)).join('');
+    const gC=sec.kind==='fuera'?null:eBuscarGrupo(corr,sec,tareas.indexOf(sec)),gE=remota&&ent?eBuscarGrupo(ent,sec,todas.indexOf(sec)):null;
+    const cuenta=gC&&gC.items.some(x=>x.v)?`<span class="ecuenta">${gC.items.filter(x=>x.v==='ok').length}/${sec.items.length} ✓</span>`:'';
+    const body=sec.blocks.map(b=>{
+      if(b.type!=='_item')return eBlocks([b]);
+      const c=gC?gC.items[b.idx]:null;
+      if(remota)return ent?eItemHtml(s.id,sec,sec.items[b.idx],b.idx,true,c,gE?gE.items[b.idx]||null:null):eBlocks([sec.items[b.idx]])+eVerdHtml(c);
+      return eItemHtml(s.id,sec,sec.items[b.idx],b.idx,locked,c);
+    }).join('');
     const timer=inter?`<button class="etimer ${run===sec.id?'on':''}" data-e="timer" data-sec="${sec.id}" ${locked?'disabled':''}>${run===sec.id?'⏸':'▶'} <span data-tm="${sec.id}">${eFmt(eMs(w.tim[sec.id]))}</span></button>`:'';
     if(sec.kind==='consulta')return `<details class="esec econs" open><summary><span class="ek">${E_LABEL.consulta}</span> ${esc(sec.title)}</summary><div class="ebody">${body}</div></details>`;
-    return `<section class="esec" data-k="${sec.kind}"><div class="ehead"><div><span class="ek">${E_LABEL[sec.kind]||''}</span><b>${esc(sec.kind==='texto'?sec.head:sec.title)}</b>${sec.min?`<span class="muted small"> · sugerido ${sec.min} min</span>`:''}</div>${timer}</div><div class="ebody">${body}</div></section>`;
+    return `<section class="esec" data-k="${sec.kind}"><div class="ehead"><div><span class="ek">${E_LABEL[sec.kind]||''}</span><b>${esc(sec.kind==='texto'?sec.head:sec.title)}</b>${typeof cuenta!=='undefined'?cuenta:''}${sec.min?`<span class="muted small"> · sugerido ${sec.min} min</span>`:''}</div>${timer}</div><div class="ebody">${body}</div></section>`;
   };
   const tot=Object.values(w.tim).reduce((a,t)=>a+eMs(t),0);
   $('#app').innerHTML=`<div class="estudio">
     <div class="row"><button class="icon-btn" data-e="back" aria-label="Volver">←</button><div style="min-width:0"><div class="muted small">${esc(eFecha(s.fecha))}</div><b class="etitle">${esc(s.titulo||'Sesión')}</b></div><span class="sp"></span>${eChip(s)}</div>
-    <div class="ebar"><span>⏱ Total <b id="eTotal">${eFmt(tot)}</b></span>${run?`<span class="muted small">En curso: ${esc((p.secs.find(x=>x.id===run)||{}).title||'')}</span>`:'<span class="muted small">Toca ▶ en cada actividad para cronometrarla</span>'}</div>
+    ${locked?'':`<div class="ebar"><span>⏱ Total <b id="eTotal">${eFmt(tot)}</b></span>${run?`<span class="muted small">En curso: ${esc((p.secs.find(x=>x.id===run)||{}).title||'')}</span>`:'<span class="muted small">Toca ▶ en cada actividad para cronometrarla</span>'}</div>`}
     ${p.feedback.length?p.feedback.map(f=>`<section class="esec efb"><div class="ehead"><div><span class="ek">${E_LABEL.feedback}</span><b>${esc(f.title||'del instructor')}</b></div></div><div class="ebody">${eBlocks(f.blocks)}</div></section>`).join(''):''}
     ${p.intro.length?`<div class="ebody eintro">${eBlocks(p.intro)}</div>`:''}
     ${p.secs.map(secHtml).join('')}
-    <div class="eactions">${remota?`<div class="muted small">Sesión ${esc((E_CHIP[s.estado]||s.estado).toLowerCase())}: tus respuestas están en «📤 Tu entrega».</div>`:locked?`<div class="muted small">Entregada el ${new Date(w.sent.at).toLocaleString('es',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}${E.outbox.some(o=>o.page===s.id)?' · se enviará cuando haya conexión':' · recibida'}</div>`
+    <div class="eactions">${remota?`<div class="muted small">Sesión ${esc((E_CHIP[s.estado]||s.estado).toLowerCase())}: ${ent?'debajo de cada consigna ves tu respuesta y la corrección del instructor.':'tus respuestas están en «📤 Tu entrega».'}</div>`:locked?`<div class="muted small">Entregada el ${new Date(w.sent.at).toLocaleString('es',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}${E.outbox.some(o=>o.page===s.id)?' · se enviará cuando haya conexión':' · recibida'}</div>`
       :`<button class="btn eprimary" data-e="entregar">Entregar</button>`}
       ${remota?'':'<button class="btn" data-e="copiar">Copiar respuestas para el chat</button>'}</div>
   </div>`;

@@ -1003,7 +1003,9 @@ let eState='off',eBusy=false,eOpen=null; // eOpen = id de la sesión abierta
 function eLoad(){try{const d=JSON.parse(localStorage.getItem(E_KEY));if(d&&d.ses)E=Object.assign({ses:{},work:{},outbox:[],lastFetch:0},d)}catch(e){}
   // Versiones anteriores podían marcar como «al día» sesiones que solo bajaron a medias:
   // se olvidan esas marcas una vez para volver a descargar todo (se conserva lo guardado mientras tanto).
-  if((E.cv||0)<2){for(const s of Object.values(E.ses))s.edited=null;E.cv=2;eSave()}}
+  if((E.cv||0)<2){for(const s of Object.values(E.ses))s.edited=null;E.cv=2;eSave()}
+  if(E.cv<3){const now=Date.now();for(const[sid,w]of Object.entries(E.work)){if(w.sent)continue;
+    for(const[it,a]of Object.entries(w.ans)){a.t=a.t||now;bMark(sid,'a:'+it)}for(const[sec,tm]of Object.entries(w.tim)){tm.t=tm.t||now;bMark(sid,'t:'+sec)}}E.cv=3;eSave()}}
 function eSave(){try{localStorage.setItem(E_KEY,JSON.stringify(E))}catch(e){}}
 const eWork=id=>E.work[id]||(E.work[id]={ans:{},tim:{},sent:null});
 
@@ -1072,9 +1074,9 @@ const eFmt=ms=>{const s=Math.floor(ms/1000),h=Math.floor(s/3600),m=Math.floor(s%
 function eRunning(w){for(const[k,t]of Object.entries(w.tim))if(t.start)return k;return null}
 function eToggle(id,sec){
   const w=eWork(id),now=Date.now(),run=eRunning(w);
-  if(run){const t=w.tim[run];t.acc=(t.acc||0)+now-t.start;t.start=null}
-  if(run!==sec){const t=w.tim[sec]||(w.tim[sec]={acc:0,start:null});t.start=now}
-  eSave();
+  if(run){const t=w.tim[run];t.acc=(t.acc||0)+now-t.start;t.start=null;t.t=now;bMark(id,'t:'+run)}
+  if(run!==sec){const t=w.tim[sec]||(w.tim[sec]={acc:0,start:null});t.start=now;t.t=now;bMark(id,'t:'+sec)}
+  eSave();bSoon(1000);
 }
 function eStopAll(w){const run=eRunning(w);if(run){const t=w.tim[run];t.acc=(t.acc||0)+Date.now()-t.start;t.start=null}}
 function eTick(){
@@ -1094,6 +1096,56 @@ async function ePost(p,body){
     if(r.status===401)throw Object.assign(new Error('Clave inválida'),{badkey:1});
     if(!r.ok)throw new Error((await r.json().catch(()=>({}))).error||('HTTP '+r.status));return r.json()}
   finally{clearTimeout(to)}
+}
+/* Borradores: la sesión a medias se copia sola al otro dispositivo (y viceversa).
+   Cada respuesta y cada cronómetro viaja por separado con su hora de edición; gana la más reciente. */
+// Cola en segundo plano: si no hay conexión, el service worker la manda sola al volver la señal
+// aunque la app esté cerrada (Background Sync, Android). Sin ese soporte, se manda al abrir la app.
+function bgCola(clave,ruta,body){try{
+  const r=indexedDB.open('mext-bg',1);r.onupgradeneeded=()=>r.result.createObjectStore('q');
+  r.onsuccess=()=>{const db=r.result,t=db.transaction('q','readwrite');t.objectStore('q').put({url:eUrl(ruta),headers:eHeaders(),body:JSON.stringify(body)},clave);
+    t.oncomplete=()=>{db.close();navigator.serviceWorker&&navigator.serviceWorker.ready.then(g=>g.sync&&g.sync.register('mext-bg')).catch(()=>{})}};
+}catch(e){}}
+function bMark(sid,k){(E.bq||(E.bq={}))[sid+'|'+k]=1}
+function bCorriendo(){const now=Date.now();for(const[sid,w]of Object.entries(E.work)){if(w.sent)continue;const run=eRunning(w);if(run){w.tim[run].t=now;bMark(sid,'t:'+run)}}}
+let bT=null,bBusy=false;
+function bSoon(ms){clearTimeout(bT);bT=setTimeout(bSync,ms)}
+function bVal(sid,k){const w=E.work[sid];if(!w)return null;
+  if(k.startsWith('a:')){const a=w.ans[k.slice(2)];return a?{t:a.t||0,v:{r:a.r||'',duda:!!a.duda,nota:a.nota||'',hecho:!!a.hecho}}:null}
+  const tm=w.tim[k.slice(2)];return tm?{t:tm.t||0,v:{acc:eMs(tm)}}:null}
+async function bSync(keepalive){
+  if(!syncConfigured()||bBusy)return;
+  if(navigator.onLine===false&&!keepalive)return;
+  const claves=Object.keys(E.bq||{}),push=[];
+  const enviado={};
+  for(const c of claves){const i=c.indexOf('|'),s=c.slice(0,i),k=c.slice(i+1),x=bVal(s,k);enviado[c]=x&&x.t;if(x&&!(E.work[s]&&E.work[s].sent))push.push({s,k,t:x.t,v:x.v})}
+  const body={push,since:E.bc||0,dev:S.dev.id};
+  if(keepalive){if(push.length){bgCola('borr:'+Date.now(),'/estudio/borrador',{push,since:0,dev:S.dev.id});
+    if(navigator.onLine!==false)try{fetch(eUrl('/estudio/borrador'),{method:'POST',headers:eHeaders(),body:JSON.stringify(body),keepalive:true})}catch(e){}}return}
+  bBusy=true;
+  try{let r,guard=0;
+    do{r=await ePost('/estudio/borrador',body);body.push=[];
+      for(const c of claves){const i=c.indexOf('|'),x=bVal(c.slice(0,i),c.slice(i+1));if(E.bq&&(!x||x.t===enviado[c]))delete E.bq[c]} // lo que editaste mientras tanto se manda en la próxima
+      bAplicar(r.rows||[]);E.bc=body.since=r.cursor;eSave()}while(r.more&&++guard<20);
+  }catch(e){}finally{bBusy=false}
+}
+function bAplicar(rows){
+  const tocadas=new Set();
+  for(const x of rows){
+    const w=eWork(x.s);if(w.sent||!x.v)continue;
+    if(x.k.startsWith('a:')){const it=x.k.slice(2),a=w.ans[it];if(a&&(a.t||0)>=x.t)continue;
+      w.ans[it]=Object.assign({},x.v,{t:x.t});tocadas.add(x.s+'|'+it)}
+    else{const sec=x.k.slice(2),tm=w.tim[sec];if(tm&&(tm.t||0)>=x.t)continue;
+      w.tim[sec]={acc:x.v.acc||0,start:null,t:x.t};tocadas.add(x.s+'|')}
+  }
+  if(!tocadas.size)return;eSave();
+  if(view!=='sesion'||!eOpen||![...tocadas].some(c=>c.startsWith(eOpen+'|')))return;
+  const foco=document.activeElement;
+  if(!(foco&&foco.matches('input,textarea'))){render();return}
+  // Estás escribiendo: se actualizan los demás campos sin tocar el que tienes abierto
+  const w=E.work[eOpen];
+  document.querySelectorAll('[data-it][data-a]').forEach(el=>{if(el===foco)return;const a=w.ans[el.dataset.it];if(!a)return;
+    const v=a[el.dataset.a];if(el.type==='checkbox')el.checked=!!v;else if(v!=null&&el.value!==v)el.value=v});
 }
 async function eSync(manual){
   if(!syncConfigured()){eState='off';eRefresh();return}
@@ -1572,7 +1624,7 @@ function eEntregar(){
   const now=new Date(),c2=eCollect(s);
   const payload={id:s.id+'-'+now.getTime().toString(36),page:s.id,fecha:s.fecha,enviada:now.toISOString(),
     enviadaTxt:now.toLocaleString('es',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}),minutos:c2.minutos,dudas:c2.dudas,acts:c2.acts};
-  w.sent={at:now.getTime(),id:payload.id};E.outbox.push(payload);eSave();render();
+  w.sent={at:now.getTime(),id:payload.id};E.outbox.push(payload);if(syncConfigured())bgCola('ent:'+payload.id,'/estudio/entrega',payload);eSave();render();
   toast(navigator.onLine===false?'Guardada: se enviará cuando vuelva la conexión':'Entregando…');eSync();
 }
 
@@ -1592,7 +1644,7 @@ function eClick(t){
   else if(a==='sim-entregar')simEntregar();
   else if(a==='sim-cancel'){if(confirm('¿Descartar este simulacro? Se borran las respuestas marcadas.')){E.sim=null;eSave();view='estudio';render()}}
   else if(a==='sim-back'){view='estudio';render()}
-  else if(a==='open'){eOpen=t.dataset.id;view='sesion';render()}
+  else if(a==='open'){eOpen=t.dataset.id;view='sesion';render();bSync()}
   else if(a==='back'){view='estudio';eOpen=null;render()}
   else if(a==='timer'){eToggle(eOpen,t.dataset.sec);render()}
   else if(a==='entregar')eEntregar();
@@ -1602,8 +1654,8 @@ let eSaveT=null;
 function eInput(el){
   const it=el.dataset.it,k=el.dataset.a;if(!it||!eOpen)return;
   const w=eWork(eOpen);if(w.sent)return;const a=w.ans[it]||(w.ans[it]={});
-  a[k]=el.type==='checkbox'?el.checked:el.value;
-  clearTimeout(eSaveT);eSaveT=setTimeout(eSave,300);
+  a[k]=el.type==='checkbox'?el.checked:el.value;a.t=Date.now();bMark(eOpen,'a:'+it);
+  clearTimeout(eSaveT);eSaveT=setTimeout(eSave,300);bSoon(2500);
   if(k==='duda'){eSave();render();const n=document.querySelector(`[data-a="nota"][data-it="${it}"]`);if(n&&el.checked)n.focus()}
   if(k==='hecho')eSave();
 }
@@ -1783,10 +1835,11 @@ if(typeof document!=='undefined'){
   setInterval(eTick,1000);
   render();requestAnimationFrame(tick);
   syncNow();
-  addEventListener('online',()=>{syncNow();eSync()});
+  addEventListener('online',()=>{syncNow();eSync();bSync()});
   eSync();
   addEventListener('offline',()=>{syncState=syncConfigured()?'offline':'off';refreshSync()});
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden){syncNow();eSync();buscarVersion()}else eSave()});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden){syncNow();eSync();bSync();buscarVersion()}else{bCorriendo();eSave();bSync(true)}});
+  bSync();setInterval(()=>{if(!document.hidden&&view!=='drill')bSync()},15000);
   setInterval(()=>{if(!document.hidden&&view!=='drill')eSync()},180000);
   setInterval(()=>{if(view==='home'||view==='stats')syncNow()},120000);
   if(location.hash==='#go')startSession(S.settings.mode);

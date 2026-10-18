@@ -14,16 +14,16 @@
 :root{--bg:#f6f0e4;--surface:#fffdf8;--surface2:#f2eadb;--text:#211b17;--muted:#74695e;--line:#e4d8c4;
   --accent:#d63a2f;--accent2:#b07d12;--accent-t:#fff;--ok:#1d8a50;--okbg:#e2f3e8;--bad:#c9302c;--badbg:#fbe6e2;--warn:#b26b00;--warnbg:#fbefd9;--focus:#2457d6;
   --glow:rgba(214,58,47,.18);--shadow:0 1px 2px rgba(60,40,20,.06),0 6px 20px rgba(60,40,20,.07);
-  --part:#0b8aa3;--jita:#7348d1;--ctr:#bb7400;--kanji:#d63a2f;--syn:#1c9459;--morph:#c23c7c;--mix:#211b17;--buf:#b26b00;--dia:#2563c9;--days:#2563c9}
+  --part:#0b8aa3;--jita:#7348d1;--ctr:#bb7400;--kanji:#d63a2f;--syn:#1c9459;--morph:#c23c7c;--mix:#211b17;--buf:#b26b00;--dia:#2563c9;--days:#2563c9;--esc:#0f8a6a;--prod:#0f8a6a}
 /* ===== Tema 夜 (oscuro) ===== */
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0c0e1b;--surface:#161a2d;--surface2:#1f2440;--text:#f2efe8;--muted:#a2a5bc;--line:#2a2f4f;
   --accent:#ff5a4e;--accent2:#ffc857;--accent-t:#1a0705;--ok:#3ddc84;--okbg:rgba(61,220,132,.13);--bad:#ff6b6b;--badbg:rgba(255,107,107,.13);--warn:#ffb347;--warnbg:rgba(255,179,71,.13);--focus:#8fb0ff;
   --glow:rgba(255,90,78,.22);--shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.25);
-  --part:#3cc8e6;--jita:#ad90ff;--ctr:#ffb84d;--kanji:#ff6b5e;--syn:#4fe090;--morph:#ff7ab6;--mix:#f2efe8;--buf:#ffb347;--dia:#7fb2ff;--days:#7fb2ff}}
+  --part:#3cc8e6;--jita:#ad90ff;--ctr:#ffb84d;--kanji:#ff6b5e;--syn:#4fe090;--morph:#ff7ab6;--mix:#f2efe8;--buf:#ffb347;--dia:#7fb2ff;--days:#7fb2ff;--esc:#4fd1a8;--prod:#4fd1a8}}
 :root[data-theme="dark"]{--bg:#0c0e1b;--surface:#161a2d;--surface2:#1f2440;--text:#f2efe8;--muted:#a2a5bc;--line:#2a2f4f;
   --accent:#ff5a4e;--accent2:#ffc857;--accent-t:#1a0705;--ok:#3ddc84;--okbg:rgba(61,220,132,.13);--bad:#ff6b6b;--badbg:rgba(255,107,107,.13);--warn:#ffb347;--warnbg:rgba(255,179,71,.13);--focus:#8fb0ff;
   --glow:rgba(255,90,78,.22);--shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.25);
-  --part:#3cc8e6;--jita:#ad90ff;--ctr:#ffb84d;--kanji:#ff6b5e;--syn:#4fe090;--morph:#ff7ab6;--mix:#f2efe8;--buf:#ffb347;--dia:#7fb2ff;--days:#7fb2ff}
+  --part:#3cc8e6;--jita:#ad90ff;--ctr:#ffb84d;--kanji:#ff6b5e;--syn:#4fe090;--morph:#ff7ab6;--mix:#f2efe8;--buf:#ffb347;--dia:#7fb2ff;--days:#7fb2ff;--esc:#4fd1a8;--prod:#4fd1a8}
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;color:var(--text);background-color:var(--bg)}
@@ -265,6 +265,32 @@ button.pill{cursor:pointer;font-family:inherit}
 .ebien{color:var(--ok);font-weight:800;text-decoration:underline;text-underline-offset:4px}
 .efix{margin-top:6px;padding:8px 12px;border-radius:10px;background:var(--surface);border:1px dashed var(--ok);font-size:1.05rem}
 .efalta{color:var(--bad);font-weight:900;margin:0 1px}
+.lrow{display:flex;gap:8px;align-items:stretch}.lrow .lesson{flex:1;min-width:0}
+.lprod{flex:none;width:58px;border:1px solid var(--line);background:var(--surface);border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:1.2rem;box-shadow:var(--shadow)}
+.lprod small{font-size:.68rem;font-weight:800;color:var(--muted)}.lprod:hover{border-color:var(--esc)}
+.lesson.lp{border-left:4px solid var(--esc)}
+.prod{margin-top:14px;display:grid;gap:10px}
+.prod input{width:100%;font:inherit;font-size:1.35rem;padding:14px;border-radius:14px;border:1.5px solid var(--line);background:var(--surface);color:var(--text)}
+.prod input:focus{outline:2px solid var(--esc);outline-offset:1px}
+.pbtn{min-height:52px;font-size:1.05rem}
+.pjudge{display:grid;grid-template-columns:1fr 1fr;gap:10px}.pjudge .btn{min-height:52px;font-weight:800}
+.pbad{color:var(--bad);border-color:var(--bad)}.pok{color:var(--ok);border-color:var(--ok)}
+.pgood{text-align:center;font-size:1.3rem;font-weight:900;color:var(--ok);padding:14px;border-radius:14px;background:var(--okbg)}
+.pcmp{display:grid;gap:6px}.pantes{margin-top:10px;font-size:.85rem;color:var(--muted)}
+.pcount{font-weight:900;font-variant-numeric:tabular-nums;color:var(--muted)}
+@media (max-width:420px){.pjudge{grid-template-columns:1fr}}
+.chart h3,.card h3{margin-bottom:2px}
+.csvg{display:block;width:100%;height:auto;margin-top:10px;overflow:visible}
+.cgrid{stroke:var(--line);stroke-width:1}.cref{stroke:var(--muted);stroke-width:1.5;stroke-dasharray:4 4}
+.cax{font-size:10px;fill:var(--muted);font-family:inherit}.clbl{font-size:11px;font-weight:800;fill:var(--text);font-family:inherit}
+.cmk{cursor:pointer}.cmk.sel path,.cmk.sel circle:last-child{stroke:var(--text);stroke-width:2}
+.ccap{min-height:1.4em;margin-top:4px}.cvacio{padding:14px 0}
+.cdatos{margin-top:6px}.cdatos summary{cursor:pointer;font-size:.8rem;color:var(--muted)}
+.chero{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-top:8px}.chero b{font-size:1.6rem;font-variant-numeric:tabular-nums}
+.chero .pos{color:var(--ok)}.chero .neg{color:var(--bad)}
+.cleg{display:flex;gap:14px;font-size:.78rem;color:var(--muted);margin-top:4px}.cleg i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-right:5px}
+.cleg i.dash{background:repeating-linear-gradient(90deg,var(--muted) 0 4px,transparent 4px 8px)}
+.ctop{width:100%;margin-top:10px}
 .foot{margin-top:22px;text-align:center;font-size:.78rem;color:var(--muted);line-height:2}
 
 @media (max-width:420px){.prompt{font-size:1.38rem}.opt{font-size:1.18rem}.ring{width:92px;height:92px}.ring .in b{font-size:1.6rem}.hero{gap:12px;padding:14px}}
@@ -292,7 +318,8 @@ const CATS={
   kanji:{n:'漢字',s:'Kanji del examen 2019',t:8},
   syn:{n:'言い換え',s:'Paráfrasis (Sección II)',t:22},
   morph:{n:'活用・時制',s:'Formas y tiempo verbal',t:10},
-  dia:{n:'Lecciones',s:'Días estudiados con el instructor',t:15}
+  dia:{n:'Lecciones',s:'Días estudiados con el instructor',t:15},
+  esc:{n:'Producción',s:'Escribir la respuesta',t:0}
 };
 const HEADS={part:'Elige la partícula',jita:'¿Intransitivo (が) o transitivo (を)?',morph:'Elige la forma correcta',syn:'Elige la oración que significa casi lo mismo'};
 
@@ -645,6 +672,7 @@ function finalize(q){shuffle(q.opts);q.correct=q.opts.findIndex(o=>o.ok);q.time=
 function build(key){
   const i=key.indexOf(':'),t=key.slice(0,i),a=key.slice(i+1);
   if(t==='d')return buildLesson(key,a);
+  if(t==='w')return buildProd(key,a);
   if(t==='s'){const it=BY_ID[a];return finalize({key,cat:it.c,head:HEADS[it.c],html:rb(it.q),long:it.c==='syn',
     opts:it.o.map((o,j)=>({v:o,h:rb(o),ok:j===0})),x:it.x.split('\n'),w:it.w||{}})}
   if(t==='cc'){
@@ -672,16 +700,19 @@ const ALL_KEYS=[].concat(
   ...Object.keys(CP_NS).map(c=>CP_NS[c].map(n=>`cp:${c}/${n}`)),
   K.map(k=>'kr:'+k.w),K.map(k=>'kw:'+k.w)
 );
-function catOf(key){const t=key.slice(0,key.indexOf(':'));if(t==='d')return 'dia';return t==='s'?BY_ID[key.slice(2)].c:(t==='cc'||t==='cp')?'ctr':'kanji'}
+function catOf(key){const t=key.slice(0,key.indexOf(':'));if(t==='d')return 'dia';if(t==='w')return 'esc';return t==='s'?BY_ID[key.slice(2)].c:(t==='cc'||t==='cp')?'ctr':'kanji'}
 function label(key){const q=build(key);return q?strip(q.html).replace(/\s+/g,' ').trim():'(lección ya no disponible)'}
-function allKeys(){return ALL_KEYS.concat(lessonKeys())}
+function allKeys(){return ALL_KEYS.concat(lessonKeys(),prodKeys())}
 
 /* ---------- Motor: SRS Leitner + buffer de errores ---------- */
 function catRecent(c){const r=(S.cats[c]||{}).r||[];return r.length<5?null:r.reduce((a,b)=>a+b,0)/r.length}
 function poolFor(mode){
   const all=allKeys();
   if(mode==='buf')return Object.keys(S.buffer).filter(k=>all.includes(k));
-  if(mode==='mix')return all;
+  if(mode==='mix')return all.filter(k=>catOf(k)!=='esc'); // Mezcla = opción múltiple
+  if(mode==='prod')return prodKeys();
+  if(mode==='top')return topErrores().map(x=>x.k).filter(k=>all.includes(k));
+  if(mode.startsWith('prod:'))return prodKeys(mode.slice(5));
   if(mode==='days')return lessonKeys();
   if(mode.startsWith('day:'))return lessonKeys(mode.slice(4));
   return all.filter(k=>catOf(k)===mode);
@@ -707,7 +738,8 @@ function startSession(mode){
   const pool=poolFor(mode);
   if(!pool.length){toast(mode==='buf'?'Buffer vacío: no tienes errores pendientes 🎉':'Sin reactivos');return}
   S.settings.mode=mode;save();
-  sess={id:rid()+Date.now().toString(36),mode,pool,qi:0,left:S.settings.dur*1000,score:0,combo:0,maxCombo:0,n:0,ok:0,byCat:{},sched:[],recent:[],freed:0,cur:null,state:'q',qEl:0,qLim:0};
+  const esProd=mode==='prod'||mode.startsWith('prod:');
+  sess={prod:esProd,maxQ:esProd?Math.min(8,Math.max(3,pool.length*2)):0,id:rid()+Date.now().toString(36),mode,pool,qi:0,left:S.settings.dur*1000,score:0,combo:0,maxCombo:0,n:0,ok:0,byCat:{},sched:[],recent:[],freed:0,cur:null,state:'q',qEl:0,qLim:0};
   // errores pendientes de esta categoría: se intercalan cada 2 preguntas
   Object.keys(S.buffer).filter(k=>pool.includes(k)).sort(()=>Math.random()-.5).forEach((k,i)=>sess.sched.push({key:k,at:mode==='buf'?i:1+i*2}));
   view='drill';next();
@@ -720,15 +752,15 @@ function next(){
   sess.qEl=0;sess.qLim=S.settings.pressure?sess.cur.time*1000*Math.max(.6,1-.04*sess.combo):0;
   sess.state='q';sess.chosen=null;renderDrill();
 }
-function answer(idx){
-  if(!sess||sess.state!=='q')return;
-  const q=sess.cur,ok=idx===q.correct,now=Date.now(),ms=Math.round(sess.qEl);
-  sess.state='fb';sess.chosen=idx;sess.qi++;sess.n++;
+function answer(idx,prod){
+  if(!sess||(sess.state!=='q'&&!(prod&&sess.state==='judge')))return;
+  const q=sess.cur,ok=prod?prod.ok:idx===q.correct,now=Date.now(),ms=Math.round(sess.qEl);
+  sess.state='fb';sess.chosen=prod?(ok?q.correct:-2):idx;sess.qi++;sess.n++;
   const sc=sess.byCat[q.cat]||(sess.byCat[q.cat]={n:0,ok:0});sc.n++;if(ok)sc.ok++;
   const wasBuf=!!S.buffer[q.key];
   // detalle para el instructor: qué salió, qué respondió y cuál era la correcta
   const txt=x=>strip(x.replace(/<u>(.*?)<\/u>/g,'【$1】')).replace(/\s+/g,' ').trim();
-  const freed=!!addLocal({t:now,k:'a',q:q.key,o:ok?1:0,ms,sid:sess.id,pr:txt(q.html).slice(0,200),ch:idx>=0?txt(q.opts[idx].h):'(se acabó el tiempo)',co:txt(q.opts[q.correct].h)}).freed;
+  const freed=!!addLocal({t:now,k:'a',q:q.key,o:ok?1:0,ms,sid:sess.id,pr:txt(q.html).slice(0,200),ch:prod?(prod.typed||'(vacío)')+(prod.ok&&!prod.exact?' (válida según yo)':''):idx>=0?txt(q.opts[idx].h):'(se acabó el tiempo)',co:prod?q.ans:txt(q.opts[q.correct].h)}).freed;
   if(!ok){schedule(q.key,rnd(2,3));if(sess.mode==='buf'&&!sess.pool.includes(q.key))sess.pool.push(q.key)}
   else if(freed){sess.freed++;if(sess.mode==='buf')sess.pool=sess.pool.filter(k=>k!==q.key)}
   else if(wasBuf)schedule(q.key,rnd(3,4));
@@ -744,7 +776,7 @@ function answer(idx){
 }
 function cont(){
   if(!sess||sess.state!=='fb')return;
-  if(sess.left<=0||(sess.mode==='buf'&&!sess.pool.length))return endSession();
+  if(sess.left<=0||(sess.mode==='buf'&&!sess.pool.length)||(sess.maxQ&&sess.qi>=sess.maxQ))return endSession();
   next();
 }
 function endSession(){
@@ -768,7 +800,7 @@ const RC=2*Math.PI*20; // circunferencia del anillo del temporizador (r=20)
 function tick(t){
   const dt=Math.min(100,t-(lastT||t));lastT=t;
   if(view==='drill'&&sess&&sess.state==='q'&&!document.hidden){
-    sess.left=Math.max(0,sess.left-dt);sess.qEl+=dt;
+    if(!sess.prod)sess.left=Math.max(0,sess.left-dt);sess.qEl+=dt;
     if(sess.qLim&&sess.qEl>=sess.qLim)answer(-1);
     updateClock();
   }
@@ -786,8 +818,8 @@ function updateClock(){
 
 /* ---------- UI ---------- */
 let view='home';
-const CUI={part:{g:'へ'},jita:{g:'他'},ctr:{g:'本'},kanji:{g:'漢'},syn:{g:'≒'},morph:{g:'形'},mix:{g:'混'},buf:{g:'復'},dia:{g:'日'},days:{g:'日'}};
-function modeLabel(m){if(m==='days')return 'Todas las lecciones';if(m&&m.startsWith('day:')){const s=E.ses[m.slice(4)];return 'Lección · '+(s?s.titulo:'día')}return (MODES.find(x=>x[0]===m)||['',m])[1]}
+const CUI={part:{g:'へ'},jita:{g:'他'},ctr:{g:'本'},kanji:{g:'漢'},syn:{g:'≒'},morph:{g:'形'},mix:{g:'混'},buf:{g:'復'},dia:{g:'日'},days:{g:'日'},esc:{g:'書'},prod:{g:'書'}};
+function modeLabel(m){if(m==='top')return 'Errores de la semana';if(m==='days')return 'Todas las lecciones';if(m==='prod')return 'Producción';if(m&&m.startsWith('prod:')){const s=E.ses[m.slice(5)];return 'Producción · '+(s?s.titulo:'día')}if(m&&m.startsWith('day:')){const s=E.ses[m.slice(4)];return 'Lección · '+(s?s.titulo:'día')}return (MODES.find(x=>x[0]===m)||['',m])[1]}
 const MODES=[['mix','Mezcla','Prioriza tus débiles'],['part','で/に/へ','Partículas de lugar'],['jita','自・他','Transitivo / intransitivo'],['ctr','助数詞','Contadores'],
   ['kanji','漢字','Kanji del 2019'],['syn','言い換え','Paráfrasis · Sección II'],['morph','活用・時制','Formas y tiempo'],['buf','Errores','Buffer pendiente']];
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('on'),1900)}
@@ -821,7 +853,7 @@ function renderHome(){
   const prog=Math.min(1,Math.max(0,1-exam/total)),C=2*Math.PI*44,mode=[m,modeLabel(m)];
   $('#app').innerHTML=`${tabsHtml('juego')}
     <div class="row"><div class="brand"><span class="hanko">朱</span><div><b>MEXT Ráfaga</b><small>Modo aburrimiento · 60–90 s</small></div></div><span class="sp"></span>
-      <button class="icon-btn" data-act="stats" aria-label="Estadísticas" title="Estadísticas (S)">📊</button></div>
+      <button class="icon-btn" data-act="prog" aria-label="Panel de progreso" title="Panel de progreso">📈</button><button class="icon-btn" data-act="stats" aria-label="Estadísticas" title="Estadísticas (S)">📊</button></div>
     <section class="hero">
       <div class="ring" aria-label="${exam} días para el examen">
         <svg viewBox="0 0 100 100"><defs><linearGradient id="g1" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#ffb547"/><stop offset="1" stop-color="var(--accent)"/></linearGradient></defs>
@@ -863,12 +895,35 @@ function renderHome(){
     </div></details>
     <div class="foot"><span class="kbd">Enter</span> empezar · <span class="kbd">1</span>–<span class="kbd">4</span> responder · <span class="kbd">Enter</span> seguir · <span class="kbd">Esc</span> salir · <span class="kbd">S</span> estadísticas<br>Agrega <span class="kbd">#go</span> a la URL para arrancar directo</div>`;
 }
+// Comparación tolerante: sin espacios ni signos (。、．，!?), ancho completo = medio
+const pNorm=s=>String(s||'').normalize('NFKC').replace(/[\s。、．，,.!！?？「」『』・〜~]/g,'').trim();
+function prodCheck(){
+  if(!sess||!sess.cur||!sess.cur.prod||sess.state!=='q')return;
+  const el=$('#prodIn'),typed=(el?el.value:'').trim();
+  if(!typed){toast('Escribe tu respuesta');el&&el.focus();return}
+  sess.typed=typed;
+  if(pNorm(typed)===pNorm(sess.cur.ans))return answer(0,{ok:true,exact:true,typed});
+  sess.state='judge';renderDrill();
+}
+function prodHtml(q){
+  const ja='lang="ja" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false"';
+  if(sess.state==='q')return `<div class="prod"><input id="prodIn" type="text" ${ja} placeholder="Escribe aquí en japonés" enterkeyhint="done">
+    <button class="btn eprimary pbtn" data-act="prodcheck">Comprobar ⏎</button><div class="muted small">Se ignoran espacios y signos (。、).</div></div>`;
+  const d=eDiff(sess.typed,q.ans);
+  const caja=`<div class="pcmp"><div class="muted small">Escribiste</div><div class="eresp" lang="ja">${d?d.a:esc(sess.typed)}</div>
+    <div class="muted small">Respuesta del instructor</div><div class="efix" lang="ja">✏️ ${d?d.b:esc(q.ans)}</div>
+    ${q.x[0]?`<div class="ecom"><span>🧑‍🏫</span><div>${esc(q.x[0])}</div></div>`:''}</div>`;
+  if(sess.state==='judge')return `<div class="prod">${caja}
+    <div class="pjudge"><button class="btn pbad" data-act="prodbad">✗ Me equivoqué <span class="kbd">1</span></button><button class="btn pok" data-act="prodok">✓ La mía también es válida <span class="kbd">2</span></button></div></div>`;
+  const ok=sess.chosen===q.correct;
+  return ok?`<div class="prod"><div class="pgood">✓ ¡Correcto!</div></div>`:`<div class="prod">${caja}<div class="n"><span class="tag buf">↻ al buffer · 0/3</span> <button class="btn" data-act="prodnext">Seguir ⏎</button></div></div>`;
+}
 function renderDrill(){
   const q=sess.cur,fb=sess.state==='fb',ok=fb&&sess.chosen===q.correct,c=q.cat;
   const mult=1+Math.min(4,Math.floor(sess.combo/3))*.5;
   const cm=sess.combo>=3?`<span class="combo ${sess.combo>=9?'hot':''}">🔥 ${sess.combo} · ×${mult.toFixed(1)}</span>`:'';
   let fbHtml='';
-  if(fb&&!ok){
+  if(fb&&!ok&&!q.prod){
     const ch=sess.chosen>=0?q.opts[sess.chosen]:null,right=q.opts[q.correct],l2=ch&&q.w[ch.v]?q.w[ch.v]:q.x[1];
     fbHtml=`<div class="fb" role="alert"><span class="ic">${ch?'✗':'⏱'}</span><div style="flex:1;min-width:0">
       <div class="h">${ch?`Elegiste <b lang="ja">${ch.h}</b> → correcta <b lang="ja" style="color:var(--ok)">${right.h}</b>`:`Se acabó el tiempo → correcta <b lang="ja" style="color:var(--ok)">${right.h}</b>`}</div>
@@ -888,11 +943,13 @@ function renderDrill(){
       <div class="prompt ${q.long?'long':''}" lang="ja">${q.html}</div>
       <div class="qtimer"><i id="qt"></i></div>
     </div>
-    <div class="opts ${q.long?'long':''} ${fb&&!ok?'shake':''}" lang="ja" style="--c:var(--${c})">${q.opts.map((o,i)=>{
+    ${q.prod?prodHtml(q):`<div class="opts ${q.long?'long':''} ${fb&&!ok?'shake':''}" lang="ja" style="--c:var(--${c})">${q.opts.map((o,i)=>{
       const cls=fb?(i===q.correct?'ok':i===sess.chosen?'bad':'dim'):'';
       return `<button class="opt ${cls}" data-ans="${i}" ${fb?'tabindex="-1"':''}><span class="k">${i+1}</span><span>${o.h}</span></button>`}).join('')}</div>
-    ${fbHtml}`;
+    ${fbHtml}`}`;
   updateClock();
+  if(q.prod&&sess.state==='q'){const el=$('#prodIn');if(el)setTimeout(()=>el.focus(),30)}
+  const tr=$('#tring');if(tr&&sess.prod)tr.outerHTML=`<span class="pcount">${Math.min(sess.qi+(sess.state==='q'?1:0),sess.maxQ)}/${sess.maxQ}</span>`;
 }
 function grade(a){return a>=.9?['優','EXCELENTE']:a>=.75?['良','BIEN']:a>=.6?['可','PASA']:['再','OTRA VEZ']}
 function renderEnd(){
@@ -925,7 +982,7 @@ function renderStats(){
   </div>`;
 }
 let lastView=null,lastOpen=null;
-function render(){applyTheme();const y=window.scrollY;if(view==='home')renderHome();else if(view==='drill')renderDrill();else if(view==='end')renderEnd();else if(view==='estudio')renderEstudio();else if(view==='sesion')renderSesion();else renderStats();
+function render(){applyTheme();const y=window.scrollY;if(view==='home')renderHome();else if(view==='drill')renderDrill();else if(view==='end')renderEnd();else if(view==='estudio')renderEstudio();else if(view==='sesion')renderSesion();else if(view==='prog')renderProg();else renderStats();
   if(view!=='drill'&&(view!==lastView||eOpen!==lastOpen))window.scrollTo(0,0);else if(view==='sesion'||view==='estudio')window.scrollTo(0,y);lastView=view;lastOpen=eOpen}
 
 /* =========================================================
@@ -1302,17 +1359,48 @@ function buildLesson(key,a){
     opts:opts.map(o=>({v:o.t,h:esc(o.t),ok:o.ok})),
     x:[it.exp||('Correcta: '+right),'Lección del '+eFechaCorta(s.fecha)+' — '+(s.titulo||'')],w:{}});
 }
+/* ---------- Producción: escribir la respuesta (errores corregidos 🔍 + preguntas 🎮) ---------- */
+function prodItems(s){
+  if(!s||!s.blocks)return[];
+  const p=eParse(s.blocks),out=[];
+  const corr=eCorr(p),ent=eEntregaAns(p),tareas=p.secs.filter(x=>x.kind==='tarea'||x.kind==='practica'),todas=p.secs.filter(x=>x.kind==='tarea'||x.kind==='practica'||x.kind==='fuera');
+  for(const sec of tareas){
+    const g=eBuscarGrupo(corr,sec,tareas.indexOf(sec));if(!g)continue;
+    const gE=ent?eBuscarGrupo(ent,sec,todas.indexOf(sec)):null,w=E.work[s.id];
+    sec.items.forEach((b,i)=>{
+      const sp=eSplitFix(g.items[i]);if(!sp||[...sp.fix].length<2)return;
+      const antes=(w&&w.ans[b.id]&&w.ans[b.id].r)||(gE&&gE.items[i]&&gE.items[i].r)||'';
+      out.push({id:'c'+b.id,pr:ptxt(b.rt).replace(/\s+A\s.*\sB\s.*$/,'').trim(),ans:sp.fix,exp:sp.com,antes,src:'Corrige tu error'});
+    });
+  }
+  for(const it of lessonItems(s))out.push({id:'g'+it.id,pr:ptxt(it.rt),ans:it.opts.find(o=>o.ok).t,exp:it.exp,antes:'',src:'Escribe la respuesta'});
+  return out;
+}
+function prodKeys(pid){
+  const list=pid?[E.ses[pid]].filter(Boolean):Object.values(E.ses);
+  return [].concat(...list.map(s=>prodItems(s).map(it=>'w:'+s.id+':'+it.id)));
+}
+function buildProd(key,a){
+  const j=a.indexOf(':'),pid=a.slice(0,j),iid=a.slice(j+1),s=E.ses[pid];
+  const it=prodItems(s).find(x=>x.id===iid);if(!it)return null;
+  const html=esc(it.pr).replace(/（　）|\(\s*\)/g,'<span class="blank">（　　）</span>')+(it.antes?`<div class="pantes">Antes escribiste: <span lang="ja">${esc(it.antes)}</span></div>`:'');
+  return finalize({key,cat:'esc',prod:true,ans:it.ans,head:it.src+' · '+(s.titulo||''),html,long:true,opts:[],
+    x:[it.exp||'','Lección del '+eFechaCorta(s.fecha)+' — '+(s.titulo||'')],w:{}});
+}
+
 function lessonsHtml(){
   const L=lessons();
   if(!L.length)return `<h3>📅 Lecciones de días estudiados</h3><div class="card lempty"><b>Aún no hay lecciones.</b><div class="muted small">Cada vez que el instructor corrija un día y agregue la sección «🎮 Juego», aparecerá aquí una lección nueva para jugar.</div></div>`;
   const allK=lessonKeys();
   const acc=keys=>{let n=0,ok=0;for(const k of keys){const it=S.items[k];if(it){n+=it.n;ok+=it.ok}}return n?ok/n:null};
-  const card=(mode,title,sub,keys,isNew)=>{const p=acc(keys);return `<button class="lesson ${S.settings.mode===mode?'on':''}" data-mode="${esc(mode)}">
+  const card=(mode,title,sub,keys,isNew,pmode,pn)=>{const p=acc(keys);return `<div class="lrow"><button class="lesson ${S.settings.mode===mode?'on':''}" data-mode="${esc(mode)}">
       <span class="glyph" style="--c:var(--dia)">日</span><span class="lt"><b>${esc(title)}</b><span class="muted small">${sub}${isNew?' · <span class="lnew">nueva</span>':''}</span></span>
-      <span class="pct">${p==null?'▶':Math.round(p*100)+'%'}</span>${p!=null?`<span class="mb" style="width:${p*100}%;background:var(--dia)"></span>`:''}</button>`};
+      <span class="pct">${p==null?'▶':Math.round(p*100)+'%'}</span>${p!=null?`<span class="mb" style="width:${p*100}%;background:var(--dia)"></span>`:''}</button>${pmode&&pn?`<button class="lprod" data-mode="${esc(pmode)}" title="Escribir las respuestas" aria-label="Producción: escribir">✏️<small>${pn}</small></button>`:''}</div>`};
+  const pAll=prodKeys();
   return `<h3>📅 Lecciones de días estudiados</h3><div class="lessons">
-    ${L.length>1?card('days','Todas las lecciones',`${L.length} días · ${allK.length} preguntas`,allK):''}
-    ${L.map(s=>{const ks=lessonKeys(s.id);return card('day:'+s.id,s.titulo||'Día estudiado',`${esc(eFechaCorta(s.fecha))} · ${ks.length} preguntas`,ks,!ks.some(k=>S.items[k]))}).join('')}
+    ${pAll.length?`<button class="lesson lp ${S.settings.mode==='prod'?'on':''}" data-mode="prod"><span class="glyph" style="--c:var(--esc)">書</span><span class="lt"><b>✏️ Producción: escribir</b><span class="muted small">${pAll.length} tarjetas · tus errores corregidos y las preguntas del juego</span></span><span class="pct">▶</span></button>`:''}
+    ${L.length>1?card('days','Todas las lecciones',`${L.length} días · ${allK.length} preguntas`,allK,false,'prod',pAll.length):''}
+    ${L.map(s=>{const ks=lessonKeys(s.id);const pk=prodKeys(s.id).length;return card('day:'+s.id,s.titulo||'Día estudiado',`${esc(eFechaCorta(s.fecha))} · ${ks.length} preguntas`,ks,!ks.some(k=>S.items[k]),'prod:'+s.id,pk)}).join('')}
   </div>`;
 }
 
@@ -1442,6 +1530,82 @@ function intentarRecarga(){
   recargaPendiente=false;eSave&&eSave();save();location.reload();
 }
 
+/* ---------- Panel de progreso ----------
+   Un gráfico por pregunta, una sola serie cada uno (más su línea de referencia), marcas finas,
+   etiquetas solo donde importan, valor al tocar/pasar y tabla «Ver datos» para cada gráfico. */
+const P_INICIO='2026-07-29',P_EXAMEN='2027-07-15';
+const dms=f=>new Date(f+'T12:00:00').getTime();
+function verTip(el){const c=el.closest('.chart');if(!c)return;c.querySelectorAll('.sel').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');const cap=c.querySelector('.ccap');if(cap)cap.textContent=el.dataset.tip}
+function tabla(cols,rows){return `<details class="cdatos"><summary>Ver datos</summary><div class="etw"><table><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr>${rows.map(r=>`<tr>${r.map(v=>`<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</table></div></details>`}
+const W=340,H=170,ML=30,MR=12,MT=14,MB=24;
+function ejeY(max,paso,fmt){let s='';for(let v=0;v<=max+1e-9;v+=paso){const y=MT+(H-MT-MB)*(1-v/max);s+=`<line x1="${ML}" x2="${W-MR}" y1="${y}" y2="${y}" class="cgrid"/><text x="${ML-6}" y="${y+3.5}" class="cax" text-anchor="end">${fmt(v)}</text>`}return s}
+function barras(datos,{max,paso,fmt,refV,refTxt,color}){
+  const n=datos.length,bw=Math.min(26,(W-ML-MR)/n-4),y0=H-MB;
+  let s=ejeY(max,paso,fmt);
+  datos.forEach((d,i)=>{const cx=ML+(W-ML-MR)*(i+.5)/n,hgt=Math.max(1,(H-MT-MB)*Math.min(d.v,max)/max),y=y0-hgt;
+    s+=`<g data-tip="${esc(d.tip)}" class="cmk"><rect x="${cx-bw/2-4}" y="${MT}" width="${bw+8}" height="${H-MT-MB}" fill="transparent"/><path d="M${cx-bw/2},${y0}V${y+4}q0,-4 4,-4h${bw-8}q4,0 4,4V${y0}Z" fill="${color}"/></g>`;
+    if(i===n-1||i===0)s+=`<text x="${cx}" y="${H-8}" class="cax" text-anchor="middle">${esc(d.label)}</text>`;
+    if(i===n-1)s+=`<text x="${cx}" y="${y-5}" class="clbl" text-anchor="middle">${esc(fmt(d.v))}</text>`;
+  });
+  if(refV!=null){const y=MT+(H-MT-MB)*(1-refV/max);s+=`<line x1="${ML}" x2="${W-MR}" y1="${y}" y2="${y}" class="cref"/><text x="${W-MR}" y="${y-4}" class="cax" text-anchor="end">${esc(refTxt)}</text>`}
+  return `<svg viewBox="0 0 ${W} ${H}" class="csvg" role="img">${s}</svg>`;
+}
+function lineas(serie,{max,paso,fmt,x0,x1,refV,refTxt,ref2,color}){
+  const X=t=>ML+(W-ML-MR)*(t-x0)/Math.max(1,x1-x0),Y=v=>MT+(H-MT-MB)*(1-Math.min(v,max)/max);
+  let s=ejeY(max,paso,fmt);
+  if(refV!=null){const y=Y(refV);s+=`<line x1="${ML}" x2="${W-MR}" y1="${y}" y2="${y}" class="cref"/><text x="${W-MR}" y="${y-4}" class="cax" text-anchor="end">${esc(refTxt)}</text>`}
+  if(ref2)s+=`<line x1="${X(ref2.t0)}" y1="${Y(ref2.v0)}" x2="${X(ref2.t1)}" y2="${Y(ref2.v1)}" class="cref"/>`;
+  if(serie.length>1)s+=`<polyline points="${serie.map(p=>X(p.t)+','+Y(p.v)).join(' ')}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  serie.forEach((p,i)=>{s+=`<g data-tip="${esc(p.tip)}" class="cmk"><circle cx="${X(p.t)}" cy="${Y(p.v)}" r="12" fill="transparent"/><circle cx="${X(p.t)}" cy="${Y(p.v)}" r="4" fill="${color}" stroke="var(--surface)" stroke-width="2"/></g>`;
+    if(i===serie.length-1)s+=`<text x="${Math.min(X(p.t),W-MR-8)}" y="${Y(p.v)-9}" class="clbl" text-anchor="middle">${esc(fmt(p.v))}</text>`});
+  const f2=t=>eFechaCorta(new Date(t).toISOString().slice(0,10));
+  s+=`<text x="${ML}" y="${H-8}" class="cax">${f2(x0)}</text><text x="${W-MR}" y="${H-8}" class="cax" text-anchor="end">${f2(x1)}</text>`;
+  return `<svg viewBox="0 0 ${W} ${H}" class="csvg" role="img">${s}</svg>`;
+}
+function semana(t){const d=new Date(t);d.setHours(0,0,0,0);d.setDate(d.getDate()-((d.getDay()+6)%7));return d.getTime()}
+function topErrores(){
+  const desde=Date.now()-7*864e5,m={};
+  for(const e of S.ev)if(e.k==='a'&&e.t>=desde&&!e.o)m[e.q]=(m[e.q]||0)+1;
+  return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,n])=>({k,n}));
+}
+function renderProg(){
+  const ses=Object.values(E.ses).sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  const card=(t,sub,cuerpo)=>`<section class="card chart"><h3>${t}</h3>${sub?`<div class="muted small">${sub}</div>`:''}${cuerpo}<div class="ccap muted small" aria-live="polite">Toca un punto para ver su valor.</div></section>`;
+  const vacio=t=>`<div class="muted small cvacio">${t}</div>`;
+  let html='';
+  // 1) Calificación por sesión
+  const notas=ses.filter(s=>typeof s.nota==='number').slice(-14);
+  html+=card('Calificación por sesión','La nota de 1 a 10 que pone el instructor',notas.length?barras(notas.map(s=>({v:Math.min(10,s.nota),label:eFechaCorta(s.fecha),tip:`${eFechaCorta(s.fecha)} · ${s.titulo} · ${String(Math.round(s.nota*10)/10).replace('.',',')}/10`})),{max:10,paso:2,fmt:v=>String(Math.round(v*10)/10).replace('.',','),color:'var(--part)'})
+    +tabla(['Fecha','Sesión','Nota'],notas.map(s=>[s.fecha,s.titulo,String(s.nota)])):vacio('Aparecerá cuando el instructor ponga la Calificación en tus sesiones.'));
+  // 2) Dominio de la fase actual
+  const conDom=ses.filter(s=>typeof s.dominio==='number'),fase=conDom.length?conDom[conDom.length-1].fase:null,dom=conDom.filter(s=>s.fase===fase);
+  const dv=s=>s.dominio>0&&s.dominio<1?s.dominio*100:s.dominio;
+  html+=card(`Dominio de la ${esc(fase||'fase')}`,'Lo estima el instructor · línea punteada = checkpoint del 50%',dom.length?lineas(dom.map(s=>({t:dms(s.fecha),v:dv(s),tip:`${eFechaCorta(s.fecha)} · ${Math.round(dv(s))}%`})),{max:100,paso:25,fmt:v=>Math.round(v)+'%',x0:dms(dom[0].fecha)-864e5,x1:Math.max(dms(dom[dom.length-1].fecha)+864e5,dms(dom[0].fecha)+6*864e5),refV:50,refTxt:'50%',color:'var(--part)'})
+    +tabla(['Fecha','Fase','Dominio'],dom.map(s=>[s.fecha,s.fase||'',Math.round(dv(s))+'%'])):vacio('Aparecerá cuando el instructor ponga «Dominio %» en tus sesiones.'));
+  // 3) Horas reales vs ritmo necesario
+  const hs=ses.filter(s=>typeof s.horas==='number');
+  if(hs.length){
+    const ult=hs[hs.length-1],ini=hs[0],meta=typeof ult.meta==='number'&&ult.meta>0?ult.meta:500,t0=dms(ini.fecha),tE=dms(P_EXAMEN);
+    // ritmo necesario desde el primer registro de horas: de ahí hasta la meta el día del examen
+    const ideal=t=>ini.horas+(meta-ini.horas)*(t-t0)/(tE-t0),delta=ult.horas-ideal(dms(ult.fecha));
+    const x0=dms(hs[0].fecha)-3*864e5,x1=Math.max(dms(ult.fecha),Date.now())+3*864e5,mx=Math.max(ideal(x1),ult.horas)*1.15;
+    const paso=mx>80?20:mx>40?10:5,maxY=Math.ceil(mx/paso)*paso;
+    const hero=`<div class="chero"><b class="${delta>=0?'pos':'neg'}">${delta>=0?'+':'−'}${Math.abs(delta).toFixed(1).replace('.',',')} h</b><span class="muted small">${delta>=0?'adelantado':'atrasado'} respecto al ritmo necesario desde el ${eFechaCorta(ini.fecha)} para llegar a ${meta} h el 15 jul 2027</span></div>`;
+    html+=card('Horas de estudio','Tus horas reales (instructor) · punteada = ritmo necesario',hero+lineas(hs.map(s=>({t:dms(s.fecha),v:s.horas,tip:`${eFechaCorta(s.fecha)} · ${s.horas} h (necesarias: ${ideal(dms(s.fecha)).toFixed(1)} h)`})),{max:maxY,paso,fmt:v=>Math.round(v)+'h',x0,x1,ref2:{t0:x0,v0:ideal(x0),t1:x1,v1:ideal(x1)},color:'var(--jita)'})
+      +`<div class="cleg"><span><i style="background:var(--jita)"></i>Tus horas</span><span><i class="dash"></i>Ritmo necesario</span></div>`
+      +tabla(['Fecha','Horas reales','Necesarias'],hs.map(s=>[s.fecha,String(s.horas),ideal(dms(s.fecha)).toFixed(1)])));
+  }else html+=card('Horas de estudio','',vacio('Aparecerá cuando el instructor ponga «Horas acumuladas» en tus sesiones.'));
+  // 4) Aciertos del juego por semana
+  const sem={};for(const e of S.ev)if(e.k==='a'){const k=semana(e.t),o=sem[k]||(sem[k]={n:0,ok:0});o.n++;if(e.o)o.ok++}
+  const ks=Object.keys(sem).map(Number).sort((a,b)=>a-b).slice(-8);
+  html+=card('Aciertos del juego por semana','Todas las ráfagas, lecciones y producción',ks.length?barras(ks.map(k=>({v:100*sem[k].ok/sem[k].n,label:eFechaCorta(new Date(k).toISOString().slice(0,10)),tip:`Semana del ${eFechaCorta(new Date(k).toISOString().slice(0,10))} · ${Math.round(100*sem[k].ok/sem[k].n)}% (${sem[k].ok}/${sem[k].n})`})),{max:100,paso:25,fmt:v=>Math.round(v)+'%',color:'var(--syn)'})
+    +tabla(['Semana','Aciertos','Respuestas'],ks.map(k=>[new Date(k).toISOString().slice(0,10),Math.round(100*sem[k].ok/sem[k].n)+'%',String(sem[k].n)])):vacio('Aparecerá cuando juegues tu primera ráfaga.'));
+  // 5) Errores más repetidos de la semana
+  const top=topErrores();
+  html+=`<section class="card"><h3>Tus errores más repetidos (7 días)</h3>${top.length?`<ul class="list">${top.map(x=>`<li>${glyph(catOf(x.k))}<span class="t" lang="ja">${esc(label(x.k))}</span><span class="muted small">${x.n}✗</span></li>`).join('')}</ul><button class="btn eprimary ctop" data-act="practicar-top">Practicar estos ${top.length}</button>`:'<span class="muted">Sin errores esta semana. 🎉</span>'}</section>`;
+  $('#app').innerHTML=`<div class="stack"><div class="row"><button class="icon-btn" data-act="home" aria-label="Inicio">←</button><b style="font-size:1.15rem">Panel de progreso</b><span class="sp"></span><span class="kbd">Esc</span></div>${html}</div>`;
+}
+
 /* ---------- Eventos ---------- */
 function exportData(){
   const a=document.createElement('a');
@@ -1449,6 +1613,7 @@ function exportData(){
   a.download=`mext-rafaga-respaldo-${today()}.json`;document.body.appendChild(a);a.click();a.remove();
 }
 function onClick(e){
+  const tip=e.target.closest&&e.target.closest('[data-tip]');if(tip&&tip.closest('.chart')){verTip(tip);return}
   const t=e.target.closest('button');
   if(t&&t.dataset.e){eClick(t);return}
   if(!t){if(view==='drill'&&sess&&sess.state==='fb'&&e.target.closest('.fb'))cont();return}
@@ -1464,7 +1629,13 @@ function onClick(e){
     case 'start':case 'again':startSession(S.settings.mode);break;
     case 'home':view='home';sess=null;render();break;
     case 'stats':view='stats';render();break;
+    case 'prog':view='prog';render();break;
+    case 'practicar-top':startSession('top');break;
     case 'quit':endSession();break;
+    case 'prodcheck':prodCheck();break;
+    case 'prodbad':answer(0,{ok:false,typed:sess.typed});break;
+    case 'prodok':answer(0,{ok:true,exact:false,typed:sess.typed});break;
+    case 'prodnext':cont();break;
     case 'export':exportData();break;
     case 'syncpill':{const det=document.querySelector('details.card');if(!syncConfigured()&&det){det.open=true;det.scrollIntoView({behavior:'smooth'})}else syncNow(true);break}
     case 'syncsave':S.settings.syncUrl=$('#sUrl').value.trim();S.settings.syncKey=$('#sKey').value.trim();save();
@@ -1476,6 +1647,8 @@ function onClick(e){
 function onKey(e){
   if(e.ctrlKey||e.metaKey||e.altKey)return;
   const k=e.key;
+  if(e.target&&e.target.id==='prodIn'){if(k==='Enter'&&!e.isComposing){e.preventDefault();prodCheck()}return} // Enter durante la conversión a kanji no envía
+  if(view==='drill'&&sess&&sess.state==='judge'){if(k==='1')answer(0,{ok:false,typed:sess.typed});else if(k==='2')answer(0,{ok:true,exact:false,typed:sess.typed});return}
   if(e.target&&e.target.matches&&e.target.matches('input,textarea,select'))return;
   if(view==='sesion'){if(k==='Escape'){view='estudio';eOpen=null;render()}return}
   if(view==='estudio'){if(k==='Escape'){view='home';render()}return}
@@ -1485,10 +1658,11 @@ function onKey(e){
     else if(k==='Escape')endSession();
   }else if(view==='home'){if(k==='Enter'&&!(e.target.closest&&e.target.closest('button'))){e.preventDefault();startSession(S.settings.mode)}else if(k==='s')(view='stats',render())}
   else if(view==='end'){if(k==='Enter'){e.preventDefault();startSession(S.settings.mode)}else if(k==='Escape'){view='home';sess=null;render()}}
-  else if(view==='stats'&&k==='Escape'){view='home';render()}
+  else if((view==='stats'||view==='prog')&&k==='Escape'){view='home';render()}
 }
 if(typeof document!=='undefined'){
   document.addEventListener('click',onClick);
+  document.addEventListener('mouseover',e=>{const t=e.target.closest&&e.target.closest('.chart [data-tip]');if(t)verTip(t)});
   document.addEventListener('keydown',onKey);
   $('#imp').addEventListener('change',e=>{
     const f=e.target.files[0];if(!f)return;const r=new FileReader();

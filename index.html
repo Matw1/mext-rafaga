@@ -291,6 +291,12 @@ button.pill{cursor:pointer;font-family:inherit}
 .cleg{display:flex;gap:14px;font-size:.78rem;color:var(--muted);margin-top:4px}.cleg i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-right:5px}
 .cleg i.dash{background:repeating-linear-gradient(90deg,var(--muted) 0 4px,transparent 4px 8px)}
 .ctop{width:100%;margin-top:10px}
+.simex.sell{opacity:.55;cursor:not-allowed}
+.simg{display:grid;gap:6px;margin-top:8px}
+.simrow{display:flex;align-items:center;gap:6px}
+.simb{flex:1;min-width:0;min-height:44px;border:1.5px solid var(--line);background:var(--surface);border-radius:10px;font-weight:800;font-size:1.05rem}
+.simb.on{background:var(--part);border-color:var(--part);color:var(--bg)}
+.simb.nose{flex:.7;color:var(--muted)}.simb.nose.on{background:var(--muted);border-color:var(--muted);color:var(--bg)}
 .foot{margin-top:22px;text-align:center;font-size:.78rem;color:var(--muted);line-height:2}
 
 @media (max-width:420px){.prompt{font-size:1.38rem}.opt{font-size:1.18rem}.ring{width:92px;height:92px}.ring .in b{font-size:1.6rem}.hero{gap:12px;padding:14px}}
@@ -982,7 +988,7 @@ function renderStats(){
   </div>`;
 }
 let lastView=null,lastOpen=null;
-function render(){applyTheme();const y=window.scrollY;if(view==='home')renderHome();else if(view==='drill')renderDrill();else if(view==='end')renderEnd();else if(view==='estudio')renderEstudio();else if(view==='sesion')renderSesion();else if(view==='prog')renderProg();else renderStats();
+function render(){applyTheme();const y=window.scrollY;if(view==='home')renderHome();else if(view==='drill')renderDrill();else if(view==='end')renderEnd();else if(view==='estudio')renderEstudio();else if(view==='sesion')renderSesion();else if(view==='prog')renderProg();else if(view==='simu')renderSimHoja();else renderStats();
   if(view!=='drill'&&(view!==lastView||eOpen!==lastOpen))window.scrollTo(0,0);else if(view==='sesion'||view==='estudio')window.scrollTo(0,y);lastView=view;lastOpen=eOpen}
 
 /* =========================================================
@@ -1072,6 +1078,7 @@ function eToggle(id,sec){
 }
 function eStopAll(w){const run=eRunning(w);if(run){const t=w.tim[run];t.acc=(t.acc||0)+Date.now()-t.start;t.start=null}}
 function eTick(){
+  if(view==='simu'){const el=document.getElementById('simT');if(el&&E.sim&&E.sim.start)el.textContent=eFmt(Date.now()-E.sim.start);return}
   if(view!=='sesion'||!eOpen)return;const w=eWork(eOpen);let total=0;
   document.querySelectorAll('[data-tm]').forEach(el=>{const ms=eMs(w.tim[el.dataset.tm]);el.textContent=eFmt(ms)});
   for(const t of Object.values(w.tim))total+=eMs(t);
@@ -1095,6 +1102,8 @@ async function eSync(manual){
   eBusy=true;eState='busy';eRefresh();
   try{
     while(E.outbox.length){await ePost('/estudio/entrega',E.outbox[0]);E.outbox.shift();eSave()}
+    while((E.simOut||[]).length){await ePost('/simulacro/entrega',E.simOut[0]);E.simOut.shift();eSave()}
+    try{const rs=await ePost('/simulacro/lista',{});E.sims=rs.simulacros||[];eSave()}catch(e){if(e.badkey)throw e} // sin base de simulacros configurada: se ignora
     // El Worker baja las sesiones por partes (límite de consultas): repetimos mientras diga 'more'
     let r,guard=0;const ronda=rid()+Date.now().toString(36); // misma ronda en todas las vueltas
     do{
@@ -1118,7 +1127,7 @@ async function eSync(manual){
 let eErr='';
 function eStatus(){
   if(!syncConfigured())return['Sin conexión configurada · configura la nube en Ajustes del juego','warn'];
-  const p=E.outbox.length?` · ${E.outbox.length} entrega(s) en cola`:'';
+  const nq=E.outbox.length+((E.simOut||[]).length),p=nq?` · ${nq} entrega(s) en cola`:'';
   if(eState==='busy')return['Actualizando…',''];
   if(eState==='offline')return['Sin conexión · usando lo guardado'+p,'warn'];
   if(eState==='badkey')return['Clave inválida (revisa Ajustes del juego)','bad'];
@@ -1142,6 +1151,7 @@ let eSub='ses';
 function renderEstudio(){
   if(eSub==='ref')return renderRef();
   if(eSub==='mat')return renderMateria();
+  if(eSub==='sim')return renderSimLista();
   const list=Object.values(E.ses).sort((a,b)=>b.fecha.localeCompare(a.fecha));
   const hoy=list.find(s=>s.fecha===today())||list.find(s=>s.estado==='Publicada'&&!(E.work[s.id]&&E.work[s.id].sent));
   const rest=list.filter(s=>s!==hoy);const[st,sc]=eStatus();
@@ -1404,8 +1414,75 @@ function lessonsHtml(){
   </div>`;
 }
 
+/* ---------- 📋 Simulacros: hoja de respuestas (las preguntas se leen del PDF del examen) ----------
+   Los exámenes sellados (checkpoints y final) solo se habilitan desde su fecha. La app no corrige:
+   la fila llega a Notion y el instructor anota % total y % de lo enseñado. */
+const SIM_EX=[
+  {id:'2014',examen:'2014 · práctica',titulo:'MEXT 2014 · Secciones I y II',desde:null,nota:'Práctica · dom 25 oct'},
+  {id:'2015',examen:'2015 · práctica',titulo:'MEXT 2015 · Secciones I y II',desde:null,nota:'Práctica · dom 1 nov'},
+  {id:'2016',examen:'2016 · checkpoint día 30',titulo:'Checkpoint día 30 · MEXT 2016',desde:'2026-10-27',nota:'Sellado hasta el mar 27 oct'},
+  {id:'2017',examen:'2017 · checkpoint día 60',titulo:'Checkpoint día 60 · MEXT 2017',desde:'2026-11-26',nota:'Sellado hasta el jue 26 nov'},
+  {id:'2018',examen:'2018 · final',titulo:'Simulacro final · MEXT 2018',desde:'2027-05-01',nota:'Sellado hasta mayo de 2027'},
+];
+const ROMANOS=['I','II','III','IV','V','VI'];
+function simStart(id){
+  const ex=SIM_EX.find(x=>x.id===id);if(!ex)return;
+  if(ex.desde&&today()<ex.desde){toast('Este examen está sellado hasta el '+eFechaCorta(ex.desde));return}
+  if(E.sim&&!confirm('Ya tienes un simulacro empezado. ¿Descartarlo y empezar otro?'))return;
+  E.sim={ex:id,examen:ex.examen,titulo:ex.titulo,secs:[['I',10],['II',10]],resp:{},start:null};eSave();view='simu';render();
+}
+function simSec(i,d){const s=E.sim.secs[i];s[1]=Math.max(1,Math.min(40,s[1]+d));eSave();render()}
+function simAddSec(){const n=E.sim.secs.length;if(n>=ROMANOS.length)return;E.sim.secs.push([ROMANOS[n],10]);eSave();render()}
+function simMarcar(q,r){if(!E.sim||!E.sim.start)return;E.sim.resp[q]=E.sim.resp[q]===r?undefined:r;eSave();
+  document.querySelectorAll(`[data-q="${q}"]`).forEach(b=>b.classList.toggle('on',b.dataset.r===E.sim.resp[q]));
+  const tot=E.sim.secs.reduce((a,s)=>a+s[1],0),hechas=Object.values(E.sim.resp).filter(Boolean).length,el=document.getElementById('simN');if(el)el.textContent=`${hechas}/${tot}`}
+function simEntregar(){
+  const s=E.sim;if(!s)return;const resp=[];
+  for(const [sec,n] of s.secs)for(let i=1;i<=n;i++)resp.push({sec,n:i,r:s.resp[sec+'-'+i]||''});
+  const blancos=resp.filter(x=>!x.r).length,nose=resp.filter(x=>x.r==='?').length,min=Math.round((Date.now()-s.start)/60000);
+  if(!confirm(`¿Entregar el simulacro?\n\n${resp.length} preguntas · ${min} min${blancos?`\n${blancos} en blanco`:''}${nose?`\n${nose} marcadas «no sé»`:''}\n\nDespués ya no podrás cambiar las respuestas.`))return;
+  (E.simOut=E.simOut||[]).push({id:'sim-'+Date.now().toString(36)+rid().slice(0,4),examen:s.examen,titulo:s.titulo+' · '+eFechaCorta(today()),fecha:today(),minutos:min,resp});
+  E.sim=null;eSave();view='estudio';eSub='sim';render();toast(navigator.onLine===false?'Guardado: se enviará cuando vuelva la conexión':'Simulacro entregado');eSync();
+}
+function renderSimLista(){
+  const[st,sc]=eStatus(),hoyF=today(),hechos=new Set((E.sims||[]).map(x=>x.examen));
+  const fmtP=v=>typeof v==='number'?Math.round(v)+'%':'—';
+  $('#app').innerHTML=`<div class="estudio">${tabsHtml('estudio')}
+    <div class="row"><h1 style="font-size:1.2rem">Estudio diario</h1><span class="sp"></span><button class="btn" data-e="refresh">Actualizar</button></div>
+    <div class="estat" id="eStat" data-s="${sc}">${esc(st)}</div>
+    ${eSubTabs()}
+    ${E.sim?`<button class="ecard ehoy" data-e="sim-open"><span class="muted small">Simulacro en curso</span><b>${esc(E.sim.titulo)}</b><span class="muted small">Toca para continuar</span></button>`:''}
+    <div class="muted small" style="margin:4px 0 10px">Lee las preguntas en el <b>PDF del examen</b>; aquí solo marcas tus respuestas, con cronómetro. El instructor corrige y anota el % total y el % de lo que ya enseñó.</div>
+    <h3>Exámenes</h3>
+    ${SIM_EX.map(ex=>{const sell=ex.desde&&hoyF<ex.desde,hecho=hechos.has(ex.examen);return `<button class="ecard simex${sell?' sell':''}" data-e="sim-start" data-ex="${ex.id}" ${sell?'aria-disabled="true"':''}>
+      <span class="muted small">${sell?'🔒 ':''}${esc(ex.nota)}</span><b>${esc(ex.titulo)}</b>${hecho?'<span class="echip" data-st="Corregida">Ya hecho</span>':''}</button>`}).join('')}
+    <div class="muted small">Los mini-simulacros del instructor llegan como sesiones normales de Estudio.</div>
+    <h3>Resultados</h3>
+    ${(E.sims||[]).length?`<div class="etw"><table><tr><th>Fecha</th><th>Examen</th><th>% total</th><th>% enseñado</th><th>Estado</th></tr>${E.sims.slice().reverse().map(x=>`<tr><td>${esc(eFechaCorta(x.fecha))}</td><td>${esc(x.examen)}</td><td>${fmtP(x.total)}</td><td>${fmtP(x.ensenado)}</td><td>${esc(x.estado||'')}</td></tr>`).join('')}</table></div>
+      <div class="muted small">El gráfico de la tendencia está en 📈 Panel de progreso.</div>`:'<div class="muted small">Todavía no hay resultados.</div>'}
+  </div>`;
+}
+function renderSimHoja(){
+  const s=E.sim;if(!s){view='estudio';return renderEstudio()}
+  const tot=s.secs.reduce((a,x)=>a+x[1],0),hechas=Object.values(s.resp).filter(Boolean).length;
+  if(!s.start){ // preparación: confirmar cuántas preguntas tiene cada sección
+    $('#app').innerHTML=`<div class="estudio"><div class="row"><button class="icon-btn" data-e="sim-back" aria-label="Volver">←</button><b class="etitle">${esc(s.titulo)}</b></div>
+      <section class="esec"><b>Antes de empezar</b><p class="muted small">Revisa en el PDF cuántas preguntas tiene cada sección que vas a hacer y ajústalo aquí. El cronómetro empieza al tocar «Empezar».</p>
+      ${s.secs.map(([sec,n],i)=>`<div class="set"><span>Sección ${sec}</span><span class="seg"><button data-e="sim-sec" data-i="${i}" data-d="-1">−</button><button class="on" disabled>${n}</button><button data-e="sim-sec" data-i="${i}" data-d="1">+</button></span></div>`).join('')}
+      ${s.secs.length<ROMANOS.length?'<button class="btn" data-e="sim-add" style="margin-top:8px">+ Añadir sección</button>':''}</section>
+      <div class="eactions"><button class="btn eprimary" data-e="sim-go">Empezar (${tot} preguntas)</button><button class="btn" data-e="sim-cancel">Cancelar</button></div></div>`;
+    return;
+  }
+  $('#app').innerHTML=`<div class="estudio">
+    <div class="row"><button class="icon-btn" data-e="sim-back" aria-label="Volver">←</button><div style="min-width:0"><div class="muted small">Simulacro · ${esc(s.examen)}</div><b class="etitle">${esc(s.titulo)}</b></div></div>
+    <div class="ebar"><span>⏱ <b id="simT">${eFmt(Date.now()-s.start)}</b></span><span>Respondidas <b id="simN">${hechas}/${tot}</b></span></div>
+    ${s.secs.map(([sec,n])=>`<section class="esec"><b>Sección ${sec}</b><div class="simg">${Array.from({length:n},(_,i)=>{const q=sec+'-'+(i+1);return `<div class="simrow"><span class="enum">${i+1}</span>${['1','2','3','4','?'].map(r=>`<button class="simb${s.resp[q]===r?' on':''}${r==='?'?' nose':''}" data-e="sim-r" data-q="${q}" data-r="${r}" aria-label="Pregunta ${i+1}: ${r==='?'?'no sé':'opción '+r}">${r}</button>`).join('')}</div>`}).join('')}</div></section>`).join('')}
+    <div class="eactions"><button class="btn eprimary" data-e="sim-entregar">Entregar simulacro</button><button class="btn" data-e="sim-cancel">Descartar</button></div>
+  </div>`;
+}
+
 /* ---------- Referencia: todo el material 📘 Consulta ya explicado ---------- */
-function eSubTabs(){return `<div class="seg esub"><button data-e="sub-ses" class="${eSub==='ses'?'on':''}">Sesiones</button><button data-e="sub-ref" class="${eSub==='ref'?'on':''}">📘 Referencia</button><button data-e="sub-mat" class="${eSub==='mat'?'on':''}">📊 Materia</button></div>`}
+function eSubTabs(){return `<div class="seg esub"><button data-e="sub-ses" class="${eSub==='ses'?'on':''}">Sesiones</button><button data-e="sub-ref" class="${eSub==='ref'?'on':''}">📘 Referencia</button><button data-e="sub-mat" class="${eSub==='mat'?'on':''}">📊 Materia</button><button data-e="sub-sim" class="${eSub==='sim'?'on':''}">📋 Simulacros</button></div>`}
 function bText(list){let s='';for(const b of list||[]){s+=' '+ptxt(b.rt);if(b.cells)s+=' '+b.cells.map(ptxt).join(' ');if(b.kids)s+=bText(b.kids)}return s}
 function renderRef(){
   const items=[];
@@ -1503,7 +1580,16 @@ function eClick(t){
   if(a==='tab-juego'){view='home';render()}
   else if(a==='tab-estudio'){view='estudio';render();eSync()}
   else if(a==='refresh')eSync(true);
-  else if(a==='sub-ses'||a==='sub-ref'||a==='sub-mat'){eSub=a.slice(4)==='ref'?'ref':a.slice(4)==='mat'?'mat':'ses';render()}
+  else if(a==='sub-ses'||a==='sub-ref'||a==='sub-mat'||a==='sub-sim'){eSub=a.slice(4);render()}
+  else if(a==='sim-start')simStart(t.dataset.ex);
+  else if(a==='sim-open'){view='simu';render()}
+  else if(a==='sim-r'){simMarcar(t.dataset.q,t.dataset.r)}
+  else if(a==='sim-sec'){simSec(+t.dataset.i,+t.dataset.d)}
+  else if(a==='sim-add')simAddSec();
+  else if(a==='sim-go'){E.sim.start=Date.now();eSave();render()}
+  else if(a==='sim-entregar')simEntregar();
+  else if(a==='sim-cancel'){if(confirm('¿Descartar este simulacro? Se borran las respuestas marcadas.')){E.sim=null;eSave();view='estudio';render()}}
+  else if(a==='sim-back'){view='estudio';render()}
   else if(a==='open'){eOpen=t.dataset.id;view='sesion';render()}
   else if(a==='back'){view='estudio';eOpen=null;render()}
   else if(a==='timer'){eToggle(eOpen,t.dataset.sec);render()}
@@ -1547,17 +1633,20 @@ function barras(datos,{max,paso,fmt,refV,refTxt,color}){
     if(i===n-1||i===0)s+=`<text x="${cx}" y="${H-8}" class="cax" text-anchor="middle">${esc(d.label)}</text>`;
     if(i===n-1)s+=`<text x="${cx}" y="${y-5}" class="clbl" text-anchor="middle">${esc(fmt(d.v))}</text>`;
   });
-  if(refV!=null){const y=MT+(H-MT-MB)*(1-refV/max);s+=`<line x1="${ML}" x2="${W-MR}" y1="${y}" y2="${y}" class="cref"/><text x="${W-MR}" y="${y-4}" class="cax" text-anchor="end">${esc(refTxt)}</text>`}
+  if(refV!=null){const y=MT+(H-MT-MB)*(1-refV/max);s+=`<line x1="${ML}" x2="${W-MR}" y1="${y}" y2="${y}" class="cref"/><text x="${ML+4}" y="${y-4}" class="cax">${esc(refTxt)}</text>`}
   return `<svg viewBox="0 0 ${W} ${H}" class="csvg" role="img">${s}</svg>`;
 }
 function lineas(serie,{max,paso,fmt,x0,x1,refV,refTxt,ref2,color}){
   const X=t=>ML+(W-ML-MR)*(t-x0)/Math.max(1,x1-x0),Y=v=>MT+(H-MT-MB)*(1-Math.min(v,max)/max);
   let s=ejeY(max,paso,fmt);
-  if(refV!=null){const y=Y(refV);s+=`<line x1="${ML}" x2="${W-MR}" y1="${y}" y2="${y}" class="cref"/><text x="${W-MR}" y="${y-4}" class="cax" text-anchor="end">${esc(refTxt)}</text>`}
+  if(refV!=null){const y=Y(refV);s+=`<line x1="${ML}" x2="${W-MR}" y1="${y}" y2="${y}" class="cref"/><text x="${ML+4}" y="${y-4}" class="cax">${esc(refTxt)}</text>`}
   if(ref2)s+=`<line x1="${X(ref2.t0)}" y1="${Y(ref2.v0)}" x2="${X(ref2.t1)}" y2="${Y(ref2.v1)}" class="cref"/>`;
   if(serie.length>1)s+=`<polyline points="${serie.map(p=>X(p.t)+','+Y(p.v)).join(' ')}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  const s2=arguments[1].serie2,c2=arguments[1].color2;
+  if(s2){if(s2.length>1)s+=`<polyline points="${s2.map(p=>X(p.t)+','+Y(p.v)).join(' ')}" fill="none" stroke="${c2}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    s2.forEach((p,i)=>{s+=`<g data-tip="${esc(p.tip)}" class="cmk"><circle cx="${X(p.t)}" cy="${Y(p.v)}" r="12" fill="transparent"/><circle cx="${X(p.t)}" cy="${Y(p.v)}" r="4" fill="${c2}" stroke="var(--surface)" stroke-width="2"/></g>`;if(i===s2.length-1)s+=`<text x="${Math.min(X(p.t),W-MR-8)}" y="${Y(p.v)+(serie.length&&p.v>serie[serie.length-1].v?-9:18)}" class="clbl" text-anchor="middle">${esc(Math.round(p.v)+'%')}</text>`})}
   serie.forEach((p,i)=>{s+=`<g data-tip="${esc(p.tip)}" class="cmk"><circle cx="${X(p.t)}" cy="${Y(p.v)}" r="12" fill="transparent"/><circle cx="${X(p.t)}" cy="${Y(p.v)}" r="4" fill="${color}" stroke="var(--surface)" stroke-width="2"/></g>`;
-    if(i===serie.length-1)s+=`<text x="${Math.min(X(p.t),W-MR-8)}" y="${Y(p.v)-9}" class="clbl" text-anchor="middle">${esc(fmt(p.v))}</text>`});
+    if(i===serie.length-1){const o2=arguments[1].serie2,u=o2&&o2.length?o2[o2.length-1].v:null,abajo=u!=null&&p.v<u;s+=`<text x="${Math.min(X(p.t),W-MR-8)}" y="${Y(p.v)+(abajo?18:-9)}" class="clbl" text-anchor="middle">${esc(fmt(p.v))}</text>`}});
   const f2=t=>eFechaCorta(new Date(t).toISOString().slice(0,10));
   s+=`<text x="${ML}" y="${H-8}" class="cax">${f2(x0)}</text><text x="${W-MR}" y="${H-8}" class="cax" text-anchor="end">${f2(x1)}</text>`;
   return `<svg viewBox="0 0 ${W} ${H}" class="csvg" role="img">${s}</svg>`;
@@ -1595,6 +1684,17 @@ function renderProg(){
       +`<div class="cleg"><span><i style="background:var(--jita)"></i>Tus horas</span><span><i class="dash"></i>Ritmo necesario</span></div>`
       +tabla(['Fecha','Horas reales','Necesarias'],hs.map(s=>[s.fecha,String(s.horas),ideal(dms(s.fecha)).toFixed(1)])));
   }else html+=card('Horas de estudio','',vacio('Aparecerá cuando el instructor ponga «Horas acumuladas» en tus sesiones.'));
+  // 3b) Simulacros: % total y % de lo enseñado (los anota el instructor)
+  const sims=(E.sims||[]).filter(x=>typeof x.total==='number'||typeof x.ensenado==='number');
+  if(sims.length){
+    const st=sims.filter(x=>typeof x.total==='number').map(x=>({t:dms(x.fecha),v:x.total,tip:`${eFechaCorta(x.fecha)} · ${x.examen} · total ${Math.round(x.total)}%`}));
+    const se=sims.filter(x=>typeof x.ensenado==='number').map(x=>({t:dms(x.fecha),v:x.ensenado,tip:`${eFechaCorta(x.fecha)} · ${x.examen} · enseñado ${Math.round(x.ensenado)}%`}));
+    const t0=dms(sims[0].fecha)-2*864e5,t1=Math.max(dms(sims[sims.length-1].fecha)+2*864e5,t0+10*864e5);
+    html+=card('Simulacros','Los corrige el instructor · punteada = 50% del checkpoint · con 20 preguntas, mira la tendencia y no una sola semana',
+      lineas(st,{max:100,paso:25,fmt:v=>Math.round(v)+'%',x0:t0,x1:t1,refV:50,refTxt:'50%',color:'var(--part)',serie2:se,color2:'var(--ctr)'})
+      +`<div class="cleg"><span><i style="background:var(--part)"></i>% total</span><span><i style="background:var(--ctr)"></i>% de lo enseñado</span></div>`
+      +tabla(['Fecha','Examen','% total','% enseñado'],sims.map(x=>[x.fecha,x.examen,typeof x.total==='number'?Math.round(x.total)+'%':'—',typeof x.ensenado==='number'?Math.round(x.ensenado)+'%':'—'])));
+  }
   // 4) Aciertos del juego por semana
   const sem={};for(const e of S.ev)if(e.k==='a'){const k=semana(e.t),o=sem[k]||(sem[k]={n:0,ok:0});o.n++;if(e.o)o.ok++}
   const ks=Object.keys(sem).map(Number).sort((a,b)=>a-b).slice(-8);

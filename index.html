@@ -1627,7 +1627,7 @@ function verTip(el){const c=el.closest('.chart');if(!c)return;c.querySelectorAll
 function tabla(cols,rows){return `<details class="cdatos"><summary>Ver datos</summary><div class="etw"><table><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr>${rows.map(r=>`<tr>${r.map(v=>`<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</table></div></details>`}
 const W=340,H=170,ML=30,MR=12,MT=14,MB=24;
 function ejeY(max,paso,fmt){let s='';for(let v=0;v<=max+1e-9;v+=paso){const y=MT+(H-MT-MB)*(1-v/max);s+=`<line x1="${ML}" x2="${W-MR}" y1="${y}" y2="${y}" class="cgrid"/><text x="${ML-6}" y="${y+3.5}" class="cax" text-anchor="end">${fmt(v)}</text>`}return s}
-function barras(datos,{max,paso,fmt,refV,refTxt,color}){
+function barras(datos,{max,paso,fmt,refV,refTxt,color,refColor}){
   const n=datos.length,bw=Math.min(26,(W-ML-MR)/n-4),y0=H-MB;
   let s=ejeY(max,paso,fmt);
   datos.forEach((d,i)=>{const cx=ML+(W-ML-MR)*(i+.5)/n,hgt=Math.max(1,(H-MT-MB)*Math.min(d.v,max)/max),y=y0-hgt;
@@ -1635,7 +1635,7 @@ function barras(datos,{max,paso,fmt,refV,refTxt,color}){
     if(i===n-1||i===0)s+=`<text x="${cx}" y="${H-8}" class="cax" text-anchor="middle">${esc(d.label)}</text>`;
     if(i===n-1)s+=`<text x="${cx}" y="${y-5}" class="clbl" text-anchor="middle">${esc(fmt(d.v))}</text>`;
   });
-  if(refV!=null){const y=MT+(H-MT-MB)*(1-refV/max);s+=`<line x1="${ML}" x2="${W-MR}" y1="${y}" y2="${y}" class="cref"/><text x="${ML+4}" y="${y-4}" class="cax">${esc(refTxt)}</text>`}
+  if(refV!=null){const y=MT+(H-MT-MB)*(1-refV/max),rc=refColor?` style="stroke:${refColor};stroke-width:2"`:'',tc=refColor?` style="fill:${refColor};font-weight:800;stroke:var(--surface);stroke-width:3px;paint-order:stroke"`:'';s+=`<line x1="${ML}" x2="${W-MR}" y1="${y}" y2="${y}" class="cref"${rc}/><text x="${ML+4}" y="${y-4}" class="cax"${tc}>${esc(refTxt)}</text>`}
   return `<svg viewBox="0 0 ${W} ${H}" class="csvg" role="img">${s}</svg>`;
 }
 function lineas(serie,{max,paso,fmt,x0,x1,refV,refTxt,ref2,color}){
@@ -1667,7 +1667,7 @@ function renderProg(){
   // 1) Calificación por sesión
   const todas=ses.filter(s=>typeof s.nota==='number'),notas=todas.slice(-14);
   const prom=todas.length?todas.reduce((a,s)=>a+Math.min(10,s.nota),0)/todas.length:null,nf=v=>String(Math.round(v*10)/10).replace('.',',');
-  html+=card('Calificación por sesión',prom==null?'La nota de 1 a 10 que pone el instructor':`<b style="color:${notaColor(prom)}">Promedio ${nf(prom)}/10</b> (${todas.length} ${todas.length===1?'sesión':'sesiones'})`,notas.length?barras(notas.map(s=>({v:Math.min(10,s.nota),c:notaColor(Math.min(10,s.nota)),label:eFechaCorta(s.fecha),tip:`${eFechaCorta(s.fecha)} · ${s.titulo} · ${nf(s.nota)}/10`})),{max:10,paso:2,fmt:nf,refV:prom,refTxt:'Prom. '+nf(prom),color:'var(--part)'})
+  html+=card('Calificación por sesión',prom==null?'La nota de 1 a 10 que pone el instructor':`<b style="color:${notaColor(prom)}">Promedio ${nf(prom)}/10</b> (${todas.length} ${todas.length===1?'sesión':'sesiones'})`,notas.length?barras(notas.map(s=>({v:Math.min(10,s.nota),c:notaColor(Math.min(10,s.nota)),label:eFechaCorta(s.fecha),tip:`${eFechaCorta(s.fecha)} · ${s.titulo} · ${nf(s.nota)}/10`})),{max:10,paso:2,fmt:nf,refV:prom,refTxt:'Prom. '+nf(prom),refColor:'var(--part)',color:'var(--part)'})
     +tabla(['Fecha','Sesión','Nota'],todas.map(s=>[s.fecha,s.titulo,String(s.nota)]).concat([['','Promedio',nf(prom)]])):vacio('Aparecerá cuando el instructor ponga la Calificación en tus sesiones.'));
   // 2) Dominio de la fase actual
   const conDom=ses.filter(s=>typeof s.dominio==='number'),fase=conDom.length?conDom[conDom.length-1].fase:null,dom=conDom.filter(s=>s.fase===fase);

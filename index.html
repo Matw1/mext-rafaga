@@ -12,16 +12,16 @@
 <style>
 /* ===== Tema 和紙 (claro) ===== */
 :root{--bg:#f6f0e4;--surface:#fffdf8;--surface2:#f2eadb;--text:#211b17;--muted:#74695e;--line:#e4d8c4;
-  --accent:#d63a2f;--accent2:#b07d12;--accent-t:#fff;--ok:#1d8a50;--okbg:#e2f3e8;--bad:#c9302c;--badbg:#fbe6e2;--warn:#b26b00;--warnbg:#fbefd9;--focus:#2457d6;
+  --accent:#d63a2f;--accent2:#b07d12;--accent-t:#fff;--ok:#1d8a50;--okbg:#e2f3e8;--bad:#c9302c;--badbg:#fbe6e2;--warn:#b26b00;--warnbg:#fbefd9;--amar:#e3b100;--focus:#2457d6;
   --glow:rgba(214,58,47,.18);--shadow:0 1px 2px rgba(60,40,20,.06),0 6px 20px rgba(60,40,20,.07);
   --part:#0b8aa3;--jita:#7348d1;--ctr:#bb7400;--kanji:#d63a2f;--syn:#1c9459;--morph:#c23c7c;--mix:#211b17;--buf:#b26b00;--dia:#2563c9;--days:#2563c9;--esc:#0f8a6a;--prod:#0f8a6a}
 /* ===== Tema 夜 (oscuro) ===== */
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0c0e1b;--surface:#161a2d;--surface2:#1f2440;--text:#f2efe8;--muted:#a2a5bc;--line:#2a2f4f;
-  --accent:#ff5a4e;--accent2:#ffc857;--accent-t:#1a0705;--ok:#3ddc84;--okbg:rgba(61,220,132,.13);--bad:#ff6b6b;--badbg:rgba(255,107,107,.13);--warn:#ffb347;--warnbg:rgba(255,179,71,.13);--focus:#8fb0ff;
+  --accent:#ff5a4e;--accent2:#ffc857;--accent-t:#1a0705;--ok:#3ddc84;--okbg:rgba(61,220,132,.13);--bad:#ff6b6b;--badbg:rgba(255,107,107,.13);--warn:#ffb347;--warnbg:rgba(255,179,71,.13);--amar:#ffd84d;--focus:#8fb0ff;
   --glow:rgba(255,90,78,.22);--shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.25);
   --part:#3cc8e6;--jita:#ad90ff;--ctr:#ffb84d;--kanji:#ff6b5e;--syn:#4fe090;--morph:#ff7ab6;--mix:#f2efe8;--buf:#ffb347;--dia:#7fb2ff;--days:#7fb2ff;--esc:#4fd1a8;--prod:#4fd1a8}}
 :root[data-theme="dark"]{--bg:#0c0e1b;--surface:#161a2d;--surface2:#1f2440;--text:#f2efe8;--muted:#a2a5bc;--line:#2a2f4f;
-  --accent:#ff5a4e;--accent2:#ffc857;--accent-t:#1a0705;--ok:#3ddc84;--okbg:rgba(61,220,132,.13);--bad:#ff6b6b;--badbg:rgba(255,107,107,.13);--warn:#ffb347;--warnbg:rgba(255,179,71,.13);--focus:#8fb0ff;
+  --accent:#ff5a4e;--accent2:#ffc857;--accent-t:#1a0705;--ok:#3ddc84;--okbg:rgba(61,220,132,.13);--bad:#ff6b6b;--badbg:rgba(255,107,107,.13);--warn:#ffb347;--warnbg:rgba(255,179,71,.13);--amar:#ffd84d;--focus:#8fb0ff;
   --glow:rgba(255,90,78,.22);--shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.25);
   --part:#3cc8e6;--jita:#ad90ff;--ctr:#ffb84d;--kanji:#ff6b5e;--syn:#4fe090;--morph:#ff7ab6;--mix:#f2efe8;--buf:#ffb347;--dia:#7fb2ff;--days:#7fb2ff;--esc:#4fd1a8;--prod:#4fd1a8}
 
@@ -253,7 +253,7 @@ button.pill{cursor:pointer;font-family:inherit}
 .esub button{white-space:nowrap;padding:8px 6px}
 .echips{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap;align-self:flex-start}
 .enota{font-size:.72rem;font-weight:800;padding:2px 9px;border-radius:99px;background:var(--surface2);font-variant-numeric:tabular-nums}
-.enota[data-n="a"]{color:var(--ok)}.enota[data-n="b"]{color:var(--warn)}.enota[data-n="c"]{color:var(--bad)}
+.enota[data-n="a"]{color:var(--ok)}.enota[data-n="b"]{color:var(--amar)}.enota[data-n="c"]{color:var(--bad)}
 .eitem.v-ok,.eitem.v-bad,.eitem.v-mid{border-left:4px solid;padding-left:12px;border-radius:4px;margin:6px 0}
 .eitem.v-ok{border-color:var(--ok);background:var(--okbg)}.eitem.v-bad{border-color:var(--bad);background:var(--badbg)}.eitem.v-mid{border-color:var(--warn);background:var(--warnbg)}
 .everd{display:inline-block;margin-top:8px;font-size:.78rem;font-weight:800;padding:2px 10px;border-radius:99px;background:var(--surface)}
@@ -1142,7 +1142,7 @@ const E_CHIP={Publicada:'Por hacer',Entregada:'Entregada',Corregida:'Corregida'}
 function eChip(s){const w=E.work[s.id],st=w&&w.sent&&s.estado==='Publicada'?'Entregada':s.estado;return `<span class="echips"><span class="echip" data-st="${esc(st)}">${esc(E_CHIP[st]||st)}${w&&w.sent&&E.outbox.some(o=>o.page===s.id)?' · en cola':''}</span>${eNota(s)}</span>`}
 // Calificación 1–10 que pone el instructor: solo una referencia, la app no la usa para nada
 // Color de una nota: rojo < 7 · amarillo 7–8,5 · verde > 8,5
-const notaNivel=v=>v>8.5?'a':v>=7?'b':'c',notaColor=v=>({a:'var(--ok)',b:'var(--warn)',c:'var(--bad)'})[notaNivel(v)];
+const notaNivel=v=>v>8.5?'a':v>=7?'b':'c',notaColor=v=>({a:'var(--ok)',b:'var(--amar)',c:'var(--bad)'})[notaNivel(v)];
 function eNota(s){
   if(typeof s.nota!=='number'||s.nota<0)return'';
   const v=Math.min(10,Math.round(s.nota*10)/10);

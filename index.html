@@ -199,6 +199,7 @@ ruby rt{font-size:.5em;color:var(--muted);font-weight:400}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 .pill[data-s="ok"]{color:var(--ok)}.pill[data-s="warn"]{color:var(--warn)}.pill[data-s="bad"]{color:var(--bad)}.pill[data-s="muted"]{color:var(--muted)}
 button.pill{cursor:pointer;font-family:inherit}
+.pill.viejo{opacity:.55}.pill.viejo .hace{font-weight:600}.nivel.viejo{opacity:.55}
 .syncbox{display:grid;gap:10px;padding:12px;border-radius:14px;background:var(--surface2)}
 .syncbox label{display:grid;gap:4px;font-size:.85rem;color:var(--muted)}
 .syncbox input{font:inherit;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px;width:100%}
@@ -1389,8 +1390,9 @@ function eDomTema(){
 function temaPill(){
   const d=eDomTema();if(!d)return'';
   // En 100 el tema queda superado; el instructor decide cuándo pasar al siguiente (nuevo Tema desde 0)
-  if(d.v>=100)return `<span class="pill ptema" title="El instructor lo dio por superado">✅ ${esc(d.tema)}: superado · instructor, ${esc(eFechaCorta(d.fecha))}</span>`;
-  return `<span class="pill ptema" title="Lo estima el instructor; no lo calcula la app">🎯 ${esc(d.tema)}: ${d.v}% · instructor, ${esc(eFechaCorta(d.fecha))}</span>`;
+  const n=eHace(d.fecha);
+  if(d.v>=100)return `<span class="pill ptema${eViejoCls(n)}" title="El instructor lo dio por superado">✅ ${esc(d.tema)}: superado · instructor, ${esc(eFechaCorta(d.fecha))}${eViejoTxt(n)}</span>`;
+  return `<span class="pill ptema${eViejoCls(n)}" title="Lo estima el instructor; no lo calcula la app">🎯 ${esc(d.tema)}: ${d.v}% · instructor, ${esc(eFechaCorta(d.fecha))}${eViejoTxt(n)}</span>`;
 }
 /* Nivel JLPT que pone el instructor (propiedad «Nivel» de la sesión más reciente que lo tenga) */
 function nivelBadge(){
@@ -1398,9 +1400,35 @@ function nivelBadge(){
   for(const s of Object.values(E.ses)){if(!s.nivel)continue;if(!best||s.fecha>best.fecha||(s.fecha===best.fecha&&(s.edited||'')>(best.edited||'')))best=s}
   return best?`<span class="nivel" title="Nivel según el instructor · ${esc(eFechaCorta(best.fecha))}">${esc(best.nivel)}</span>`:'';
 }
+/* Dato viejo: si el instructor no lo actualiza hace 7 días o más, la pastilla se atenúa y dice «hace N días».
+   Solo informa: no cambia el valor ni presiona. */
+const E_VIEJO=7;
+function eHace(fecha){if(!fecha)return null;const n=-daysTo(String(fecha).slice(0,10));return n>=E_VIEJO?n:null}
+const eViejoCls=n=>n?' viejo':'',eViejoTxt=n=>n?` <span class="hace">· hace ${n} días</span>`:'';
+/* Dominio de la fase = temas en 100% ÷ temas de la fase en «🗺️ Temas» (la misma cuenta del instructor).
+   El criterio sigue siendo suyo: él decide cuándo un tema llega a 100; la app solo suma.
+   Sin lista de temas para esa fase, se usa el «Dominio %» que escribió en la sesión (como antes). */
+function eFaseActual(){
+  let best=null;
+  for(const s of Object.values(E.ses)){if(!s.fase)continue;if(!best||s.fecha>best.fecha||(s.fecha===best.fecha&&(s.edited||'')>(best.edited||'')))best=s}
+  if(best)return best.fase;
+  const ts=E.temas||[],f=[...new Set(ts.map(t=>t.fase))].find(f=>ts.some(t=>t.fase===f&&temaPct(t)!==100));
+  return f||null;
+}
+function eDominioFase(){
+  const fase=eFaseActual(),ts=(E.temas||[]).filter(t=>t.fase===fase);
+  if(fase&&ts.length){
+    const dom=ts.filter(t=>temaPct(t)===100).length;
+    let fecha='';for(const t of ts){const s=temaDeSesion(t),f=(s&&s.edited)||t.edited||'';if(f>fecha)fecha=f}
+    return{fase,v:Math.round(1000*dom/ts.length)/10,dom,n:ts.length,fecha:fecha.slice(0,10),temas:true};
+  }
+  return eDominio();
+}
 function dominioPill(){
-  const d=eDominio();if(!d)return'';
-  return `<span class="pill pdom" title="Lo estima el instructor; no lo calcula la app">📈 Dominio ${esc(d.fase)}: ${d.v}% · instructor, ${esc(eFechaCorta(d.fecha))}</span>`;
+  const d=eDominioFase();if(!d)return'';
+  const n=eHace(d.fecha),v=String(d.v).replace('.',',');
+  if(d.temas)return `<span class="pill pdom${eViejoCls(n)}" title="Temas en 100% ÷ temas de la fase (🗺️ Temas). Los % de cada tema los pone el instructor · actualizado ${esc(eFechaCorta(d.fecha))}">📈 ${esc(d.fase)}: ${v}% · ${d.dom}/${d.n} temas${eViejoTxt(n)}</span>`;
+  return `<span class="pill pdom${eViejoCls(n)}" title="Lo estima el instructor; no lo calcula la app">📈 Dominio ${esc(d.fase)}: ${v}% · instructor, ${esc(eFechaCorta(d.fecha))}${eViejoTxt(n)}</span>`;
 }
 const eFechaCorta=f=>new Date(f+'T12:00:00').toLocaleDateString('es',{day:'numeric',month:'short'}).replace('.','');
 /* Tiempo diario necesario: (meta − horas acumuladas que puso el instructor) ÷ días hasta el examen */
@@ -1416,7 +1444,8 @@ function eRitmo(){
 function ritmoPill(){
   const r=eRitmo();if(!r)return'';
   const t=r.min>=60?`${Math.floor(r.min/60)} h ${r.min%60} min`:`${r.min} min`;
-  return `<span class="pill prit" title="${r.horas} h de ${r.meta} h (instructor, ${esc(eFechaCorta(r.fecha))}) · faltan ${r.dias} días">⏱ Debes estudiar ${t}/día</span>`;
+  const n=eHace(r.fecha);
+  return `<span class="pill prit${eViejoCls(n)}" title="${r.horas} h de ${r.meta} h (instructor, ${esc(eFechaCorta(r.fecha))}) · faltan ${r.dias} días">⏱ Debes estudiar ${t}/día${n?` <span class="hace">· horas de hace ${n} días</span>`:''}</span>`;
 }
 
 /* ---------- Lecciones del juego: sección 🎮 Juego que el instructor agrega al corregir ----------
@@ -1623,13 +1652,13 @@ function temaDeSesion(t){
 function temaPct(t){const s=temaDeSesion(t);let v=s?s.domTema:t.dom;if(typeof v!=='number')return null;if(v>0&&v<1)v*=100;return Math.max(0,Math.min(100,Math.round(v)))}
 function renderTemas(){
   const[st,sc]=eStatus(),ts=E.temas||[],fases=[...new Set(ts.map(t=>t.fase))];
-  const actual=(eDominio()||{}).fase;
+  const actual=eFaseActual();
   $('#app').innerHTML=`<div class="estudio">${tabsHtml('estudio')}
     <div class="row"><h1 style="font-size:1.2rem">Estudio diario</h1><span class="sp"></span><button class="btn" data-e="refresh">Actualizar</button></div>
     <div class="estat" id="eStat" data-s="${sc}">${esc(st)}</div>
     ${eSubTabs()}
     ${fases.length?fases.map((f,i)=>{const l=ts.filter(t=>t.fase===f),ps=l.map(temaPct),dom=ps.filter(v=>v===100).length;
-      return `<details class="esec etf" ${(actual?f===actual:i===0)?'open':''}><summary><b>${esc(f)} (Temas)</b><span class="muted small">${dom}/${l.length} dominados</span></summary>
+      return `<details class="esec etf" ${(actual?f===actual:i===0)?'open':''}><summary><b>${esc(f)} (Temas)</b><span class="muted small">${dom}/${l.length} dominados · ${String(Math.round(1000*dom/l.length)/10).replace('.',',')}%</span></summary>
         ${l.map((t,j)=>{const v=ps[j],cls=v===100?'ok':v===0?'cero':v==null?'sin':'';
           return `<div class="etema"><span class="en">${t.codigo?`<span class="ec">${esc(t.codigo)}</span>`:''}${esc(t.tema)}</span><span class="ep ${cls}">${v==null?'sin medir':v===100?'✅ 100%':v+'%'}</span>
             <span class="eb"><i class="${v===100?'ok':''}" style="width:${v||0}%"></i></span>${t.nota?`<span class="etnota">${esc(t.nota)}</span>`:''}</div>`}).join('')}

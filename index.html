@@ -238,7 +238,7 @@ button.pill{cursor:pointer;font-family:inherit}
 .eduda{margin-top:8px;font-size:.88rem;color:var(--muted)}.eduda label{display:inline-flex;gap:8px;align-items:center;min-height:36px}.eduda input[type="text"]{margin-top:6px;font-size:.95rem}
 .eactions{display:flex;flex-direction:column;gap:10px;margin:18px 0 8px}.eactions .btn{width:100%;min-height:50px;font-weight:700}
 .eprimary{background:var(--text);color:var(--bg);border-color:var(--text)}
-.esub{display:flex;margin:0 0 14px}.esub button{flex:1}
+.esub{display:flex;margin:0 0 14px;overflow-x:auto;scrollbar-width:none}.esub::-webkit-scrollbar{display:none}.esub button{flex:1 0 auto}
 .ebuscar{width:100%;font:inherit;font-size:1rem;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:46px;margin-bottom:6px}
 .eref summary .ek{display:block;margin-bottom:2px}
 .pdom{color:var(--part)}.ptema{color:var(--esc)}.prit{color:var(--jita)}
@@ -249,6 +249,13 @@ button.pill{cursor:pointer;font-family:inherit}
 .lesson .mb{position:absolute;left:0;bottom:0;height:3px}.lnew{color:var(--dia);font-weight:800}
 .lempty{display:flex;flex-direction:column;gap:4px}
 .emat summary{cursor:pointer;list-style:none}.emat summary::-webkit-details-marker{display:none}.emat summary .ek{display:block}
+.etf summary{cursor:pointer;list-style:none;display:flex;align-items:baseline;gap:8px}.etf summary::-webkit-details-marker{display:none}
+.etf summary b{font-size:1rem}.etf summary .muted{margin-left:auto}
+.etema{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:9px 0;border-top:1px solid var(--line)}
+.etema:first-of-type{border-top:0}.etema .en{font-weight:600}.etema .ec{color:var(--muted);font-weight:700;margin-right:6px;font-variant-numeric:tabular-nums}
+.etema .ep{font-weight:800;font-variant-numeric:tabular-nums;text-align:right}.etema .ep.ok{color:var(--ok)}.etema .ep.cero,.etema .ep.sin{color:var(--muted);font-weight:600}
+.etema .eb{grid-column:1/-1;height:6px;border-radius:3px;background:var(--line);overflow:hidden}.etema .eb i{display:block;height:100%;background:var(--part);border-radius:3px}.etema .eb i.ok{background:var(--ok)}
+.etema .etnota{grid-column:1/-1;font-size:.78rem;color:var(--muted)}
 .emtema{font-size:.8rem;font-weight:700;color:var(--muted);margin:12px 0 2px}
 .esub button{white-space:nowrap;padding:8px 6px}
 .echips{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap;align-self:flex-start}
@@ -1156,6 +1163,7 @@ async function eSync(manual){
     while(E.outbox.length){await ePost('/estudio/entrega',E.outbox[0]);E.outbox.shift();eSave()}
     while((E.simOut||[]).length){await ePost('/simulacro/entrega',E.simOut[0]);E.simOut.shift();eSave()}
     try{const rs=await ePost('/simulacro/lista',{});E.sims=rs.simulacros||[];eSave()}catch(e){if(e.badkey)throw e} // sin base de simulacros configurada: se ignora
+    try{const rt=await ePost('/temas/lista',{});E.temas=rt.temas||[];eSave()}catch(e){if(e.badkey)throw e}
     // El Worker baja las sesiones por partes (límite de consultas): repetimos mientras diga 'more'
     let r,guard=0;const ronda=rid()+Date.now().toString(36); // misma ronda en todas las vueltas
     do{
@@ -1206,6 +1214,7 @@ function renderEstudio(){
   if(eSub==='ref')return renderRef();
   if(eSub==='mat')return renderMateria();
   if(eSub==='sim')return renderSimLista();
+  if(eSub==='tem')return renderTemas();
   const list=Object.values(E.ses).sort((a,b)=>b.fecha.localeCompare(a.fecha));
   const hoy=list.find(s=>s.fecha===today())||list.find(s=>s.estado==='Publicada'&&!(E.work[s.id]&&E.work[s.id].sent));
   const rest=list.filter(s=>s!==hoy);const[st,sc]=eStatus();
@@ -1553,7 +1562,7 @@ function renderSimHoja(){
 }
 
 /* ---------- Referencia: todo el material 📘 Consulta ya explicado ---------- */
-function eSubTabs(){return `<div class="seg esub"><button data-e="sub-ses" class="${eSub==='ses'?'on':''}">Sesiones</button><button data-e="sub-ref" class="${eSub==='ref'?'on':''}">📘 Referencia</button><button data-e="sub-mat" class="${eSub==='mat'?'on':''}">📊 Materia</button><button data-e="sub-sim" class="${eSub==='sim'?'on':''}">📋 Simulacros</button></div>`}
+function eSubTabs(){return `<div class="seg esub"><button data-e="sub-ses" class="${eSub==='ses'?'on':''}">Sesiones</button><button data-e="sub-ref" class="${eSub==='ref'?'on':''}">📘 Referencia</button><button data-e="sub-mat" class="${eSub==='mat'?'on':''}">📊 Materia</button><button data-e="sub-sim" class="${eSub==='sim'?'on':''}">📋 Simulacros</button><button data-e="sub-tem" class="${eSub==='tem'?'on':''}">🗺️ Temas</button></div>`}
 function bText(list){let s='';for(const b of list||[]){s+=' '+ptxt(b.rt);if(b.cells)s+=' '+b.cells.map(ptxt).join(' ');if(b.kids)s+=bText(b.kids)}return s}
 function renderRef(){
   const items=[];
@@ -1587,6 +1596,40 @@ function materiaDias(){
     if(tablas.length)dias.push({s,tablas});
   }
   return dias;
+}
+/* ---------- 🗺️ Temas por fase: lista del instructor con el % de cada tema (no visto = 0) ----------
+   Si una sesión más reciente trae el mismo tema en «Tema» (por código, p. ej. «1.2», o por nombre)
+   con «Dominio tema %», se usa ese valor: así el tema del día está al día aunque la fila no se haya tocado. */
+const tNorm=s=>String(s||'').toLowerCase().normalize('NFKC').replace(/s+/g,' ').trim();
+function temaDeSesion(t){
+  let best=null;
+  for(const s of Object.values(E.ses)){
+    if(typeof s.domTema!=='number'||!s.tema)continue;
+    const st=tNorm(s.tema),cod=tNorm(t.codigo);
+    // por código: «1.2» al inicio, sin confundirlo con «1.20»
+    const ok=!!cod&&st.startsWith(cod)&&!/^[\d.]/.test(st.slice(cod.length));
+    if(!ok&&!(st===tNorm(t.tema)||st.includes(tNorm(t.tema))))continue;
+    if(!best||(s.edited||s.fecha)>(best.edited||best.fecha))best=s;
+  }
+  return best&&(!t.edited||(best.edited||'')>t.edited)?best:null;
+}
+function temaPct(t){const s=temaDeSesion(t);let v=s?s.domTema:t.dom;if(typeof v!=='number')return null;if(v>0&&v<1)v*=100;return Math.max(0,Math.min(100,Math.round(v)))}
+function renderTemas(){
+  const[st,sc]=eStatus(),ts=E.temas||[],fases=[...new Set(ts.map(t=>t.fase))];
+  const actual=(eDominio()||{}).fase;
+  $('#app').innerHTML=`<div class="estudio">${tabsHtml('estudio')}
+    <div class="row"><h1 style="font-size:1.2rem">Estudio diario</h1><span class="sp"></span><button class="btn" data-e="refresh">Actualizar</button></div>
+    <div class="estat" id="eStat" data-s="${sc}">${esc(st)}</div>
+    ${eSubTabs()}
+    ${fases.length?fases.map((f,i)=>{const l=ts.filter(t=>t.fase===f),ps=l.map(temaPct),dom=ps.filter(v=>v===100).length;
+      return `<details class="esec etf" ${(actual?f===actual:i===0)?'open':''}><summary><b>${esc(f)} (Temas)</b><span class="muted small">${dom}/${l.length} dominados</span></summary>
+        ${l.map((t,j)=>{const v=ps[j],cls=v===100?'ok':v===0?'cero':v==null?'sin':'';
+          return `<div class="etema"><span class="en">${t.codigo?`<span class="ec">${esc(t.codigo)}</span>`:''}${esc(t.tema)}</span><span class="ep ${cls}">${v==null?'sin medir':v===100?'✅ 100%':v+'%'}</span>
+            <span class="eb"><i class="${v===100?'ok':''}" style="width:${v||0}%"></i></span>${t.nota?`<span class="etnota">${esc(t.nota)}</span>`:''}</div>`}).join('')}
+      </details>`}).join('')
+    :'<div class="ecard eempty"><b>Aún no hay temas.</b><span class="muted small">Aquí aparecerán los temas de cada fase con su % de dominio, cuando el instructor los cargue en Notion.</span></div>'}
+    <div class="muted small" style="margin:6px 2px 0">El % lo pone el instructor. Tema no visto = 0%.</div>
+  </div>`;
 }
 function renderMateria(){
   const dias=materiaDias(),[st,sc]=eStatus();
@@ -1651,7 +1694,7 @@ function eClick(t){
   if(a==='tab-juego'){view='home';render()}
   else if(a==='tab-estudio'){view='estudio';render();eSync()}
   else if(a==='refresh')eSync(true);
-  else if(a==='sub-ses'||a==='sub-ref'||a==='sub-mat'||a==='sub-sim'){eSub=a.slice(4);render()}
+  else if(a==='sub-ses'||a==='sub-ref'||a==='sub-mat'||a==='sub-sim'||a==='sub-tem'){eSub=a.slice(4);render()}
   else if(a==='sim-start')simStart(t.dataset.ex);
   else if(a==='sim-open'){view='simu';render()}
   else if(a==='sim-r'){simMarcar(t.dataset.q,t.dataset.r)}

@@ -50,6 +50,7 @@ h3{font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mu
 .brand{display:flex;align-items:center;gap:10px}
 .hanko{width:42px;height:42px;border-radius:10px;background:var(--accent);color:var(--accent-t);display:grid;place-items:center;font-weight:900;font-size:1.25rem;transform:rotate(-4deg);box-shadow:0 4px 14px var(--glow)}
 .brand b{display:block;font-size:1.15rem;letter-spacing:.02em}
+.nivel{display:inline-block;margin-left:7px;padding:1px 8px;border-radius:99px;border:1.5px solid var(--accent);color:var(--accent);font-size:.72rem;font-weight:900;letter-spacing:.06em;vertical-align:2px}
 .brand small{color:var(--muted);font-size:.78rem}
 
 /* ===== Hero ===== */
@@ -865,7 +866,7 @@ function renderHome(){
   const exam=daysTo('2027-07-15'),cp=daysTo('2026-11-26'),total=daysTo('2027-07-15')-daysTo('2026-07-29');
   const prog=Math.min(1,Math.max(0,1-exam/total)),C=2*Math.PI*44,mode=[m,modeLabel(m)];
   $('#app').innerHTML=`${tabsHtml('juego')}
-    <div class="row"><div class="brand"><span class="hanko">朱</span><div><b>MEXT Ráfaga</b><small>Modo aburrimiento · 60–90 s</small></div></div><span class="sp"></span>
+    <div class="row"><div class="brand"><span class="hanko">朱</span><div><b>MEXT Ráfaga${nivelBadge()}</b><small>Modo aburrimiento · 60–90 s</small></div></div><span class="sp"></span>
       <button class="icon-btn" data-act="prog" aria-label="Panel de progreso" title="Panel de progreso">📈</button><button class="icon-btn" data-act="stats" aria-label="Estadísticas" title="Estadísticas (S)">📊</button></div>
     <section class="hero">
       <div class="ring" aria-label="${exam} días para el examen">
@@ -1390,6 +1391,12 @@ function temaPill(){
   // En 100 el tema queda superado; el instructor decide cuándo pasar al siguiente (nuevo Tema desde 0)
   if(d.v>=100)return `<span class="pill ptema" title="El instructor lo dio por superado">✅ ${esc(d.tema)}: superado · instructor, ${esc(eFechaCorta(d.fecha))}</span>`;
   return `<span class="pill ptema" title="Lo estima el instructor; no lo calcula la app">🎯 ${esc(d.tema)}: ${d.v}% · instructor, ${esc(eFechaCorta(d.fecha))}</span>`;
+}
+/* Nivel JLPT que pone el instructor (propiedad «Nivel» de la sesión más reciente que lo tenga) */
+function nivelBadge(){
+  let best=null;
+  for(const s of Object.values(E.ses)){if(!s.nivel)continue;if(!best||s.fecha>best.fecha||(s.fecha===best.fecha&&(s.edited||'')>(best.edited||'')))best=s}
+  return best?`<span class="nivel" title="Nivel según el instructor · ${esc(eFechaCorta(best.fecha))}">${esc(best.nivel)}</span>`:'';
 }
 function dominioPill(){
   const d=eDominio();if(!d)return'';

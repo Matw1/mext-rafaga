@@ -241,7 +241,7 @@ button.pill{cursor:pointer;font-family:inherit}
 .esub{display:flex;margin:0 0 14px}.esub button{flex:1}
 .ebuscar{width:100%;font:inherit;font-size:1rem;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:46px;margin-bottom:6px}
 .eref summary .ek{display:block;margin-bottom:2px}
-.pdom{color:var(--part)}.prit{color:var(--jita)}
+.pdom{color:var(--part)}.ptema{color:var(--esc)}.prit{color:var(--jita)}
 .lessons{display:grid;gap:10px}
 .lesson{position:relative;display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:16px;padding:12px 14px;min-height:64px;box-shadow:var(--shadow);overflow:hidden}
 .lesson:hover,.lesson.on{border-color:var(--dia)}.lesson .glyph{margin:0}
@@ -870,7 +870,7 @@ function renderHome(){
       <div>
         <div class="eyebrow">試験 · 15 jul 2027</div>
         <div class="h">${cp>0?`Checkpoint Fase 1 (50%) en <span style="color:var(--accent)">${cp} días</span>`:'Fase 2 en marcha'}</div>
-        <div class="pills">${dominioPill()}${ritmoPill()}<span class="pill">🔥 ${streak()} días</span><span class="pill">✓ ${td.n} hoy${td.n?' · '+Math.round(100*td.ok/td.n)+'%':''}</span><span class="pill" style="color:var(--warn)">↻ ${bufN}</span><button class="pill" id="syncPill" data-act="syncpill" data-s="${syncLabel()[1]}">${syncLabel()[0]}</button></div>
+        <div class="pills">${dominioPill()}${temaPill()}${ritmoPill()}<span class="pill">🔥 ${streak()} días</span><span class="pill">✓ ${td.n} hoy${td.n?' · '+Math.round(100*td.ok/td.n)+'%':''}</span><span class="pill" style="color:var(--warn)">↻ ${bufN}</span><button class="pill" id="syncPill" data-act="syncpill" data-s="${syncLabel()[1]}">${syncLabel()[0]}</button></div>
       </div>
     </section>
     <button class="start" data-act="start"><span class="play">▶</span><span><b>Ráfaga de ${S.settings.dur} s</b><small>${mode[1]} · Enter</small></span></button>
@@ -1364,6 +1364,23 @@ function eDominio(){
   if(!best)return null;
   let v=best.dominio;if(v>0&&v<1)v*=100; // por si lo escribió como 0.42
   return{fase:best.fase||'Fase',v:Math.max(0,Math.min(100,Math.round(v))),fecha:best.fecha};
+}
+/* Dominio del tema que se está viendo: también lo escribe el instructor (Tema + Dominio tema %) */
+function eDomTema(){
+  let best=null;
+  for(const s of Object.values(E.ses)){
+    if(typeof s.domTema!=='number')continue;
+    if(!best||s.fecha>best.fecha||(s.fecha===best.fecha&&(s.edited||'')>(best.edited||'')))best=s;
+  }
+  if(!best)return null;
+  let v=best.domTema;if(v>0&&v<1)v*=100;
+  return{tema:best.tema||'tema actual',v:Math.max(0,Math.min(100,Math.round(v))),fecha:best.fecha};
+}
+function temaPill(){
+  const d=eDomTema();if(!d)return'';
+  // En 100 el tema queda superado; el instructor decide cuándo pasar al siguiente (nuevo Tema desde 0)
+  if(d.v>=100)return `<span class="pill ptema" title="El instructor lo dio por superado">✅ ${esc(d.tema)}: superado · instructor, ${esc(eFechaCorta(d.fecha))}</span>`;
+  return `<span class="pill ptema" title="Lo estima el instructor; no lo calcula la app">🎯 ${esc(d.tema)}: ${d.v}% · instructor, ${esc(eFechaCorta(d.fecha))}</span>`;
 }
 function dominioPill(){
   const d=eDominio();if(!d)return'';

@@ -1627,10 +1627,40 @@ function eTables(list,out){for(const b of list||[]){if(b.type==='table')out.push
    Se abre con el atajo del ícono (index.html#tabla), que puede quedar en la pantalla de inicio. */
 function renderTablaDia(){
   const d=materiaDias()[0];
-  $('#app').innerHTML=`<div class="tdia"><div class="row"><b>📌 Tabla del día</b><span class="sp"></span><button class="btn" data-e="tabla-cerrar">✕</button></div>
+  $('#app').innerHTML=`<div class="tdia"><div class="row"><b>📌 Tabla del día</b><span class="sp"></span>${d?'<button class="btn" data-e="tabla-img">🖼️ Fondo de pantalla</button> ':''}<button class="btn" data-e="tabla-cerrar">✕</button></div>
     ${d?`<div class="muted small">${esc(eFecha(d.s.fecha))} · ${esc(d.s.titulo||'')}</div>
       ${d.tablas.map((x,j)=>`${x.tema&&(j===0||d.tablas[j-1].tema!==x.tema)?`<div class="emtema">${esc(x.tema)}</div>`:''}${eBlocks([x.t])}`).join('')}`
     :'<div class="ecard eempty"><b>Aún no hay tablas.</b><span class="muted small">Aparecerán cuando el instructor ponga una tabla en tu clase.</span></div>'}</div>`;
+}
+/* 🖼️ Imagen de la tabla del día (1080×2400) para ponerla de fondo de pantalla: así se ve sin abrir nada.
+   Se dibuja en un canvas con el texto de las celdas; la letra se achica sola para que quepa. */
+async function tablaImagen(){
+  const d=materiaDias()[0];if(!d)return;
+  const W=1080,H=2400,cv=document.createElement('canvas');cv.width=W;cv.height=H;const g=cv.getContext('2d');
+  const F='"Noto Sans JP","Hiragino Sans","Yu Gothic",sans-serif';
+  g.fillStyle='#10131f';g.fillRect(0,0,W,H);
+  const tablas=d.tablas.map(x=>({tema:x.tema,rows:(x.t.kids||[]).map(r=>(r.cells||[]).map(c=>ptxt(c).trim())),head:!!x.t.header}));
+  const M=60,ancho=W-2*M;
+  // medir: tamaño de letra que hace caber todas las tablas en la mitad inferior (arriba quedan reloj e íconos)
+  const medir=fs=>{let h=0;const lay=[];for(const t of tablas){const nc=Math.max(...t.rows.map(r=>r.length),1);g.font=`600 ${fs}px ${F}`;
+      const cw=Array(nc).fill(0);for(const r of t.rows)r.forEach((c,i)=>{cw[i]=Math.max(cw[i],g.measureText(c).width+fs*1.2)});
+      const tot=cw.reduce((a,b)=>a+b,0);lay.push({t,cw:cw.map(w=>w*ancho/Math.max(tot,1)),ok:tot<=ancho});h+=(t.tema?fs*1.6:0)+t.rows.length*fs*1.75+fs*1.2}
+    return{h,lay,ok:lay.every(l=>l.ok)}};
+  let fs=46,m=medir(fs);while(fs>18&&(!m.ok||m.h>H*0.62)){fs-=2;m=medir(fs)}
+  let y=Math.max(H*0.3,H-m.h-200);
+  g.fillStyle='#ff6b5e';g.font=`800 ${Math.round(fs*0.8)}px ${F}`;g.fillText('📌 '+(d.s.titulo||'Tabla del día'),M,y-fs*0.9);
+  for(const L of m.lay){const t=L.t;
+    if(t.tema){g.fillStyle='#9aa3c7';g.font=`700 ${Math.round(fs*0.8)}px ${F}`;g.fillText(t.tema,M,y+fs*0.9);y+=fs*1.6}
+    t.rows.forEach((r,ri)=>{const rh=fs*1.75,top=y;
+      g.fillStyle=ri===0&&t.head?'#2a3150':ri%2?'#171b2c':'#1c2135';g.fillRect(M,top,ancho,rh);
+      let x=M;r.forEach((c,i)=>{g.fillStyle=ri===0&&t.head?'#ffd84d':'#f2efe8';g.font=`${ri===0&&t.head?800:600} ${fs}px ${F}`;g.fillText(c,x+fs*0.6,top+rh*0.68);x+=L.cw[i]});
+      y+=rh});
+    y+=fs*1.2}
+  const blob=await new Promise(r=>cv.toBlob(r,'image/png'));
+  const file=new File([blob],'tabla-del-dia.png',{type:'image/png'});
+  try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:'Tabla del día'});return}}catch(e){if(e.name==='AbortError')return}
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='tabla-del-dia.png';document.body.appendChild(a);a.click();a.remove();
+  toast('Imagen guardada: ponla como fondo de pantalla desde tu galería');
 }
 function materiaDias(){
   const dias=[];
@@ -1750,6 +1780,7 @@ function eClick(t){
   else if(a==='sim-entregar')simEntregar();
   else if(a==='sim-cancel'){if(confirm('¿Descartar este simulacro? Se borran las respuestas marcadas.')){E.sim=null;eSave();view='estudio';render()}}
   else if(a==='sim-back'){view='estudio';render()}
+  else if(a==='tabla-img')tablaImagen();
   else if(a==='tabla-cerrar'){history.replaceState(null,'',location.pathname);view='home';render()}
   else if(a==='open'){eOpen=t.dataset.id;view='sesion';render();bSync()}
   else if(a==='back'){view='estudio';eOpen=null;render()}

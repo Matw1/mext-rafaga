@@ -259,6 +259,8 @@ button.pill{cursor:pointer;font-family:inherit}
 .etema .eb{grid-column:1/-1;height:6px;border-radius:3px;background:var(--line);overflow:hidden}.etema .eb i{display:block;height:100%;background:var(--part);border-radius:3px}.etema .eb i.ok{background:var(--ok)}
 .etema .etnota{grid-column:1/-1;font-size:.78rem;color:var(--muted)}
 .tdia{padding:4px 0 24px}.tdia .row{margin-bottom:6px}.tdia table{font-size:1.05rem}
+.tpin{display:block;margin:10px 0 4px auto;font:inherit;font-size:.75rem;font-weight:700;padding:3px 10px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer}.tpin.on{color:var(--accent);border-color:var(--accent)}
+.efij{border-color:var(--accent)}
 .emtema{font-size:.8rem;font-weight:700;color:var(--muted);margin:12px 0 2px}
 .esub button{white-space:nowrap;padding:8px 6px}
 .echips{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap;align-self:flex-start}
@@ -1120,7 +1122,8 @@ function bMark(sid,k){(E.bq||(E.bq={}))[sid+'|'+k]=1}
 function bCorriendo(){const now=Date.now();for(const[sid,w]of Object.entries(E.work)){if(w.sent)continue;const run=eRunning(w);if(run){w.tim[run].t=now;bMark(sid,'t:'+run)}}}
 let bT=null,bBusy=false;
 function bSoon(ms){clearTimeout(bT);bT=setTimeout(bSync,ms)}
-function bVal(sid,k){const w=E.work[sid];if(!w)return null;
+function bVal(sid,k){if(sid==='_pins'){const p=(E.pins||{})[k.slice(2)];return p?{t:p.t,v:{on:!!p.on}}:null}
+  const w=E.work[sid];if(!w)return null;
   if(k.startsWith('a:')){const a=w.ans[k.slice(2)];return a?{t:a.t||0,v:{r:a.r||'',duda:!!a.duda,nota:a.nota||'',hecho:!!a.hecho}}:null}
   const tm=w.tim[k.slice(2)];return tm?{t:tm.t||0,v:{acc:eMs(tm)}}:null}
 async function bSync(keepalive){
@@ -1140,14 +1143,16 @@ async function bSync(keepalive){
   }catch(e){}finally{bBusy=false}
 }
 function bAplicar(rows){
-  const tocadas=new Set();
+  const tocadas=new Set();let pins=false;
   for(const x of rows){
+    if(x.s==='_pins'){const id=x.k.slice(2),p=(E.pins||(E.pins={}))[id];if(!x.v||(p&&p.t>=x.t))continue;E.pins[id]={on:!!x.v.on,t:x.t};pins=true;continue}
     const w=eWork(x.s);if(w.sent||!x.v)continue;
     if(x.k.startsWith('a:')){const it=x.k.slice(2),a=w.ans[it];if(a&&(a.t||0)>=x.t)continue;
       w.ans[it]=Object.assign({},x.v,{t:x.t});tocadas.add(x.s+'|'+it)}
     else{const sec=x.k.slice(2),tm=w.tim[sec];if(tm&&(tm.t||0)>=x.t)continue;
       w.tim[sec]={acc:x.v.acc||0,start:null,t:x.t};tocadas.add(x.s+'|')}
   }
+  if(pins){eSave();if((view==='estudio'&&eSub==='mat')||view==='tabla')render()}
   if(!tocadas.size)return;eSave();
   if(view!=='sesion'||!eOpen||![...tocadas].some(c=>c.startsWith(eOpen+'|')))return;
   const foco=document.activeElement;
@@ -1625,11 +1630,22 @@ function sinTablas(list){return (list||[]).map(b=>b.type==='table'?{type:'paragr
 function eTables(list,out){for(const b of list||[]){if(b.type==='table')out.push(b);else if(b.kids)eTables(b.kids,out)}return out}
 /* 📌 Tabla del día: las tablas de la clase más reciente, a pantalla completa y sin menús.
    Se abre con el atajo del ícono (index.html#tabla), que puede quedar en la pantalla de inicio. */
+/* 📌 Tablas fijadas: se fijan desde Materia y quedan arriba (también en la Tabla del día y el fondo de pantalla).
+   Se sincronizan entre el teléfono y la PC. */
+const tPinned=id=>!!(E.pins&&E.pins[id]&&E.pins[id].on);
+function tTogglePin(id){(E.pins||(E.pins={}))[id]={on:!tPinned(id),t:Date.now()};bMark('_pins','p:'+id);eSave();bSoon(800);render()}
+function tFijadas(){const out=[];for(const d of materiaDias())for(const x of d.tablas)if(tPinned(x.t.id))out.push({...x,s:d.s});
+  return out.sort((a,b)=>E.pins[b.t.id].t-E.pins[a.t.id].t)}
+const tPinBtn=id=>`<button class="tpin${tPinned(id)?' on':''}" data-e="pin" data-id="${esc(id)}">${tPinned(id)?'📌 Fijada':'📌 Fijar'}</button>`;
+const tTablasHtml=(l,pin)=>l.map((x,j)=>`${x.tema&&(j===0||l[j-1].tema!==x.tema)?`<div class="emtema">${esc(x.tema)}</div>`:''}${pin?tPinBtn(x.t.id):''}${eBlocks([x.t])}`).join('');
+/* Lo que muestra la Tabla del día: primero las fijadas, luego las de la última clase (sin repetir) */
+function tablasDelDia(){const d=materiaDias()[0],f=tFijadas(),ids=new Set(f.map(x=>x.t.id));
+  return{d,tablas:f.concat(d?d.tablas.filter(x=>!ids.has(x.t.id)):[])}}
 function renderTablaDia(){
-  const d=materiaDias()[0];
+  const td=tablasDelDia(),d=td.tablas.length?td:null;
   $('#app').innerHTML=`<div class="tdia"><div class="row"><b>📌 Tabla del día</b><span class="sp"></span>${d?'<button class="btn" data-e="tabla-img">🖼️ Fondo de pantalla</button> ':''}<button class="btn" data-e="tabla-cerrar">✕</button></div>
-    ${d?`<div class="muted small">${esc(eFecha(d.s.fecha))} · ${esc(d.s.titulo||'')}</div>
-      ${d.tablas.map((x,j)=>`${x.tema&&(j===0||d.tablas[j-1].tema!==x.tema)?`<div class="emtema">${esc(x.tema)}</div>`:''}${eBlocks([x.t])}`).join('')}`
+    ${d?`${td.d?`<div class="muted small">${esc(eFecha(td.d.s.fecha))} · ${esc(td.d.s.titulo||'')}</div>`:''}
+      ${tTablasHtml(d.tablas,false)}`
     :!syncConfigured()?'<div class="ecard eempty"><b>Aquí no están tus clases.</b><span class="muted small">Se abrió en un navegador sin tu clave de la nube. Ábrela desde la app instalada (Ráfaga), o configura la nube en Ajustes.</span></div>'
      :Object.keys(E.ses).length?'<div class="ecard eempty"><b>Aún no hay tablas.</b><span class="muted small">Aparecerán cuando el instructor ponga una tabla en tu clase.</span></div>'
      :'<div class="ecard eempty"><b>Cargando tus clases…</b><span class="muted small">Necesita internet la primera vez.</span></div>'}</div>`;
@@ -1638,7 +1654,7 @@ function renderTablaDia(){
 /* 🖼️ Imagen de la tabla del día (1080×2400) para ponerla de fondo de pantalla: así se ve sin abrir nada.
    Se dibuja en un canvas con el texto de las celdas; la letra se achica sola para que quepa. */
 async function tablaImagen(){
-  const d=materiaDias()[0];if(!d)return;
+  const td=tablasDelDia();if(!td.tablas.length)return;const d={s:(td.d||{}).s||{titulo:'Tablas fijadas'},tablas:td.tablas};
   const W=1080,H=2400,cv=document.createElement('canvas');cv.width=W;cv.height=H;const g=cv.getContext('2d');
   const F='"Noto Sans JP","Hiragino Sans","Yu Gothic",sans-serif';
   g.fillStyle='#10131f';g.fillRect(0,0,W,H);
@@ -1716,8 +1732,9 @@ function renderMateria(){
     <div class="row"><h1 style="font-size:1.2rem">Estudio diario</h1><span class="sp"></span><button class="btn" data-e="refresh">Actualizar</button></div>
     <div class="estat" id="eStat" data-s="${sc}">${esc(st)}</div>
     ${eSubTabs()}
+    ${(()=>{const f=tFijadas();return f.length?`<details class="esec emat efij" open><summary><span class="ek">${f.length} tabla${f.length>1?'s':''} fijada${f.length>1?'s':''}</span><b>📌 Fijadas</b></summary><div class="ebody">${tTablasHtml(f,true)}</div></details>`:''})()}
     ${dias.length?dias.map((d,i)=>`<details class="esec emat" ${i===0?'open':''}><summary><span class="ek">${esc(eFecha(d.s.fecha))} · ${d.tablas.length} tabla${d.tablas.length>1?'s':''}</span><b>${esc(d.s.titulo||'Sesión')}</b></summary>
-      <div class="ebody">${d.tablas.map((x,j)=>`${x.tema&&(j===0||d.tablas[j-1].tema!==x.tema)?`<div class="emtema">${esc(x.tema)}</div>`:''}${eBlocks([x.t])}`).join('')}</div></details>`).join('')
+      <div class="ebody">${tTablasHtml(d.tablas,true)}</div></details>`).join('')
     :'<div class="ecard eempty"><b>Aún no hay tablas.</b><span class="muted small">Aquí aparecerán, por día, las tablas que el instructor ponga en tus clases.</span></div>'}
   </div>`;
 }
@@ -1783,6 +1800,7 @@ function eClick(t){
   else if(a==='sim-entregar')simEntregar();
   else if(a==='sim-cancel'){if(confirm('¿Descartar este simulacro? Se borran las respuestas marcadas.')){E.sim=null;eSave();view='estudio';render()}}
   else if(a==='sim-back'){view='estudio';render()}
+  else if(a==='pin')tTogglePin(t.dataset.id);
   else if(a==='tabla-img')tablaImagen();
   else if(a==='tabla-cerrar'){history.replaceState(null,'',location.pathname);view='home';render()}
   else if(a==='open'){eOpen=t.dataset.id;view='sesion';render();bSync()}

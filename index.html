@@ -1185,7 +1185,7 @@ async function eSync(manual){
     E.ses=next;E.lastFetch=Date.now();eState='ok';eSave();
     if(manual)toast('Sesiones actualizadas');
   }catch(err){eState=err.badkey?'badkey':(navigator.onLine===false||err.name==='TypeError'||err.name==='AbortError')?'offline':'error';eErr=err.message;if(manual)toast(eState==='offline'?'Sin conexión: se usará lo guardado':'No se pudo actualizar: '+err.message)}
-  finally{eBusy=false;const typing=document.activeElement&&document.activeElement.matches('textarea,input');if(view==='estudio'||((view==='home'||view==='sesion')&&!typing))render();else eRefresh()}
+  finally{eBusy=false;const typing=document.activeElement&&document.activeElement.matches('textarea,input');if(view==='estudio'||view==='tabla'||((view==='home'||view==='sesion')&&!typing))render();else eRefresh()}
 }
 let eErr='';
 function eStatus(){
@@ -1630,7 +1630,10 @@ function renderTablaDia(){
   $('#app').innerHTML=`<div class="tdia"><div class="row"><b>📌 Tabla del día</b><span class="sp"></span>${d?'<button class="btn" data-e="tabla-img">🖼️ Fondo de pantalla</button> ':''}<button class="btn" data-e="tabla-cerrar">✕</button></div>
     ${d?`<div class="muted small">${esc(eFecha(d.s.fecha))} · ${esc(d.s.titulo||'')}</div>
       ${d.tablas.map((x,j)=>`${x.tema&&(j===0||d.tablas[j-1].tema!==x.tema)?`<div class="emtema">${esc(x.tema)}</div>`:''}${eBlocks([x.t])}`).join('')}`
-    :'<div class="ecard eempty"><b>Aún no hay tablas.</b><span class="muted small">Aparecerán cuando el instructor ponga una tabla en tu clase.</span></div>'}</div>`;
+    :!syncConfigured()?'<div class="ecard eempty"><b>Aquí no están tus clases.</b><span class="muted small">Se abrió en un navegador sin tu clave de la nube. Ábrela desde la app instalada (Ráfaga), o configura la nube en Ajustes.</span></div>'
+     :Object.keys(E.ses).length?'<div class="ecard eempty"><b>Aún no hay tablas.</b><span class="muted small">Aparecerán cuando el instructor ponga una tabla en tu clase.</span></div>'
+     :'<div class="ecard eempty"><b>Cargando tus clases…</b><span class="muted small">Necesita internet la primera vez.</span></div>'}</div>`;
+  if(!d&&syncConfigured()&&!Object.keys(E.ses).length)eSync();
 }
 /* 🖼️ Imagen de la tabla del día (1080×2400) para ponerla de fondo de pantalla: así se ve sin abrir nada.
    Se dibuja en un canvas con el texto de las celdas; la letra se achica sola para que quepa. */

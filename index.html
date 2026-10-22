@@ -258,6 +258,7 @@ button.pill{cursor:pointer;font-family:inherit}
 .etema .ep{font-weight:800;font-variant-numeric:tabular-nums;text-align:right}.etema .ep.ok{color:var(--ok)}.etema .ep.cero,.etema .ep.sin{color:var(--muted);font-weight:600}
 .etema .eb{grid-column:1/-1;height:6px;border-radius:3px;background:var(--line);overflow:hidden}.etema .eb i{display:block;height:100%;background:var(--part);border-radius:3px}.etema .eb i.ok{background:var(--ok)}
 .etema .etnota{grid-column:1/-1;font-size:.78rem;color:var(--muted)}
+.tdia{padding:4px 0 24px}.tdia .row{margin-bottom:6px}.tdia table{font-size:1.05rem}
 .emtema{font-size:.8rem;font-weight:700;color:var(--muted);margin:12px 0 2px}
 .esub button{white-space:nowrap;padding:8px 6px}
 .echips{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap;align-self:flex-start}
@@ -997,7 +998,7 @@ function renderStats(){
   </div>`;
 }
 let lastView=null,lastOpen=null;
-function render(){applyTheme();const y=window.scrollY;if(view==='home')renderHome();else if(view==='drill')renderDrill();else if(view==='end')renderEnd();else if(view==='estudio')renderEstudio();else if(view==='sesion')renderSesion();else if(view==='prog')renderProg();else if(view==='simu')renderSimHoja();else renderStats();
+function render(){applyTheme();const y=window.scrollY;if(view==='tabla')return renderTablaDia();if(view==='home')renderHome();else if(view==='drill')renderDrill();else if(view==='end')renderEnd();else if(view==='estudio')renderEstudio();else if(view==='sesion')renderSesion();else if(view==='prog')renderProg();else if(view==='simu')renderSimHoja();else renderStats();
   if(view!=='drill'&&(view!==lastView||eOpen!==lastOpen))window.scrollTo(0,0);else if(view==='sesion'||view==='estudio')window.scrollTo(0,y);lastView=view;lastOpen=eOpen}
 
 /* =========================================================
@@ -1622,6 +1623,15 @@ function sinTablas(list){return (list||[]).map(b=>b.type==='table'?{type:'paragr
 
 /* ---------- Materia: solo las tablas de cada clase, por día ---------- */
 function eTables(list,out){for(const b of list||[]){if(b.type==='table')out.push(b);else if(b.kids)eTables(b.kids,out)}return out}
+/* 📌 Tabla del día: las tablas de la clase más reciente, a pantalla completa y sin menús.
+   Se abre con el atajo del ícono (index.html#tabla), que puede quedar en la pantalla de inicio. */
+function renderTablaDia(){
+  const d=materiaDias()[0];
+  $('#app').innerHTML=`<div class="tdia"><div class="row"><b>📌 Tabla del día</b><span class="sp"></span><button class="btn" data-e="tabla-cerrar">✕</button></div>
+    ${d?`<div class="muted small">${esc(eFecha(d.s.fecha))} · ${esc(d.s.titulo||'')}</div>
+      ${d.tablas.map((x,j)=>`${x.tema&&(j===0||d.tablas[j-1].tema!==x.tema)?`<div class="emtema">${esc(x.tema)}</div>`:''}${eBlocks([x.t])}`).join('')}`
+    :'<div class="ecard eempty"><b>Aún no hay tablas.</b><span class="muted small">Aparecerán cuando el instructor ponga una tabla en tu clase.</span></div>'}</div>`;
+}
 function materiaDias(){
   const dias=[];
   for(const s of Object.values(E.ses).sort((a,b)=>b.fecha.localeCompare(a.fecha))){
@@ -1740,6 +1750,7 @@ function eClick(t){
   else if(a==='sim-entregar')simEntregar();
   else if(a==='sim-cancel'){if(confirm('¿Descartar este simulacro? Se borran las respuestas marcadas.')){E.sim=null;eSave();view='estudio';render()}}
   else if(a==='sim-back'){view='estudio';render()}
+  else if(a==='tabla-cerrar'){history.replaceState(null,'',location.pathname);view='home';render()}
   else if(a==='open'){eOpen=t.dataset.id;view='sesion';render();bSync()}
   else if(a==='back'){view='estudio';eOpen=null;render()}
   else if(a==='timer'){eToggle(eOpen,t.dataset.sec);render()}
@@ -1939,6 +1950,8 @@ if(typeof document!=='undefined'){
   setInterval(()=>{if(!document.hidden&&view!=='drill')eSync()},180000);
   setInterval(()=>{if(view==='home'||view==='stats')syncNow()},120000);
   if(location.hash==='#go')startSession(S.settings.mode);
+  if(location.hash==='#tabla'){view='tabla';render()}
+  addEventListener('hashchange',()=>{if(location.hash==='#tabla'){view='tabla';render()}});
   // PWA: funciona offline tras la primera visita y pide que Android no borre los datos
   if(location.protocol.startsWith('http')&&'serviceWorker' in navigator){
     const habia=!!navigator.serviceWorker.controller;

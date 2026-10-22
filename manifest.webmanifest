@@ -15,6 +15,7 @@
     { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
+    { "name": "Tabla del día", "short_name": "Tabla", "url": "./index.html#tabla", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] },
     { "name": "Ráfaga inmediata", "url": "./index.html#go", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] }
   ]
 }

@@ -1732,8 +1732,8 @@ function renderMateria(){
     <div class="row"><h1 style="font-size:1.2rem">Estudio diario</h1><span class="sp"></span><button class="btn" data-e="refresh">Actualizar</button></div>
     <div class="estat" id="eStat" data-s="${sc}">${esc(st)}</div>
     ${eSubTabs()}
-    ${(()=>{const f=tFijadas();return f.length?`<details class="esec emat efij" open><summary><span class="ek">${f.length} tabla${f.length>1?'s':''} fijada${f.length>1?'s':''}</span><b>📌 Fijadas</b></summary><div class="ebody">${tTablasHtml(f,true)}</div></details>`:''})()}
-    ${dias.length?dias.map((d,i)=>`<details class="esec emat" ${i===0?'open':''}><summary><span class="ek">${esc(eFecha(d.s.fecha))} · ${d.tablas.length} tabla${d.tablas.length>1?'s':''}</span><b>${esc(d.s.titulo||'Sesión')}</b></summary>
+    ${(()=>{const f=tFijadas();return f.length?`<details class="esec emat efij" data-mat="fij" ${matAbiertos.has('fij')?'open':''}><summary><span class="ek">${f.length} tabla${f.length>1?'s':''} fijada${f.length>1?'s':''}</span><b>📌 Fijadas</b></summary><div class="ebody">${tTablasHtml(f,true)}</div></details>`:''})()}
+    ${dias.length?dias.map((d,i)=>`<details class="esec emat" data-mat="${esc(d.s.id)}" ${matAbiertos.has(d.s.id)?'open':''}><summary><span class="ek">${esc(eFecha(d.s.fecha))} · ${d.tablas.length} tabla${d.tablas.length>1?'s':''}</span><b>${esc(d.s.titulo||'Sesión')}</b></summary>
       <div class="ebody">${tTablasHtml(d.tablas,true)}</div></details>`).join('')
     :'<div class="ecard eempty"><b>Aún no hay tablas.</b><span class="muted small">Aquí aparecerán, por día, las tablas que el instructor ponga en tus clases.</span></div>'}
   </div>`;
@@ -2013,6 +2013,10 @@ if(typeof document!=='undefined'){
   }
   try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
 }
+
+/* Materia: los bloques se abren solo al tocarlos y siguen abiertos aunque la pantalla se actualice al sincronizar */
+var matAbiertos=new Set();
+document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.matches&&d.matches('details[data-mat]')){if(d.open)matAbiertos.add(d.dataset.mat);else matAbiertos.delete(d.dataset.mat)}},true);
 </script>
 </body>
 </html>

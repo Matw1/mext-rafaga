@@ -1371,25 +1371,30 @@ function eItemHtmlBase(sid,sec,b,idx,locked){
    Materia (tablas) y Referencia (teoría) sin salir. Solo aparece en tareas que no son «sin apuntes». */
 function lupaOk(sec){const t=(sec.title+' '+sec.head+' '+bText(sec.blocks.filter(b=>b.type!=='_item'))).toLowerCase();
   return !/sin apuntes|sin tablas|sin mirar|sin consultar|en fr[ií]o|sin ayuda|minisimulacro|simulacro/.test(t)}
-let lupaTab='mat',lupaQ='';
-function lupaAbrir(){let el=document.getElementById('lupa');
+let lupaTab='mat',lupaQ='',lupaTodo=false;
+// «Este tema»: la sesión abierta y las que tienen el mismo «Tema» (por código, p. ej. 1.4, o por nombre)
+const temaClave=t=>{t=String(t||'').trim().toLowerCase();const m=t.match(/^\d+(\.\d+)?/);return m?m[0]:t};
+function lupaEnTema(s2){if(lupaTodo)return true;const cur=E.ses[eOpen];if(!cur)return true;if(s2.id===cur.id)return true;
+  const k=temaClave(cur.tema);return !!k&&temaClave(s2.tema)===k}
+function lupaAbrir(){lupaTodo=false;let el=document.getElementById('lupa');
   if(!el){el=document.createElement('aside');el.id='lupa';document.body.appendChild(el);
-    el.innerHTML=`<div class="lp-head"><b>🔍 Consulta</b><div class="seg lp-tabs"><button data-lp="mat">📊 Materia</button><button data-lp="ref">📘 Referencia</button></div><button class="lp-x" data-lp="x" aria-label="Cerrar">✕</button></div>
+    el.innerHTML=`<div class="lp-head"><b>🔍 Consulta</b><div class="seg lp-tabs"><button data-lp="mat">📊 Materia</button><button data-lp="ref">📘 Referencia</button></div><div class="seg lp-tabs"><button data-lp="tema">Este tema</button><button data-lp="todo">Todo</button></div><button class="lp-x" data-lp="x" aria-label="Cerrar">✕</button></div>
       <input type="search" id="lpQ" class="ebuscar" placeholder="Palabra clave (ej. そうです, 開ける, どれ)" lang="ja" autocapitalize="off" autocorrect="off" spellcheck="false"><div class="muted small" id="lpN"></div><div id="lpRes"></div>`;
-    el.addEventListener('click',e=>{const b=e.target.closest('[data-lp]');if(!b)return;if(b.dataset.lp==='x')return lupaCerrar();lupaTab=b.dataset.lp;lupaPintar()});
+    el.addEventListener('click',e=>{const b=e.target.closest('[data-lp]');if(!b)return;if(b.dataset.lp==='x')return lupaCerrar();if(b.dataset.lp==='tema'||b.dataset.lp==='todo')lupaTodo=b.dataset.lp==='todo';else lupaTab=b.dataset.lp;lupaPintar()});
     el.querySelector('#lpQ').addEventListener('input',e=>{lupaQ=e.target.value;lupaPintar()});}
   el.classList.add('on');document.body.classList.add('lupa-on');el.querySelector('#lpQ').value=lupaQ;lupaPintar();
 }
 function lupaCerrar(){const el=document.getElementById('lupa');if(el)el.classList.remove('on');document.body.classList.remove('lupa-on')}
 function lupaPintar(){const el=document.getElementById('lupa');if(!el)return;
   el.querySelectorAll('[data-lp="mat"],[data-lp="ref"]').forEach(b=>b.classList.toggle('on',b.dataset.lp===lupaTab));
+  el.querySelectorAll('[data-lp="tema"],[data-lp="todo"]').forEach(b=>b.classList.toggle('on',(b.dataset.lp==='todo')===lupaTodo));
   const q=lupaQ.trim().toLowerCase();let html='',n=0;
-  if(lupaTab==='mat'){for(const d of materiaDias())for(const x of d.tablas){if(q&&!((x.tema||'')+' '+tablaTxt(x.t)).toLowerCase().includes(q))continue;n++;
+  if(lupaTab==='mat'){for(const d of materiaDias())if(lupaEnTema(d.s))for(const x of d.tablas){if(q&&!((x.tema||'')+' '+tablaTxt(x.t)).toLowerCase().includes(q))continue;n++;
       html+=`<div class="lp-it"><div class="muted small">${esc(eFechaCorta(d.s.fecha))} · ${esc(x.tema||d.s.titulo||'')}</div>${eBlocks([x.t])}</div>`}}
-  else{for(const s2 of Object.values(E.ses).sort((a,b)=>b.fecha.localeCompare(a.fecha))){if(!s2.blocks)continue;
+  else{for(const s2 of Object.values(E.ses).sort((a,b)=>b.fecha.localeCompare(a.fecha))){if(!s2.blocks||!lupaEnTema(s2))continue;
       for(const sec of eParse(s2.blocks).secs){if(sec.kind!=='consulta')continue;const t=(sec.title+' '+bText(sec.blocks)).toLowerCase();if(q&&!t.includes(q))continue;n++;
         html+=`<details class="lp-it" ${q?'open':''}><summary><span class="muted small">${esc(eFechaCorta(s2.fecha))}</span> <b>${esc(sec.title||'Consulta')}</b></summary>${eBlocks(sinTablas(sec.blocks))}</details>`}}}
-  el.querySelector('#lpRes').innerHTML=html||`<div class="muted small" style="padding:10px 2px">${q?'Nada con «'+esc(lupaQ.trim())+'».':'Aún no hay material.'}</div>`;
+  el.querySelector('#lpRes').innerHTML=html||`<div class="muted small" style="padding:10px 2px">${q?'Nada con «'+esc(lupaQ.trim())+'»'+(lupaTodo?'.':' en este tema. Prueba con «Todo».'):(lupaTodo?'Aún no hay material.':'Esta clase no tiene material de consulta. Prueba con «Todo».')}</div>`;
   el.querySelector('#lpN').textContent=q?`${n} resultado${n===1?'':'s'}`:'';
   if(q)el.querySelectorAll('#lpRes td,#lpRes th').forEach(c=>c.classList.toggle('hit',c.textContent.toLowerCase().includes(q)));
 }

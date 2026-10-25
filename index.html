@@ -1092,6 +1092,15 @@ function eToggle(id,sec){
   if(run!==sec){const t=w.tim[sec]||(w.tim[sec]={acc:0,start:null});t.start=now;t.t=now;bMark(id,'t:'+sec)}
   eSave();bSoon(1000);
 }
+/* Cronómetro automático: al escribir o elegir una respuesta en una sección, su cronómetro arranca solo
+   (y el de la sección anterior se detiene). Sin re-dibujar la pantalla, para no perder el foco. */
+function eAutoTimer(el){
+  if(view!=='sesion'||!eOpen||!el||!el.closest)return;const w=eWork(eOpen);if(w.sent)return;
+  const btn=el.closest('section')?.querySelector('[data-e="timer"]');if(!btn||btn.disabled)return;
+  const sec=btn.dataset.sec;if(eRunning(w)===sec)return;
+  eToggle(eOpen,sec);
+  document.querySelectorAll('[data-e="timer"]').forEach(b=>{const on=eRunning(w)===b.dataset.sec;b.classList.toggle('on',on);if(b.firstChild&&b.firstChild.nodeType===3)b.firstChild.nodeValue=(on?'⏸':'▶')+' '});
+}
 function eStopAll(w){const run=eRunning(w);if(run){const t=w.tim[run];t.acc=(t.acc||0)+Date.now()-t.start;t.start=null}}
 function eTick(){
   if(view==='simu'){const el=document.getElementById('simT');if(el&&E.sim&&E.sim.start)el.textContent=eFmt(Date.now()-E.sim.start);return}
@@ -1833,7 +1842,7 @@ function eClick(t){
   else if(a==='sim-entregar')simEntregar();
   else if(a==='sim-cancel'){if(confirm('¿Descartar este simulacro? Se borran las respuestas marcadas.')){E.sim=null;eSave();view='estudio';render()}}
   else if(a==='sim-back'){view='estudio';render()}
-  else if(a==='pick'){const w=eWork(eOpen);if(w.sent)return;const an=w.ans[t.dataset.it]||(w.ans[t.dataset.it]={});
+  else if(a==='pick'){const w=eWork(eOpen);if(w.sent)return;eAutoTimer(t);const an=w.ans[t.dataset.it]||(w.ans[t.dataset.it]={});
     an.r=an.r===t.dataset.o?'':t.dataset.o;an.t=Date.now();bMark(eOpen,'a:'+t.dataset.it);eSave();bSoon(2500);
     t.parentNode.querySelectorAll('.eletra').forEach(x=>x.classList.toggle('on',x.dataset.o===an.r))}
   else if(a==='ref2mat'){matQ=t.dataset.q||'';eSub='mat';render()}
@@ -1841,7 +1850,7 @@ function eClick(t){
   else if(a==='tabla-img')tablaImagen();
   else if(a==='tabla-cerrar'){history.replaceState(null,'',location.pathname);view='home';render()}
   else if(a==='open'){eOpen=t.dataset.id;view='sesion';render();bSync()}
-  else if(a==='back'){view='estudio';eOpen=null;render()}
+  else if(a==='back'){if(eOpen){const w=eWork(eOpen);if(eRunning(w)){eStopAll(w);eSave()}}view='estudio';eOpen=null;render()}
   else if(a==='timer'){eToggle(eOpen,t.dataset.sec);render()}
   else if(a==='entregar')eEntregar();
   else if(a==='copiar'){const s=E.ses[eOpen];if(s)eCopy(eTexto(s,eCollect(s)))}
@@ -1849,7 +1858,7 @@ function eClick(t){
 let eSaveT=null;
 function eInput(el){
   const it=el.dataset.it,k=el.dataset.a;if(!it||!eOpen)return;
-  const w=eWork(eOpen);if(w.sent)return;const a=w.ans[it]||(w.ans[it]={});
+  const w=eWork(eOpen);if(w.sent)return;const a=w.ans[it]||(w.ans[it]={});eAutoTimer(el);
   a[k]=el.type==='checkbox'?el.checked:el.value;a.t=Date.now();bMark(eOpen,'a:'+it);
   clearTimeout(eSaveT);eSaveT=setTimeout(eSave,300);bSoon(2500);
   if(k==='duda'){eSave();render();const n=document.querySelector(`[data-a="nota"][data-it="${it}"]`);if(n&&el.checked)n.focus()}
@@ -2026,6 +2035,7 @@ if(typeof document!=='undefined'){
   });
   try{load()}catch(e){S=fresh();derivedReset(S)}
   eLoad();
+  document.addEventListener('focusin',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.it&&t.matches('textarea,input'))eAutoTimer(t)});
   document.addEventListener('input',e=>{if(e.target.id==='eBuscar')return eFiltrar(e.target.value);if(e.target.id==='matBuscar'){matQ=e.target.value;return matFiltrar()}if(e.target.dataset&&e.target.dataset.a&&e.target.type!=='checkbox')eInput(e.target)});
   document.addEventListener('change',e=>{if(e.target.dataset&&e.target.dataset.a&&e.target.type==='checkbox')eInput(e.target)});
   setInterval(eTick,1000);

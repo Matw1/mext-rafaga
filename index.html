@@ -1360,7 +1360,8 @@ function renderSesion(){
       if(remota)return ent?eItemHtml(s.id,sec,sec.items[b.idx],b.idx,true,c,gE?gE.items[b.idx]||null:null):eBlocks([sec.items[b.idx]])+eVerdHtml(c);
       return eItemHtml(s.id,sec,sec.items[b.idx],b.idx,locked,c);
     }).join('');
-    const timer=inter?`<button class="etimer ${run===sec.id?'on':''}" data-e="timer" data-sec="${sec.id}" ${locked?'disabled':''}>${run===sec.id?'⏸':'▶'} <span data-tm="${sec.id}">${eFmt(eMs(w.tim[sec.id]))}</span></button>`:'';
+    // 📘 Consulta lleva cronómetro solo si el instructor le puso tiempo sugerido («· N min»)
+    const timer=inter||(sec.kind==='consulta'&&sec.min&&!remota)?`<button class="etimer ${run===sec.id?'on':''}" data-e="timer" data-sec="${sec.id}" ${locked?'disabled':''}>${run===sec.id?'⏸':'▶'} <span data-tm="${sec.id}">${eFmt(eMs(w.tim[sec.id]))}</span></button>`:'';
     if(sec.kind==='consulta')return `<details class="esec econs" open><summary><span class="ek">${E_LABEL.consulta}</span> ${esc(sec.title)}</summary><div class="ebody">${body}</div></details>`;
     return `<section class="esec" data-k="${sec.kind}"><div class="ehead"><div><span class="ek">${E_LABEL[sec.kind]||''}</span><b>${esc(sec.kind==='texto'?sec.head:sec.title)}</b>${typeof cuenta!=='undefined'?cuenta:''}${sec.min?`<span class="muted small"> · sugerido ${sec.min} min</span>`:''}</div>${timer}</div><div class="ebody">${body}</div></section>`;
   };
@@ -1770,8 +1771,8 @@ function eFiltrar(v){
 function eCollect(s){
   const w=eWork(s.id),p=eParse(s.blocks),acts=[];let dudas=0,total=0;
   for(const sec of p.secs){
-    if(!['tarea','practica','fuera'].includes(sec.kind))continue;
-    const ms=eMs(w.tim[sec.id]);total+=ms;
+    if(!['tarea','practica','fuera','consulta'].includes(sec.kind))continue;
+    const ms=eMs(w.tim[sec.id]);if(sec.kind==='consulta'&&!ms)continue;total+=ms;
     const items=sec.items.map(b=>{const a=w.ans[b.id]||{};if(a.duda)dudas++;return{p:ptxt(b.rt),r:a.r||'',duda:!!a.duda,nota:a.nota||'',hecho:!!a.hecho}});
     acts.push({tipo:sec.kind,titulo:sec.title,min:Math.round(ms/60000),items});
   }

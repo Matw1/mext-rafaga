@@ -314,6 +314,7 @@ button.pill{cursor:pointer;font-family:inherit}
 @media (max-width:420px){.prompt{font-size:1.38rem}.opt{font-size:1.18rem}.ring{width:92px;height:92px}.ring .in b{font-size:1.6rem}.hero{gap:12px;padding:14px}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 #matCuenta{margin:0 2px 6px}td.hit,th.hit{background:color-mix(in srgb,var(--amar) 35%,transparent)}
+.eletras{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 4px}.eletra{font:inherit;font-size:1.05rem;min-height:44px;min-width:64px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--text);cursor:pointer}.eletra b{color:var(--muted);margin-right:6px}.eletra.on{border-color:var(--part);background:color-mix(in srgb,var(--part) 14%,transparent);font-weight:700}.eletra.on b{color:var(--part)}
 </style>
 </head>
 <body>
@@ -1327,13 +1328,22 @@ function eItemHtml(sid,sec,b,idx,locked,corr,remoto){
   return eItemHtmlBase(sid,sec,b,idx,locked).replace(/^<div class="eitem">/,`<div class="eitem${corr&&corr.v?' v-'+corr.v:''}">`).replace(/<\/div>$/,eVerdHtml(corr)+'</div>');
 }
 function eRespHtml(r,c){const sp=eSplitFix(c),d=sp&&[...r].length>2?eDiff(r,sp.fix):null;return d?d.a:esc(r)}
+/* Opciones con letra dentro de la consigna («… a) で b) に c) を»): se responden tocando la letra.
+   La respuesta queda como «b) に», igual que si se hubiera escrito. */
+function eLetras(txt){const m=txt.match(/(?<![A-Za-z])[aA]\)\s*\S/);if(!m)return null;const i=m.index;
+  const parts=txt.slice(i).split(/\s*(?<![A-Za-z])([a-fA-F])\)\s*/).filter(x=>x!=='');const ops=[];
+  for(let j=0;j+1<parts.length;j+=2)ops.push({k:parts[j].toLowerCase(),t:parts[j+1].trim()});
+  return ops.length>=2&&ops[0].k==='a'&&ops[1].k==='b'?{q:txt.slice(0,i).trim(),ops}:null}
 function eItemHtmlBase(sid,sec,b,idx,locked){
   const w=eWork(sid),a=w.ans[b.id]||{},dis=locked?'disabled':'';
   const ja='lang="ja" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false"';
   let field='';
   if(sec.kind==='fuera')field=`<label class="echeck"><input type="checkbox" data-a="hecho" data-it="${b.id}" ${a.hecho?'checked':''} ${dis}> <span>${eRich(b.rt)}</span></label>`;
   else{
-    field=`<div class="eprompt"><span class="enum">${idx+1}</span><div>${eRich(b.rt)}${b.kids?`<div class="ekids">${eBlocks(b.kids)}</div>`:''}</div></div>`+
+    const L=eLetras(ptxt(b.rt));
+    if(L){field=`<div class="eprompt"><span class="enum">${idx+1}</span><div>${esc(L.q)}${b.kids?`<div class="ekids">${eBlocks(b.kids)}</div>`:''}</div></div>
+      <div class="eletras" lang="ja">${L.ops.map(o=>{const v=o.k+') '+o.t;return `<button class="eletra${a.r===v?' on':''}" data-e="pick" data-it="${b.id}" data-o="${esc(v)}" ${dis}><b>${esc(o.k)}</b> ${esc(o.t)}</button>`}).join('')}</div>`}
+    else field=`<div class="eprompt"><span class="enum">${idx+1}</span><div>${eRich(b.rt)}${b.kids?`<div class="ekids">${eBlocks(b.kids)}</div>`:''}</div></div>`+
       (sec.kind==='tarea'?`<textarea rows="2" data-a="r" data-it="${b.id}" ${ja} ${dis} placeholder="Escribe tu respuesta">${esc(a.r||'')}</textarea>`
         :`<input type="text" data-a="r" data-it="${b.id}" ${ja} ${dis} placeholder="Respuesta" value="${esc(a.r||'')}">`);
   }
@@ -1823,6 +1833,9 @@ function eClick(t){
   else if(a==='sim-entregar')simEntregar();
   else if(a==='sim-cancel'){if(confirm('¿Descartar este simulacro? Se borran las respuestas marcadas.')){E.sim=null;eSave();view='estudio';render()}}
   else if(a==='sim-back'){view='estudio';render()}
+  else if(a==='pick'){const w=eWork(eOpen);if(w.sent)return;const an=w.ans[t.dataset.it]||(w.ans[t.dataset.it]={});
+    an.r=an.r===t.dataset.o?'':t.dataset.o;an.t=Date.now();bMark(eOpen,'a:'+t.dataset.it);eSave();bSoon(2500);
+    t.parentNode.querySelectorAll('.eletra').forEach(x=>x.classList.toggle('on',x.dataset.o===an.r))}
   else if(a==='ref2mat'){matQ=t.dataset.q||'';eSub='mat';render()}
   else if(a==='pin')tTogglePin(t.dataset.id);
   else if(a==='tabla-img')tablaImagen();

@@ -315,6 +315,13 @@ button.pill{cursor:pointer;font-family:inherit}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 #matCuenta{margin:0 2px 6px}td.hit,th.hit{background:color-mix(in srgb,var(--amar) 35%,transparent)}
 .eletras{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 4px}.eletra{font:inherit;font-size:1.05rem;min-height:44px;min-width:64px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--text);cursor:pointer}.eletra b{color:var(--muted);margin-right:6px}.eletra.on{border-color:var(--part);background:color-mix(in srgb,var(--part) 14%,transparent);font-weight:700}.eletra.on b{color:var(--part)}
+.eheadr{display:flex;align-items:center;gap:8px}.elupa{font:inherit;font-size:1.05rem;width:42px;height:42px;border-radius:12px;border:1px solid var(--line);background:var(--surface);cursor:pointer}
+#lupa{position:fixed;top:0;right:0;bottom:0;width:min(420px,100vw);background:var(--bg);border-left:1px solid var(--line);box-shadow:-8px 0 30px rgba(0,0,0,.12);z-index:60;padding:12px 14px 30px;overflow-y:auto;transform:translateX(105%);transition:transform .2s ease}
+#lupa.on{transform:none}#lupa .lp-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}#lupa .lp-tabs{display:flex}#lupa .lp-tabs button{padding:6px 10px}#lupa .lp-tabs button.on{background:var(--text);color:var(--bg)}
+#lupa .lp-x{margin-left:auto;font:inherit;width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--surface);cursor:pointer}
+#lupa .lp-it{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px}#lupa .lp-it summary{cursor:pointer}#lupa table{font-size:.92rem}
+@media (min-width:1100px){body.lupa-on #app{margin-right:440px}}
+@media (max-width:759px){#lupa{top:auto;width:100vw;height:72vh;border-left:0;border-top:1px solid var(--line);border-radius:16px 16px 0 0;transform:translateY(105%)}#lupa.on{transform:none}}
 </style>
 </head>
 <body>
@@ -1360,6 +1367,32 @@ function eItemHtmlBase(sid,sec,b,idx,locked){
     <div class="eduda"><label><input type="checkbox" data-a="duda" data-it="${b.id}" ${a.duda?'checked':''} ${dis}> Tengo duda</label>
     ${a.duda?`<input type="text" data-a="nota" data-it="${b.id}" ${ja} ${dis} placeholder="¿Qué no te queda claro? (nota para el instructor)" value="${esc(a.nota||'')}">`:''}</div></div>`;
 }
+/* 🔍 Consulta rápida dentro de la sesión: panel a la derecha (abajo en el teléfono) para buscar en
+   Materia (tablas) y Referencia (teoría) sin salir. Solo aparece en tareas que no son «sin apuntes». */
+function lupaOk(sec){const t=(sec.title+' '+sec.head+' '+bText(sec.blocks.filter(b=>b.type!=='_item'))).toLowerCase();
+  return !/sin apuntes|sin tablas|sin mirar|sin consultar|en fr[ií]o|sin ayuda|minisimulacro|simulacro/.test(t)}
+let lupaTab='mat',lupaQ='';
+function lupaAbrir(){let el=document.getElementById('lupa');
+  if(!el){el=document.createElement('aside');el.id='lupa';document.body.appendChild(el);
+    el.innerHTML=`<div class="lp-head"><b>🔍 Consulta</b><div class="seg lp-tabs"><button data-lp="mat">📊 Materia</button><button data-lp="ref">📘 Referencia</button></div><button class="lp-x" data-lp="x" aria-label="Cerrar">✕</button></div>
+      <input type="search" id="lpQ" class="ebuscar" placeholder="Palabra clave (ej. そうです, 開ける, どれ)" lang="ja" autocapitalize="off" autocorrect="off" spellcheck="false"><div class="muted small" id="lpN"></div><div id="lpRes"></div>`;
+    el.addEventListener('click',e=>{const b=e.target.closest('[data-lp]');if(!b)return;if(b.dataset.lp==='x')return lupaCerrar();lupaTab=b.dataset.lp;lupaPintar()});
+    el.querySelector('#lpQ').addEventListener('input',e=>{lupaQ=e.target.value;lupaPintar()});}
+  el.classList.add('on');document.body.classList.add('lupa-on');el.querySelector('#lpQ').value=lupaQ;lupaPintar();
+}
+function lupaCerrar(){const el=document.getElementById('lupa');if(el)el.classList.remove('on');document.body.classList.remove('lupa-on')}
+function lupaPintar(){const el=document.getElementById('lupa');if(!el)return;
+  el.querySelectorAll('[data-lp="mat"],[data-lp="ref"]').forEach(b=>b.classList.toggle('on',b.dataset.lp===lupaTab));
+  const q=lupaQ.trim().toLowerCase();let html='',n=0;
+  if(lupaTab==='mat'){for(const d of materiaDias())for(const x of d.tablas){if(q&&!((x.tema||'')+' '+tablaTxt(x.t)).toLowerCase().includes(q))continue;n++;
+      html+=`<div class="lp-it"><div class="muted small">${esc(eFechaCorta(d.s.fecha))} · ${esc(x.tema||d.s.titulo||'')}</div>${eBlocks([x.t])}</div>`}}
+  else{for(const s2 of Object.values(E.ses).sort((a,b)=>b.fecha.localeCompare(a.fecha))){if(!s2.blocks)continue;
+      for(const sec of eParse(s2.blocks).secs){if(sec.kind!=='consulta')continue;const t=(sec.title+' '+bText(sec.blocks)).toLowerCase();if(q&&!t.includes(q))continue;n++;
+        html+=`<details class="lp-it" ${q?'open':''}><summary><span class="muted small">${esc(eFechaCorta(s2.fecha))}</span> <b>${esc(sec.title||'Consulta')}</b></summary>${eBlocks(sinTablas(sec.blocks))}</details>`}}}
+  el.querySelector('#lpRes').innerHTML=html||`<div class="muted small" style="padding:10px 2px">${q?'Nada con «'+esc(lupaQ.trim())+'».':'Aún no hay material.'}</div>`;
+  el.querySelector('#lpN').textContent=q?`${n} resultado${n===1?'':'s'}`:'';
+  if(q)el.querySelectorAll('#lpRes td,#lpRes th').forEach(c=>c.classList.toggle('hit',c.textContent.toLowerCase().includes(q)));
+}
 function renderSesion(){
   const s=E.ses[eOpen];if(!s){view='estudio';return renderEstudio()}
   const w=eWork(s.id),p=eParse(s.blocks),run=eRunning(w);
@@ -1382,7 +1415,7 @@ function renderSesion(){
     // 📘 Consulta lleva cronómetro solo si el instructor le puso tiempo sugerido («· N min»)
     const timer=inter||(sec.kind==='consulta'&&sec.min&&!remota)?`<button class="etimer ${run===sec.id?'on':''}" data-e="timer" data-sec="${sec.id}" ${locked?'disabled':''}>${run===sec.id?'⏸':'▶'} <span data-tm="${sec.id}">${eFmt(eMs(w.tim[sec.id]))}</span></button>`:'';
     if(sec.kind==='consulta')return `<details class="esec econs" open><summary><span class="ek">${E_LABEL.consulta}</span> ${esc(sec.title)}</summary><div class="ebody">${body}</div></details>`;
-    return `<section class="esec" data-k="${sec.kind}"><div class="ehead"><div><span class="ek">${E_LABEL[sec.kind]||''}</span><b>${esc(sec.kind==='texto'?sec.head:sec.title)}</b>${typeof cuenta!=='undefined'?cuenta:''}${sec.min?`<span class="muted small"> · sugerido ${sec.min} min</span>`:''}</div>${timer}</div><div class="ebody">${body}</div></section>`;
+    return `<section class="esec" data-k="${sec.kind}"><div class="ehead"><div><span class="ek">${E_LABEL[sec.kind]||''}</span><b>${esc(sec.kind==='texto'?sec.head:sec.title)}</b>${typeof cuenta!=='undefined'?cuenta:''}${sec.min?`<span class="muted small"> · sugerido ${sec.min} min</span>`:''}</div><div class="eheadr">${(sec.kind==='tarea'||sec.kind==='practica')&&!locked&&lupaOk(sec)?'<button class="elupa" data-e="lupa" title="Consultar Materia y Referencia sin salir" aria-label="Consultar Materia y Referencia">🔍</button>':''}${timer}</div></div><div class="ebody">${body}</div></section>`;
   };
   const tot=Object.values(w.tim).reduce((a,t)=>a+eMs(t),0);
   $('#app').innerHTML=`<div class="estudio">
@@ -1845,12 +1878,13 @@ function eClick(t){
   else if(a==='pick'){const w=eWork(eOpen);if(w.sent)return;eAutoTimer(t);const an=w.ans[t.dataset.it]||(w.ans[t.dataset.it]={});
     an.r=an.r===t.dataset.o?'':t.dataset.o;an.t=Date.now();bMark(eOpen,'a:'+t.dataset.it);eSave();bSoon(2500);
     t.parentNode.querySelectorAll('.eletra').forEach(x=>x.classList.toggle('on',x.dataset.o===an.r))}
+  else if(a==='lupa')lupaAbrir();
   else if(a==='ref2mat'){matQ=t.dataset.q||'';eSub='mat';render()}
   else if(a==='pin')tTogglePin(t.dataset.id);
   else if(a==='tabla-img')tablaImagen();
   else if(a==='tabla-cerrar'){history.replaceState(null,'',location.pathname);view='home';render()}
   else if(a==='open'){eOpen=t.dataset.id;view='sesion';render();bSync()}
-  else if(a==='back'){if(eOpen){const w=eWork(eOpen);if(eRunning(w)){eStopAll(w);eSave()}}view='estudio';eOpen=null;render()}
+  else if(a==='back'){lupaCerrar();if(eOpen){const w=eWork(eOpen);if(eRunning(w)){eStopAll(w);eSave()}}view='estudio';eOpen=null;render()}
   else if(a==='timer'){eToggle(eOpen,t.dataset.sec);render()}
   else if(a==='entregar')eEntregar();
   else if(a==='copiar'){const s=E.ses[eOpen];if(s)eCopy(eTexto(s,eCollect(s)))}

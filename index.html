@@ -1186,7 +1186,12 @@ async function eSync(manual){
     const next={};
     for(const s of r.sesiones||[])next[s.id]=E.ses[s.id];
     const oldest=(r.sesiones||[]).reduce((m,s)=>!m||s.fecha<m?s.fecha:m,'');
-    for(const[id,s]of Object.entries(E.ses))if(!next[id]&&(E.work[id]||(r.sesiones||[]).length>=40&&s.fecha<oldest))next[id]=s; // conserva lo trabajado y lo antiguo
+    // Si el instructor borró una sesión en Notion, se quita también aquí. Solo se conserva lo que aún no
+    // llegó a Notion (respuestas sin entregar o una entrega en cola) y lo antiguo que ya no entra en la lista.
+    const enCola=new Set(E.outbox.map(o=>o.page));
+    for(const[id,s]of Object.entries(E.ses)){if(next[id])continue;const w=E.work[id];
+      const sinEntregar=w&&!w.sent&&Object.keys(w.ans||{}).length;
+      if(sinEntregar||enCola.has(id)||(r.sesiones||[]).length>=40&&s.fecha<oldest)next[id]=s}
     E.ses=next;E.lastFetch=Date.now();eState='ok';eSave();
     if(manual)toast('Sesiones actualizadas');
   }catch(err){eState=err.badkey?'badkey':(navigator.onLine===false||err.name==='TypeError'||err.name==='AbortError')?'offline':'error';eErr=err.message;if(manual)toast(eState==='offline'?'Sin conexión: se usará lo guardado':'No se pudo actualizar: '+err.message)}

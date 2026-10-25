@@ -313,6 +313,7 @@ button.pill{cursor:pointer;font-family:inherit}
 
 @media (max-width:420px){.prompt{font-size:1.38rem}.opt{font-size:1.18rem}.ring{width:92px;height:92px}.ring .in b{font-size:1.6rem}.hero{gap:12px;padding:14px}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+#matCuenta{margin:0 2px 6px}td.hit,th.hit{background:color-mix(in srgb,var(--amar) 35%,transparent)}
 </style>
 </head>
 <body>
@@ -1623,6 +1624,7 @@ function renderRef(){
     <div class="estat" id="eStat" data-s="${sc}">${esc(st)}</div>
     ${eSubTabs()}
     ${items.length?`<input type="search" id="eBuscar" class="ebuscar" placeholder="Buscar en el material (ej. で, contadores, 消す)" lang="ja" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <button class="btn" id="eRef2Mat" data-e="ref2mat" style="display:none;margin-bottom:6px"></button>
     <div class="muted small" id="eCuenta">${items.length} tema(s) explicados</div>
     <div id="eRefList">${items.map((it,i)=>`<details class="esec econs eref" data-q="${esc(it.q)}"><summary><span class="ek">${esc(eFecha(it.s.fecha))} · ${esc(it.s.titulo||'')}</span> ${esc(it.sec.title||'Consulta')}</summary><div class="ebody">${eBlocks(sinTablas(it.sec.blocks))}</div></details>`).join('')}</div>`
     :'<div class="ecard eempty"><b>Aún no hay material de consulta.</b><span class="muted small">Aquí se juntará automáticamente todo lo que el instructor marque como «📘 Consulta» en tus sesiones.</span></div>'}
@@ -1642,7 +1644,8 @@ function tTogglePin(id){(E.pins||(E.pins={}))[id]={on:!tPinned(id),t:Date.now()}
 function tFijadas(){const out=[];for(const d of materiaDias())for(const x of d.tablas)if(tPinned(x.t.id))out.push({...x,s:d.s});
   return out.sort((a,b)=>E.pins[b.t.id].t-E.pins[a.t.id].t)}
 const tPinBtn=id=>`<button class="tpin${tPinned(id)?' on':''}" data-e="pin" data-id="${esc(id)}">${tPinned(id)?'📌 Fijada':'📌 Fijar'}</button>`;
-const tTablasHtml=(l,pin)=>l.map((x,j)=>`${x.tema&&(j===0||l[j-1].tema!==x.tema)?`<div class="emtema">${esc(x.tema)}</div>`:''}${pin?tPinBtn(x.t.id):''}${eBlocks([x.t])}`).join('');
+const tablaTxt=t=>(t.kids||[]).map(r=>(r.cells||[]).map(ptxt).join(' ')).join(' ');
+const tTablasHtml=(l,pin)=>l.map((x,j)=>`<div class="mtab" data-q="${esc(((x.tema||'')+' '+tablaTxt(x.t)).toLowerCase())}">${x.tema&&(pin||j===0||l[j-1].tema!==x.tema)?`<div class="emtema">${esc(x.tema)}</div>`:''}${pin?tPinBtn(x.t.id):''}${eBlocks([x.t])}</div>`).join('');
 /* Lo que muestra la Tabla del día: primero las fijadas, luego las de la última clase (sin repetir) */
 function tablasDelDia(){const d=materiaDias()[0],f=tFijadas(),ids=new Set(f.map(x=>x.t.id));
   return{d,tablas:f.concat(d?d.tablas.filter(x=>!ids.has(x.t.id)):[])}}
@@ -1731,22 +1734,36 @@ function renderTemas(){
     <div class="muted small" style="margin:6px 2px 0">El % lo pone el instructor. Tema no visto = 0%.</div>
   </div>`;
 }
+/* 🔍 Búsqueda en Materia: deja solo las tablas que contienen lo escrito, abre su día y resalta las celdas */
+var matQ='';
+function matFiltrar(){
+  const q=matQ.trim().toLowerCase();let n=0;
+  document.querySelectorAll('details.emat').forEach(d=>{let hay=0;
+    d.querySelectorAll('.mtab').forEach(t=>{const ok=!q||t.dataset.q.includes(q);t.style.display=ok?'':'none';if(ok&&q){hay++;n++}
+      t.querySelectorAll('td,th').forEach(c=>c.classList.toggle('hit',!!q&&ok&&c.textContent.toLowerCase().includes(q)))});
+    d.style.display=!q||hay?'':'none';if(q&&hay)d.open=true;else if(!q)d.open=matAbiertos.has(d.dataset.mat)});
+  const c=document.getElementById('matCuenta');if(c)c.textContent=q?(n?`${n} tabla${n>1?'s':''} con «${matQ.trim()}»`:`Ninguna tabla tiene «${matQ.trim()}»`):'';
+}
+function tablasCon(q){let n=0;for(const d of materiaDias())for(const x of d.tablas)if(tablaTxt(x.t).toLowerCase().includes(q))n++;return n}
 function renderMateria(){
   const dias=materiaDias(),[st,sc]=eStatus();
   $('#app').innerHTML=`<div class="estudio">${tabsHtml('estudio')}
     <div class="row"><h1 style="font-size:1.2rem">Estudio diario</h1><span class="sp"></span><button class="btn" data-e="refresh">Actualizar</button></div>
     <div class="estat" id="eStat" data-s="${sc}">${esc(st)}</div>
     ${eSubTabs()}
+    ${dias.length?`<input type="search" id="matBuscar" class="ebuscar" placeholder="🔍 Buscar en las tablas (ej. 開ける, どれ, そうです)" lang="ja" value="${esc(matQ)}" autocapitalize="off" autocorrect="off" spellcheck="false"><div class="muted small" id="matCuenta"></div>`:''}
     ${(()=>{const f=tFijadas();return f.length?`<details class="esec emat efij" data-mat="fij" ${matAbiertos.has('fij')?'open':''}><summary><span class="ek">${f.length} tabla${f.length>1?'s':''} fijada${f.length>1?'s':''}</span><b>📌 Fijadas</b></summary><div class="ebody">${tTablasHtml(f,true)}</div></details>`:''})()}
     ${dias.length?dias.map((d,i)=>`<details class="esec emat" data-mat="${esc(d.s.id)}" ${matAbiertos.has(d.s.id)?'open':''}><summary><span class="ek">${esc(eFecha(d.s.fecha))} · ${d.tablas.length} tabla${d.tablas.length>1?'s':''}</span><b>${esc(d.s.titulo||'Sesión')}</b></summary>
       <div class="ebody">${tTablasHtml(d.tablas,true)}</div></details>`).join('')
     :'<div class="ecard eempty"><b>Aún no hay tablas.</b><span class="muted small">Aquí aparecerán, por día, las tablas que el instructor ponga en tus clases.</span></div>'}
   </div>`;
+  if(matQ)matFiltrar();
 }
 function eFiltrar(v){
   const q=v.trim().toLowerCase();let n=0;
   document.querySelectorAll('.eref').forEach(d=>{const ok=!q||d.dataset.q.includes(q);d.style.display=ok?'':'none';if(ok)n++;if(q&&ok)d.open=true});
   const c=document.getElementById('eCuenta');if(c)c.textContent=q?`${n} resultado(s)`:`${n} tema(s) explicados`;
+  const b=document.getElementById('eRef2Mat'),nt=q?tablasCon(q):0;if(b){b.style.display=nt?'':'none';b.textContent=`📊 Ver ${nt} tabla${nt>1?'s':''} con «${v.trim()}» en Materia`;b.dataset.q=v.trim()}
 }
 
 /* ---------- Entrega ---------- */
@@ -1805,6 +1822,7 @@ function eClick(t){
   else if(a==='sim-entregar')simEntregar();
   else if(a==='sim-cancel'){if(confirm('¿Descartar este simulacro? Se borran las respuestas marcadas.')){E.sim=null;eSave();view='estudio';render()}}
   else if(a==='sim-back'){view='estudio';render()}
+  else if(a==='ref2mat'){matQ=t.dataset.q||'';eSub='mat';render()}
   else if(a==='pin')tTogglePin(t.dataset.id);
   else if(a==='tabla-img')tablaImagen();
   else if(a==='tabla-cerrar'){history.replaceState(null,'',location.pathname);view='home';render()}
@@ -1994,7 +2012,7 @@ if(typeof document!=='undefined'){
   });
   try{load()}catch(e){S=fresh();derivedReset(S)}
   eLoad();
-  document.addEventListener('input',e=>{if(e.target.id==='eBuscar')return eFiltrar(e.target.value);if(e.target.dataset&&e.target.dataset.a&&e.target.type!=='checkbox')eInput(e.target)});
+  document.addEventListener('input',e=>{if(e.target.id==='eBuscar')return eFiltrar(e.target.value);if(e.target.id==='matBuscar'){matQ=e.target.value;return matFiltrar()}if(e.target.dataset&&e.target.dataset.a&&e.target.type!=='checkbox')eInput(e.target)});
   document.addEventListener('change',e=>{if(e.target.dataset&&e.target.dataset.a&&e.target.type==='checkbox')eInput(e.target)});
   setInterval(eTick,1000);
   render();requestAnimationFrame(tick);

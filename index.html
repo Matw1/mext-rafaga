@@ -207,7 +207,7 @@ button.pill{cursor:pointer;font-family:inherit}
 .tabs{display:flex;gap:6px;padding:4px;margin-bottom:14px;border-radius:14px;background:var(--surface2);border:1px solid var(--line)}
 .tabs button{flex:1;border:0;background:transparent;border-radius:10px;padding:10px;min-height:44px;font-weight:700;color:var(--muted)}
 .tabs button.on{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
-.estudio{line-height:1.6}.estudio .stack>*+*{margin-top:12px}
+.estudio{line-height:1.6}.simpdf{max-height:62vh;overflow:auto;border:1px solid var(--line,#ddd);border-radius:12px;background:#fff;margin:4px 0 12px;-webkit-overflow-scrolling:touch}.simpdf img{display:block;width:100%;height:auto}.simpdf img+img{border-top:1px solid #ddd}.estudio .stack>*+*{margin-top:12px}
 .estat{font-size:.82rem;margin:6px 0 14px;color:var(--muted)}.estat[data-s="warn"]{color:var(--warn)}.estat[data-s="bad"]{color:var(--bad)}
 .ecard{display:flex;flex-direction:column;gap:4px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px;min-height:64px}
 .ecard b{font-size:1.02rem}.ehoy{border-left:4px solid var(--part)}.eempty{cursor:default}
@@ -1622,11 +1622,11 @@ function lessonsHtml(){
 // Preguntas por sección del Problema A (Elementary), según la hoja de respuestas oficial (igual de 2014 a 2018)
 const SIM_A=[['I',10],['II',10],['III',5],['IV',7],['V',5]];
 const SIM_EX=[
-  {id:'2014',examen:'2014 · práctica',titulo:'MEXT 2014 · Secciones I y II',desde:null,secs:[['I',10],['II',10]],nota:'Práctica · dom 25 oct'},
-  {id:'2015',examen:'2015 · práctica',titulo:'MEXT 2015 · Secciones I y II',desde:null,secs:[['I',10],['II',10]],nota:'Práctica · dom 1 nov'},
-  {id:'2016',secs:SIM_A,examen:'2016 · checkpoint día 30',titulo:'Checkpoint día 30 · MEXT 2016',desde:'2026-10-27',nota:'Sellado hasta el mar 27 oct'},
-  {id:'2017',secs:SIM_A,examen:'2017 · checkpoint día 60',titulo:'Checkpoint día 60 · MEXT 2017',desde:'2026-11-26',nota:'Sellado hasta el jue 26 nov'},
-  {id:'2018',secs:SIM_A,examen:'2018 · final',titulo:'Simulacro final · MEXT 2018',desde:'2027-05-01',nota:'Sellado hasta mayo de 2027'},
+  {id:'2014',examen:'2014 · práctica',titulo:'MEXT 2014 · Secciones I y II',desde:null,secs:[['I',10],['II',10]],pdf:'2014_ke_ja.pdf',pags:[3,5],nota:'Práctica · dom 25 oct'},
+  {id:'2015',examen:'2015 · práctica',titulo:'MEXT 2015 · Secciones I y II',desde:null,secs:[['I',10],['II',10]],pdf:'2015_ke_ja.pdf',pags:[3,5],nota:'Práctica · dom 1 nov'},
+  {id:'2016',secs:SIM_A,pdf:'2016_ke_ja.pdf',examen:'2016 · checkpoint día 30',titulo:'Checkpoint día 30 · MEXT 2016',desde:'2026-10-27',nota:'Sellado hasta el mar 27 oct'},
+  {id:'2017',secs:SIM_A,pdf:'2017_ke_ja.pdf',examen:'2017 · checkpoint día 60',titulo:'Checkpoint día 60 · MEXT 2017',desde:'2026-11-26',nota:'Sellado hasta el jue 26 nov'},
+  {id:'2018',secs:SIM_A,pdf:'2018_ke_ja.pdf',examen:'2018 · final',titulo:'Simulacro final · MEXT 2018',desde:'2027-05-01',nota:'Sellado hasta mayo de 2027'},
 ];
 const ROMANOS=['I','II','III','IV','V','VI'];
 function simStart(id){
@@ -1635,6 +1635,34 @@ function simStart(id){
   if(E.sim&&!confirm('Ya tienes un simulacro empezado. ¿Descartarlo y empezar otro?'))return;
   E.sim={ex:id,examen:ex.examen,titulo:ex.titulo,secs:(ex.secs||[['I',10],['II',10]]).map(x=>x.slice()),resp:{},start:null};eSave();view='simu';render();
 }
+/* Preguntas del simulacro: el PDF lo eliges tú y se guarda solo en este dispositivo (no se sube a ningún lado).
+   Se muestran solo las páginas de las secciones de ese simulacro. */
+let simPdfVer=false;const simPdfImgs={};
+function pdfIdb(){return new Promise((ok,no)=>{const r=indexedDB.open('rafaga-pdf',1);r.onupgradeneeded=()=>r.result.createObjectStore('f');r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)})}
+async function pdfGet(id){try{const db=await pdfIdb();return await new Promise(ok=>{const q=db.transaction('f').objectStore('f').get(id);q.onsuccess=()=>ok(q.result||null);q.onerror=()=>ok(null)})}catch(e){return null}}
+async function pdfPut(id,blob){const db=await pdfIdb();await new Promise((ok,no)=>{const t=db.transaction('f','readwrite');t.objectStore('f').put(blob,id);t.oncomplete=ok;t.onerror=()=>no(t.error)})}
+let pdfLib=null;
+function pdfCargarLib(){if(pdfLib)return pdfLib;
+  pdfLib=new Promise((ok,no)=>{const sc=document.createElement('script');sc.src='vendor/pdf.min.js';
+    sc.onload=()=>{window.pdfjsLib.GlobalWorkerOptions.workerSrc='vendor/pdf.worker.min.js';ok(window.pdfjsLib)};
+    sc.onerror=()=>{pdfLib=null;no(new Error('no se pudo cargar el lector de PDF'))};document.head.appendChild(sc)});
+  return pdfLib}
+function simPdfHtml(s){const ex=SIM_EX.find(x=>x.id===s.ex)||{};
+  if(simPdfImgs[s.ex])return simPdfImgs[s.ex].map((u,i)=>`<img src="${u}" alt="Página ${(ex.pags?ex.pags[0]:1)+i} del examen">`).join('');
+  setTimeout(()=>simPdfCargar(s.ex),0);return '<div class="muted small" style="padding:10px">Cargando las preguntas…</div>'}
+async function simPdfCargar(id,file){const el=document.getElementById('simPdf');if(!el)return;
+  const ex=SIM_EX.find(x=>x.id===id)||{};
+  try{let blob=file||await pdfGet(id);
+    if(!blob){el.innerHTML=`<div style="padding:10px"><p class="muted small">Elige el PDF del examen (${esc(ex.pdf||'el del año '+id)}). Se guarda solo en este dispositivo; la próxima vez se abre solo.</p><label class="btn">Elegir PDF<input type="file" accept="application/pdf,.pdf" data-simpdf="${esc(id)}" hidden></label></div>`;return}
+    const lib=await pdfCargarLib(),doc=await lib.getDocument({data:new Uint8Array(await blob.arrayBuffer())}).promise;
+    const a=ex.pags?ex.pags[0]:1,b=ex.pags?Math.min(ex.pags[1],doc.numPages):doc.numPages,urls=[];
+    if(a>doc.numPages)throw new Error('ese PDF no parece el del examen '+id);
+    for(let n=a;n<=b;n++){const pg=await doc.getPage(n),v0=pg.getViewport({scale:1}),v=pg.getViewport({scale:1600/v0.width});
+      const c=document.createElement('canvas');c.width=v.width;c.height=v.height;await pg.render({canvasContext:c.getContext('2d'),viewport:v}).promise;
+      urls.push(await new Promise(ok=>c.toBlob(x=>ok(URL.createObjectURL(x)),'image/jpeg',.85)))}
+    if(file)await pdfPut(id,file);
+    simPdfImgs[id]=urls;const el2=document.getElementById('simPdf');if(el2)el2.innerHTML=simPdfHtml(E.sim);
+  }catch(err){const el2=document.getElementById('simPdf');if(el2)el2.innerHTML=`<div class="muted small" style="padding:10px">No pude abrir el PDF: ${esc(err.message||String(err))}. Prueba con «Cambiar PDF».</div>`}}
 function simSec(i,d){const s=E.sim.secs[i];s[1]=Math.max(1,Math.min(40,s[1]+d));eSave();render()}
 function simAddSec(){const n=E.sim.secs.length;if(n>=ROMANOS.length)return;E.sim.secs.push([ROMANOS[n],10]);eSave();render()}
 function simMarcar(q,r){if(!E.sim||!E.sim.start)return;E.sim.resp[q]=E.sim.resp[q]===r?undefined:r;eSave();
@@ -1680,6 +1708,8 @@ function renderSimHoja(){
   $('#app').innerHTML=`<div class="estudio">
     <div class="row"><button class="icon-btn" data-e="sim-back" aria-label="Volver">←</button><div style="min-width:0"><div class="muted small">Simulacro · ${esc(s.examen)}</div><b class="etitle">${esc(s.titulo)}</b></div></div>
     <div class="ebar"><span>⏱ <b id="simT">${eFmt(Date.now()-s.start)}</b></span><span>Respondidas <b id="simN">${hechas}/${tot}</b></span></div>
+    <div class="row" style="gap:8px;margin:6px 0"><button class="btn" data-e="sim-pdf">${simPdfVer?'Ocultar preguntas':'📄 Ver preguntas'}</button>${simPdfVer?'<button class="btn" data-e="sim-pdf-otro">Cambiar PDF</button>':''}</div>
+    ${simPdfVer?`<div class="simpdf" id="simPdf">${simPdfHtml(s)}</div>`:''}
     ${s.secs.map(([sec,n])=>`<section class="esec"><b>Sección ${sec}</b><div class="simg">${Array.from({length:n},(_,i)=>{const q=sec+'-'+(i+1);return `<div class="simrow"><span class="enum">${i+1}</span>${['1','2','3','4','?'].map(r=>`<button class="simb${s.resp[q]===r?' on':''}${r==='?'?' nose':''}" data-e="sim-r" data-q="${q}" data-r="${r}" aria-label="Pregunta ${i+1}: ${r==='?'?'no sé':'opción '+r}">${r}</button>`).join('')}</div>`}).join('')}</div></section>`).join('')}
     <div class="eactions"><button class="btn eprimary" data-e="sim-entregar">Entregar simulacro</button><button class="btn" data-e="sim-cancel">Descartar</button></div>
   </div>`;
@@ -1894,6 +1924,8 @@ function eClick(t){
   else if(a==='sim-r'){simMarcar(t.dataset.q,t.dataset.r)}
   else if(a==='sim-sec'){simSec(+t.dataset.i,+t.dataset.d)}
   else if(a==='sim-add')simAddSec();
+  else if(a==='sim-pdf'){simPdfVer=!simPdfVer;render()}
+  else if(a==='sim-pdf-otro'){delete simPdfImgs[E.sim.ex];simPdfVer=true;render();const el=document.getElementById('simPdf');if(el)el.innerHTML=`<div style="padding:10px"><label class="btn">Elegir PDF<input type="file" accept="application/pdf,.pdf" data-simpdf="${esc(E.sim.ex)}" hidden></label></div>`}
   else if(a==='sim-go'){E.sim.start=Date.now();eSave();render()}
   else if(a==='sim-entregar')simEntregar();
   else if(a==='sim-cancel'){if(confirm('¿Descartar este simulacro? Se borran las respuestas marcadas.')){E.sim=null;eSave();view='estudio';render()}}
@@ -2094,6 +2126,8 @@ if(typeof document!=='undefined'){
   document.addEventListener('focusin',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.it&&t.matches('textarea,input'))eAutoTimer(t)});
   document.addEventListener('input',e=>{if(e.target.id==='eBuscar')return eFiltrar(e.target.value);if(e.target.id==='matBuscar'){matQ=e.target.value;return matFiltrar()}if(e.target.dataset&&e.target.dataset.a&&e.target.type!=='checkbox')eInput(e.target)});
   document.addEventListener('change',e=>{if(e.target.dataset&&e.target.dataset.a&&e.target.type==='checkbox')eInput(e.target)});
+  document.addEventListener('change',e=>{const id=e.target.dataset&&e.target.dataset.simpdf,f=e.target.files&&e.target.files[0];if(!id||!f)return;
+    const el=document.getElementById('simPdf');if(el)el.innerHTML='<div class="muted small" style="padding:10px">Cargando las preguntas…</div>';simPdfCargar(id,f)});
   setInterval(eTick,1000);
   render();requestAnimationFrame(tick);
   syncNow();

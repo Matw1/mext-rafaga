@@ -1885,7 +1885,7 @@ function eClick(t){
   const a=t.dataset.e;
   if(a==='tab-juego'){view='home';render()}
   else if(a==='tab-estudio'){view='estudio';render();eSync()}
-  else if(a==='refresh')eSync(true);
+  else if(a==='refresh'){eSync(true);buscarVersion()}
   else if(a==='sub-ses'||a==='sub-ref'||a==='sub-mat'||a==='sub-sim'||a==='sub-tem'){eSub=a.slice(4);render()}
   else if(a==='sim-start')simStart(t.dataset.ex);
   else if(a==='sim-open'){view='simu';render()}
@@ -2099,6 +2099,8 @@ if(typeof document!=='undefined'){
   addEventListener('online',()=>{syncNow();eSync();bSync()});
   eSync();
   addEventListener('offline',()=>{syncState=syncConfigured()?'offline':'off';refreshSync()});
+  // versión nueva de la app: se revisa cada minuto mientras está a la vista (antes solo al volver a abrirla)
+  setInterval(()=>{if(!document.hidden)buscarVersion()},60000);addEventListener('online',buscarVersion);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden){syncNow();eSync();bSync();buscarVersion()}else{bCorriendo();eSave();bSync(true)}});
   bSync();setInterval(()=>{if(!document.hidden&&view!=='drill')bSync()},15000);
   setInterval(()=>{if(!document.hidden&&view!=='drill')eSync()},180000);

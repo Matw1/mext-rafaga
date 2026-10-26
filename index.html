@@ -1925,9 +1925,8 @@ let swReg=null,recargaPendiente=false;
 function buscarVersion(){try{swReg&&swReg.update()}catch(e){}}
 function intentarRecarga(){
   if(!recargaPendiente)return;
-  const escribiendo=document.activeElement&&document.activeElement.matches('input,textarea');
-  if((view==='drill'&&sess&&sess.state!=='end')||escribiendo)return; // espera a que termines
-  recargaPendiente=false;eSave&&eSave();save();location.reload();
+  // Se aplica enseguida, también a mitad de una sesión: antes de recargar se guarda todo (respuestas y cronómetros)
+  recargaPendiente=false;try{bCorriendo();eSave();save()}catch(e){}location.reload();
 }
 
 /* ---------- Panel de progreso ----------

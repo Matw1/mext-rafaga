@@ -207,7 +207,7 @@ button.pill{cursor:pointer;font-family:inherit}
 .tabs{display:flex;gap:6px;padding:4px;margin-bottom:14px;border-radius:14px;background:var(--surface2);border:1px solid var(--line)}
 .tabs button{flex:1;border:0;background:transparent;border-radius:10px;padding:10px;min-height:44px;font-weight:700;color:var(--muted)}
 .tabs button.on{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
-.estudio{line-height:1.6}.simpdf{max-height:62vh;overflow:auto;border:1px solid var(--line,#ddd);border-radius:12px;background:#fff;margin:4px 0 12px;-webkit-overflow-scrolling:touch}.simpdf img{display:block;width:100%;height:auto}.simpdf img+img{border-top:1px solid #ddd}.estudio .stack>*+*{margin-top:12px}
+.estudio{line-height:1.6}.au{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:8px 0 4px}.au audio{width:100%;max-width:420px}.au .muted.small{flex-basis:100%}.au-on{color:var(--bad,#c33);font-weight:600}.au-dot{width:12px;height:12px;border-radius:50%;background:var(--bad,#c33);animation:aupl 1s infinite}@keyframes aupl{50%{opacity:.25}}.au-tx{flex-basis:100%;margin-top:2px}.simpdf{max-height:62vh;overflow:auto;border:1px solid var(--line,#ddd);border-radius:12px;background:#fff;margin:4px 0 12px;-webkit-overflow-scrolling:touch}.simpdf img{display:block;width:100%;height:auto}.simpdf img+img{border-top:1px solid #ddd}.estudio .stack>*+*{margin-top:12px}
 .estat{font-size:.82rem;margin:6px 0 14px;color:var(--muted)}.estat[data-s="warn"]{color:var(--warn)}.estat[data-s="bad"]{color:var(--bad)}
 .ecard{display:flex;flex-direction:column;gap:4px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px;min-height:64px}
 .ecard b{font-size:1.02rem}.ehoy{border-left:4px solid var(--part)}.eempty{cursor:default}
@@ -1032,8 +1032,8 @@ function eSave(){try{localStorage.setItem(E_KEY,JSON.stringify(E))}catch(e){}}
 const eWork=id=>E.work[id]||(E.work[id]={ans:{},tim:{},sent:null});
 
 /* ---------- Lectura del formato del instructor ---------- */
-const E_MARKS=[[/^📘/,'consulta'],[/^✍️|^✍/,'tarea'],[/^⚡/,'practica'],[/^✅/,'fuera'],[/^🧑‍🏫|^👨‍🏫|^👩‍🏫/,'feedback'],[/^📤/,'entrega'],[/^🎮/,'juego'],[/^🔍.*correcci[oó]n/i,'correccion'],[/^🔍/,'tarea']]; // 🔍 sin «Corrección» (p. ej. «🔍 Análisis de errores») es una actividad
-const E_LABEL={consulta:'📘 Consulta',tarea:'✍️ Tarea',practica:'⚡ Práctica',fuera:'✅ Fuera de la app',feedback:'🧑‍🏫 Retroalimentación'};
+const E_MARKS=[[/^🎙|^🎤/,'tarea'],[/^📘/,'consulta'],[/^✍️|^✍/,'tarea'],[/^⚡/,'practica'],[/^✅/,'fuera'],[/^🧑‍🏫|^👨‍🏫|^👩‍🏫/,'feedback'],[/^📤/,'entrega'],[/^🎮/,'juego'],[/^🔍.*correcci[oó]n/i,'correccion'],[/^🔍/,'tarea']]; // 🔍 sin «Corrección» (p. ej. «🔍 Análisis de errores») es una actividad
+const E_LABEL={oral:'🎙️ Speaking',consulta:'📘 Consulta',tarea:'✍️ Tarea',practica:'⚡ Práctica',fuera:'✅ Fuera de la app',feedback:'🧑‍🏫 Retroalimentación'};
 const ptxt=rt=>(rt||[]).map(r=>r.t).join('');
 function eParse(blocks){
   const out={intro:[],secs:[],feedback:[],corr:[]};let cur=null;
@@ -1042,10 +1042,10 @@ function eParse(blocks){
       const text=ptxt(b.rt).trim(),mk=E_MARKS.find(([re])=>re.test(text));
       const kind=mk?mk[1]:'texto';
       let title=text.replace(/^(\p{Extended_Pictographic}|️|‍|\s)+/u,'');
-      title=title.replace(/^(Consulta|Tarea|Práctica|Practica|Fuera de la app|Retroalimentación|Entrega)\s*[:：]?\s*/i,'');
+      title=title.replace(/^(Consulta|Tarea|Práctica|Practica|Fuera de la app|Retroalimentación|Entrega|Speaking|Oral|Producción oral)\s*[:：]?\s*/i,'');
       const mm=title.match(/\s*[·\-–(]\s*(\d+)\s*min\)?\s*$/i);
       if(mm)title=title.slice(0,mm.index).trim();
-      cur={id:b.id,kind,title,min:mm?+mm[1]:null,blocks:[],items:[],head:text};
+      cur={id:b.id,kind,title,min:mm?+mm[1]:null,blocks:[],items:[],head:text,oral:/^(🎙|🎤)/u.test(text)};
       if(kind==='feedback')out.feedback.push(cur);else if(kind==='correccion')out.corr.push(cur);else out.secs.push(cur);
       continue;
     }
@@ -1344,13 +1344,76 @@ function eItemHtml(sid,sec,b,idx,locked,corr,remoto){
   }
   return eItemHtmlBase(sid,sec,b,idx,locked).replace(/^<div class="eitem">/,`<div class="eitem${corr&&corr.v?' v-'+corr.v:''}">`).replace(/<\/div>$/,eVerdHtml(corr)+'</div>');
 }
-function eRespHtml(r,c){const sp=eSplitFix(c),d=sp&&[...r].length>2?eDiff(r,sp.fix):null;return d?d.a:esc(r)}
+function eRespHtml(r,c){const am=String(r||'').match(AU_MARCA);if(am)return auVista(am,r);const sp=eSplitFix(c),d=sp&&[...r].length>2?eDiff(r,sp.fix):null;return d?d.a:esc(r)}
 /* Opciones con letra dentro de la consigna («… a) で b) に c) を»): se responden tocando la letra.
    La respuesta queda como «b) に», igual que si se hubiera escrito. */
 function eLetras(txt){const m=txt.match(/(?<![A-Za-z])[aA]\)\s*\S/);if(!m)return null;const i=m.index;
   const parts=txt.slice(i).split(/\s*(?<![A-Za-z])([a-fA-F])\)\s*/).filter(x=>x!=='');const ops=[];
   for(let j=0;j+1<parts.length;j+=2)ops.push({k:parts[j].toLowerCase(),t:parts[j+1].trim()});
   return ops.length>=2&&ops[0].k==='a'&&ops[1].k==='b'?{q:txt.slice(0,i).trim(),ops}:null}
+/* 🎙️ Consignas orales: se graba con el micrófono o se elige un audio (mp3, m4a…). El audio sube al Worker,
+   que lo transcribe (el instructor lee la página, no puede escuchar) y lo adjunta a Notion al entregar.
+   La respuesta queda como «[audio:<id>|<s>s] transcripción», y así viaja al otro dispositivo como cualquier borrador. */
+const AU_MARCA=/^\[audio:([\w-]{6,64})\|(\d+)s\]\s*/,AU_MAX=5*1024*1024,AU_SEG=300;
+let auRec=null;const auUrl={},auEst={};
+function auIdb(){return new Promise((ok,no)=>{const r=indexedDB.open('rafaga-audio',1);r.onupgradeneeded=()=>r.result.createObjectStore('a');r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)})}
+async function auGet(id){try{const db=await auIdb();return await new Promise(ok=>{const q=db.transaction('a').objectStore('a').get(id);q.onsuccess=()=>ok(q.result||null);q.onerror=()=>ok(null)})}catch(e){return null}}
+async function auPut(id,v){try{const db=await auIdb();await new Promise(ok=>{const t=db.transaction('a','readwrite');t.objectStore('a').put(v,id);t.oncomplete=ok;t.onerror=ok})}catch(e){}}
+const auFmt=n=>`${Math.floor(n/60)}:${String(n%60).padStart(2,'0')}`;
+function auVista(am,r){const id=am[1],tx=r.slice(am[0].length).trim();
+  return `${auUrl[id]?`<audio controls preload="none" src="${auUrl[id]}"></audio>`:`<button class="btn" data-e="au-oir" data-id="${esc(id)}">▶ Escuchar (${am[2]} s)</button>`}
+    <div class="muted small au-tx">Transcripción automática: <span lang="ja">${tx?esc(tx):'(no entendió nada)'}</span></div>`}
+function auHtml(it,a,locked){
+  const st=auEst[it],am=String(a.r||'').match(AU_MARCA);
+  if(auRec&&auRec.it===it)return `<div class="au au-on"><span class="au-dot"></span> Grabando <b id="auT">${auFmt(Math.round((Date.now()-auRec.t0)/1000))}</b><button class="btn" data-e="au-stop">⏹ Detener</button></div>`;
+  if(st==='sub')return `<div class="au muted small">Subiendo y transcribiendo…</div>`;
+  if(am)return `<div class="au">${auVista(am,a.r)}${locked?'':`<button class="btn au-del" data-e="au-del" data-it="${it}">🗑 Borrar y grabar otra vez</button>`}</div>`;
+  if(locked)return `<div class="au muted small">(sin audio)</div>`;
+  const err=st&&st.err||(a.aup?'El audio quedó guardado aquí, pero falta subirlo.':'');
+  return `<div class="au">${err?`<div class="small" style="color:var(--bad,#c33)">${esc(err)} <button class="btn" data-e="au-retry" data-it="${it}">Reintentar</button></div>`:''}
+    <button class="btn au-rec" data-e="au-rec" data-it="${it}" ${auRec?'disabled':''}>🎙️ Grabar</button>
+    <label class="btn">📁 Subir audio<input type="file" accept="audio/*,.mp3,.m4a,.wav,.ogg,.aac" data-au-file="${it}" hidden></label>
+    <div class="muted small">Máx. ${AU_SEG/60} min o 5 MB. El instructor recibe el audio y una transcripción automática.</div></div>`}
+function auMime(){if(!window.MediaRecorder)return null;for(const m of['audio/mp4;codecs=mp4a.40.2','audio/mp4','audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus'])if(MediaRecorder.isTypeSupported(m))return m;return ''}
+async function auGrabar(btn){const it=btn.dataset.it,mime=auMime();
+  if(mime===null||!navigator.mediaDevices){toast('Este navegador no puede grabar: usa «Subir audio»');return}
+  let stream;try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}})}
+  catch(e){toast('Sin permiso para el micrófono');return}
+  eAutoTimer(btn);
+  const mr=new MediaRecorder(stream,mime?{mimeType:mime,audioBitsPerSecond:64000}:{audioBitsPerSecond:64000}),ch=[];
+  auRec={it,sid:eOpen,mr,t0:Date.now(),stream};
+  mr.ondataavailable=e=>{if(e.data&&e.data.size)ch.push(e.data)};
+  mr.onstop=()=>{const r=auRec;auRec=null;clearInterval(auGrabar.h);stream.getTracks().forEach(t=>t.stop());
+    const blob=new Blob(ch,{type:(mr.mimeType||mime||'audio/webm')});
+    auListo(r.sid,it,blob,Math.max(1,Math.round((Date.now()-r.t0)/1000)))};
+  mr.start(1000);render();
+  auGrabar.h=setInterval(()=>{if(!auRec)return;const s=Math.round((Date.now()-auRec.t0)/1000),el=document.getElementById('auT');if(el)el.textContent=auFmt(s);if(s>=AU_SEG)auRec.mr.stop()},500)}
+function auDur(blob){return new Promise(ok=>{const u=URL.createObjectURL(blob),x=new Audio();let hecho=false;const fin=v=>{if(hecho)return;hecho=true;URL.revokeObjectURL(u);ok(v)};
+  x.preload='metadata';x.onloadedmetadata=()=>fin(isFinite(x.duration)?Math.round(x.duration):0);x.onerror=()=>fin(0);setTimeout(()=>fin(0),4000);x.src=u})}
+async function auArchivo(it,f){
+  if(!/^audio\//.test(f.type)&&!/\.(mp3|m4a|wav|ogg|aac)$/i.test(f.name)){toast('Ese archivo no es un audio');return}
+  if(f.size>AU_MAX){toast('El audio pasa de 5 MB: grábalo más corto');return}
+  eAutoTimer(document.querySelector(`[data-au-file="${it}"]`));
+  auListo(eOpen,it,f,Math.max(1,await auDur(f)))}
+async function auListo(sid,it,blob,dur){
+  if(blob.size>AU_MAX){auEst[it]={err:'El audio pasa de 5 MB.'};render();return}
+  const id='a'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+  await auPut(id,{blob,dur,sid,it});auUrl[id]=URL.createObjectURL(blob);
+  const w=eWork(sid),a=w.ans[it]||(w.ans[it]={});a.aup=id;eSave();auSubir(sid,it)}
+async function auSubir(sid,it){const w=eWork(sid),a=w.ans[it]||{},id=a.aup;if(!id)return;
+  const x=await auGet(id);if(!x){delete a.aup;auEst[it]={err:'Se perdió la grabación: vuelve a grabar.'};eSave();render();return}
+  if(!syncConfigured()){auEst[it]={err:'Falta configurar la sincronización (Ajustes) para enviar audios.'};render();return}
+  auEst[it]='sub';render();
+  try{const b64=await new Promise((ok,no)=>{const fr=new FileReader();fr.onload=()=>ok(String(fr.result).split(',')[1]);fr.onerror=()=>no(fr.error);fr.readAsDataURL(x.blob)});
+    const r=await ePost('/audio/subir',{id,mime:x.blob.type||'audio/mpeg',dur:x.dur,b64});
+    if(w.sent)return;a.r=`[audio:${id}|${x.dur}s] ${r.texto||''}`.trim();delete a.aup;a.t=Date.now();bMark(sid,'a:'+it);delete auEst[it];eSave();bSoon(1500)}
+  catch(e){auEst[it]={err:navigator.onLine===false?'Sin conexión: el audio quedó guardado aquí.':'No se pudo subir ('+(e.message||e)+').'}}
+  render()}
+async function auOir(id){const x=await auGet(id);
+  if(x){auUrl[id]=URL.createObjectURL(x.blob);render();return}
+  try{toast('Descargando audio…');const r=await ePost('/audio/bajar',{id});const u8=Uint8Array.from(atob(r.b64),c=>c.charCodeAt(0)),blob=new Blob([u8],{type:r.mime});
+    await auPut(id,{blob,dur:0});auUrl[id]=URL.createObjectURL(blob);render()}
+  catch(e){toast('No se pudo descargar el audio')}}
 function eItemHtmlBase(sid,sec,b,idx,locked){
   const w=eWork(sid),a=w.ans[b.id]||{},dis=locked?'disabled':'';
   const ja='lang="ja" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false"';
@@ -1361,7 +1424,7 @@ function eItemHtmlBase(sid,sec,b,idx,locked){
     if(L){field=`<div class="eprompt"><span class="enum">${idx+1}</span><div>${esc(L.q)}${b.kids?`<div class="ekids">${eBlocks(b.kids)}</div>`:''}</div></div>
       <div class="eletras" lang="ja">${L.ops.map(o=>{const v=o.k+') '+o.t;return `<button class="eletra${a.r===v?' on':''}" data-e="pick" data-it="${b.id}" data-o="${esc(v)}" ${dis}><b>${esc(o.k)}</b> ${esc(o.t)}</button>`}).join('')}</div>`}
     else field=`<div class="eprompt"><span class="enum">${idx+1}</span><div>${eRich(b.rt)}${b.kids?`<div class="ekids">${eBlocks(b.kids)}</div>`:''}</div></div>`+
-      (sec.kind==='tarea'?`<textarea rows="2" data-a="r" data-it="${b.id}" ${ja} ${dis} placeholder="Escribe tu respuesta">${esc(a.r||'')}</textarea>`
+      (sec.oral?auHtml(b.id,a,locked):sec.kind==='tarea'?`<textarea rows="2" data-a="r" data-it="${b.id}" ${ja} ${dis} placeholder="Escribe tu respuesta">${esc(a.r||'')}</textarea>`
         :`<input type="text" data-a="r" data-it="${b.id}" ${ja} ${dis} placeholder="Respuesta" value="${esc(a.r||'')}">`);
   }
   return `<div class="eitem">${field}
@@ -1436,7 +1499,7 @@ function renderSesion(){
     // 📘 Consulta lleva cronómetro solo si el instructor le puso tiempo sugerido («· N min»)
     const timer=inter||(sec.kind==='consulta'&&sec.min&&!remota)?`<button class="etimer ${run===sec.id?'on':''}" data-e="timer" data-sec="${sec.id}" ${locked?'disabled':''}>${run===sec.id?'⏸':'▶'} <span data-tm="${sec.id}">${eFmt(eMs(w.tim[sec.id]))}</span></button>`:'';
     if(sec.kind==='consulta')return `<details class="esec econs" open><summary><span class="ek">${E_LABEL.consulta}</span> ${esc(sec.title)}</summary><div class="ebody">${body}</div></details>`;
-    return `<section class="esec" data-k="${sec.kind}"><div class="ehead"><div><span class="ek">${E_LABEL[sec.kind]||''}</span><b>${esc(sec.kind==='texto'?sec.head:sec.title)}</b>${typeof cuenta!=='undefined'?cuenta:''}${sec.min?`<span class="muted small"> · sugerido ${sec.min} min</span>`:''}</div><div class="eheadr">${(sec.kind==='tarea'||sec.kind==='practica')&&!locked&&lupaOk(sec)?`<button class="elupa" data-e="lupa" data-sec="${sec.id}" title="Consultar Materia y Referencia sin salir" aria-label="Consultar Materia y Referencia">🔍</button>`:''}${timer}</div></div><div class="ebody">${body}</div></section>`;
+    return `<section class="esec" data-k="${sec.kind}"><div class="ehead"><div><span class="ek">${E_LABEL[sec.oral?'oral':sec.kind]||''}</span><b>${esc(sec.kind==='texto'?sec.head:sec.title)}</b>${typeof cuenta!=='undefined'?cuenta:''}${sec.min?`<span class="muted small"> · sugerido ${sec.min} min</span>`:''}</div><div class="eheadr">${(sec.kind==='tarea'||sec.kind==='practica')&&!locked&&lupaOk(sec)?`<button class="elupa" data-e="lupa" data-sec="${sec.id}" title="Consultar Materia y Referencia sin salir" aria-label="Consultar Materia y Referencia">🔍</button>`:''}${timer}</div></div><div class="ebody">${body}</div></section>`;
   };
   const tot=Object.values(w.tim).reduce((a,t)=>a+eMs(t),0);
   $('#app').innerHTML=`<div class="estudio">
@@ -1879,7 +1942,7 @@ function eCollect(s){
     if(!['tarea','practica','fuera','consulta'].includes(sec.kind))continue;
     const ms=eMs(w.tim[sec.id]);if(sec.kind==='consulta'&&!ms)continue;total+=ms;
     const items=sec.items.map(b=>{const a=w.ans[b.id]||{};if(a.duda)dudas++;return{p:ptxt(b.rt),r:a.r||'',duda:!!a.duda,nota:a.nota||'',hecho:!!a.hecho}});
-    acts.push({tipo:sec.kind,titulo:sec.title,min:Math.round(ms/60000),items});
+    acts.push({tipo:sec.oral?'oral':sec.kind,titulo:sec.title,min:Math.round(ms/60000),items});
   }
   return{acts,dudas,minutos:Math.round(total/60000)};
 }
@@ -1889,7 +1952,7 @@ function eTexto(s,c){
     L.push('',`${E_LABEL[a.tipo]}: ${a.titulo} — ${a.min} min`);
     a.items.forEach((it,i)=>{
       if(a.tipo==='fuera')L.push(`${it.hecho?'[x]':'[ ]'} ${it.p}`);
-      else{L.push(`${i+1}. ${it.p}`,`→ ${it.r.trim()||'(sin respuesta)'}`)}
+      else{const am=it.r.match(AU_MARCA);L.push(`${i+1}. ${it.p}`,`→ ${am?`🎙️ audio de ${am[2]} s (se escucha en Notion) · transcripción automática: ${it.r.slice(am[0].length).trim()||'(no entendió nada)'}`:it.r.trim()||'(sin respuesta)'}`)}
       if(it.duda)L.push(`❓ Duda: ${it.nota||'(sin nota)'}`);
     });
   }
@@ -1934,6 +1997,11 @@ function eClick(t){
     an.r=an.r===t.dataset.o?'':t.dataset.o;an.t=Date.now();bMark(eOpen,'a:'+t.dataset.it);eSave();bSoon(2500);
     t.parentNode.querySelectorAll('.eletra').forEach(x=>x.classList.toggle('on',x.dataset.o===an.r))}
   else if(a==='lupa')lupaAbrir(t.dataset.sec);
+  else if(a==='au-rec')auGrabar(t);
+  else if(a==='au-stop'){if(auRec)auRec.mr.stop()}
+  else if(a==='au-retry'){delete auEst[t.dataset.it];auSubir(eOpen,t.dataset.it)}
+  else if(a==='au-oir')auOir(t.dataset.id);
+  else if(a==='au-del'){const w=eWork(eOpen);if(w.sent||!confirm('¿Borrar esta grabación?'))return;const an=w.ans[t.dataset.it]||{};an.r='';an.t=Date.now();bMark(eOpen,'a:'+t.dataset.it);eSave();bSoon(2500);render()}
   else if(a==='ref2mat'){matQ=t.dataset.q||'';eSub='mat';render()}
   else if(a==='pin')tTogglePin(t.dataset.id);
   else if(a==='tabla-img')tablaImagen();
@@ -2126,6 +2194,7 @@ if(typeof document!=='undefined'){
   document.addEventListener('focusin',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.it&&t.matches('textarea,input'))eAutoTimer(t)});
   document.addEventListener('input',e=>{if(e.target.id==='eBuscar')return eFiltrar(e.target.value);if(e.target.id==='matBuscar'){matQ=e.target.value;return matFiltrar()}if(e.target.dataset&&e.target.dataset.a&&e.target.type!=='checkbox')eInput(e.target)});
   document.addEventListener('change',e=>{if(e.target.dataset&&e.target.dataset.a&&e.target.type==='checkbox')eInput(e.target)});
+  document.addEventListener('change',e=>{const it=e.target.dataset&&e.target.dataset.auFile,f=e.target.files&&e.target.files[0];if(it&&f){e.target.value='';auArchivo(it,f)}});
   document.addEventListener('change',e=>{const id=e.target.dataset&&e.target.dataset.simpdf,f=e.target.files&&e.target.files[0];if(!id||!f)return;
     const el=document.getElementById('simPdf');if(el)el.innerHTML='<div class="muted small" style="padding:10px">Cargando las preguntas…</div>';simPdfCargar(id,f)});
   setInterval(eTick,1000);

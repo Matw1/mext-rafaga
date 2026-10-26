@@ -1032,7 +1032,7 @@ function eSave(){try{localStorage.setItem(E_KEY,JSON.stringify(E))}catch(e){}}
 const eWork=id=>E.work[id]||(E.work[id]={ans:{},tim:{},sent:null});
 
 /* ---------- Lectura del formato del instructor ---------- */
-const E_MARKS=[[/^📘/,'consulta'],[/^✍️|^✍/,'tarea'],[/^⚡/,'practica'],[/^✅/,'fuera'],[/^🧑‍🏫|^👨‍🏫|^👩‍🏫/,'feedback'],[/^📤/,'entrega'],[/^🎮/,'juego'],[/^🔍/,'correccion']];
+const E_MARKS=[[/^📘/,'consulta'],[/^✍️|^✍/,'tarea'],[/^⚡/,'practica'],[/^✅/,'fuera'],[/^🧑‍🏫|^👨‍🏫|^👩‍🏫/,'feedback'],[/^📤/,'entrega'],[/^🎮/,'juego'],[/^🔍.*correcci[oó]n/i,'correccion'],[/^🔍/,'tarea']]; // 🔍 sin «Corrección» (p. ej. «🔍 Análisis de errores») es una actividad
 const E_LABEL={consulta:'📘 Consulta',tarea:'✍️ Tarea',practica:'⚡ Práctica',fuera:'✅ Fuera de la app',feedback:'🧑‍🏫 Retroalimentación'};
 const ptxt=rt=>(rt||[]).map(r=>r.t).join('');
 function eParse(blocks){

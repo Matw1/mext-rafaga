@@ -1619,19 +1619,21 @@ function lessonsHtml(){
 /* ---------- 📋 Simulacros: hoja de respuestas (las preguntas se leen del PDF del examen) ----------
    Los exámenes sellados (checkpoints y final) solo se habilitan desde su fecha. La app no corrige:
    la fila llega a Notion y el instructor anota % total y % de lo enseñado. */
+// Preguntas por sección del Problema A (Elementary), según la hoja de respuestas oficial (igual de 2014 a 2018)
+const SIM_A=[['I',10],['II',10],['III',5],['IV',7],['V',5]];
 const SIM_EX=[
-  {id:'2014',examen:'2014 · práctica',titulo:'MEXT 2014 · Secciones I y II',desde:null,nota:'Práctica · dom 25 oct'},
-  {id:'2015',examen:'2015 · práctica',titulo:'MEXT 2015 · Secciones I y II',desde:null,nota:'Práctica · dom 1 nov'},
-  {id:'2016',examen:'2016 · checkpoint día 30',titulo:'Checkpoint día 30 · MEXT 2016',desde:'2026-10-27',nota:'Sellado hasta el mar 27 oct'},
-  {id:'2017',examen:'2017 · checkpoint día 60',titulo:'Checkpoint día 60 · MEXT 2017',desde:'2026-11-26',nota:'Sellado hasta el jue 26 nov'},
-  {id:'2018',examen:'2018 · final',titulo:'Simulacro final · MEXT 2018',desde:'2027-05-01',nota:'Sellado hasta mayo de 2027'},
+  {id:'2014',examen:'2014 · práctica',titulo:'MEXT 2014 · Secciones I y II',desde:null,secs:[['I',10],['II',10]],nota:'Práctica · dom 25 oct'},
+  {id:'2015',examen:'2015 · práctica',titulo:'MEXT 2015 · Secciones I y II',desde:null,secs:[['I',10],['II',10]],nota:'Práctica · dom 1 nov'},
+  {id:'2016',secs:SIM_A,examen:'2016 · checkpoint día 30',titulo:'Checkpoint día 30 · MEXT 2016',desde:'2026-10-27',nota:'Sellado hasta el mar 27 oct'},
+  {id:'2017',secs:SIM_A,examen:'2017 · checkpoint día 60',titulo:'Checkpoint día 60 · MEXT 2017',desde:'2026-11-26',nota:'Sellado hasta el jue 26 nov'},
+  {id:'2018',secs:SIM_A,examen:'2018 · final',titulo:'Simulacro final · MEXT 2018',desde:'2027-05-01',nota:'Sellado hasta mayo de 2027'},
 ];
 const ROMANOS=['I','II','III','IV','V','VI'];
 function simStart(id){
   const ex=SIM_EX.find(x=>x.id===id);if(!ex)return;
   if(ex.desde&&today()<ex.desde){toast('Este examen está sellado hasta el '+eFechaCorta(ex.desde));return}
   if(E.sim&&!confirm('Ya tienes un simulacro empezado. ¿Descartarlo y empezar otro?'))return;
-  E.sim={ex:id,examen:ex.examen,titulo:ex.titulo,secs:[['I',10],['II',10]],resp:{},start:null};eSave();view='simu';render();
+  E.sim={ex:id,examen:ex.examen,titulo:ex.titulo,secs:(ex.secs||[['I',10],['II',10]]).map(x=>x.slice()),resp:{},start:null};eSave();view='simu';render();
 }
 function simSec(i,d){const s=E.sim.secs[i];s[1]=Math.max(1,Math.min(40,s[1]+d));eSave();render()}
 function simAddSec(){const n=E.sim.secs.length;if(n>=ROMANOS.length)return;E.sim.secs.push([ROMANOS[n],10]);eSave();render()}
@@ -1669,7 +1671,7 @@ function renderSimHoja(){
   const tot=s.secs.reduce((a,x)=>a+x[1],0),hechas=Object.values(s.resp).filter(Boolean).length;
   if(!s.start){ // preparación: confirmar cuántas preguntas tiene cada sección
     $('#app').innerHTML=`<div class="estudio"><div class="row"><button class="icon-btn" data-e="sim-back" aria-label="Volver">←</button><b class="etitle">${esc(s.titulo)}</b></div>
-      <section class="esec"><b>Antes de empezar</b><p class="muted small">Revisa en el PDF cuántas preguntas tiene cada sección que vas a hacer y ajústalo aquí. El cronómetro empieza al tocar «Empezar».</p>
+      <section class="esec"><b>Antes de empezar</b><p class="muted small">Ya puse cuántas preguntas tiene cada sección del Problema A según la hoja de respuestas oficial. Solo cámbialo si el instructor te pidió otras secciones. El cronómetro empieza al tocar «Empezar».</p>
       ${s.secs.map(([sec,n],i)=>`<div class="set"><span>Sección ${sec}</span><span class="seg"><button data-e="sim-sec" data-i="${i}" data-d="-1">−</button><button class="on" disabled>${n}</button><button data-e="sim-sec" data-i="${i}" data-d="1">+</button></span></div>`).join('')}
       ${s.secs.length<ROMANOS.length?'<button class="btn" data-e="sim-add" style="margin-top:8px">+ Añadir sección</button>':''}</section>
       <div class="eactions"><button class="btn eprimary" data-e="sim-go">Empezar (${tot} preguntas)</button><button class="btn" data-e="sim-cancel">Cancelar</button></div></div>`;

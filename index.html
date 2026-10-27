@@ -1414,6 +1414,12 @@ async function auOir(id){const x=await auGet(id);
   try{toast('Descargando audio…');const r=await ePost('/audio/bajar',{id});const u8=Uint8Array.from(atob(r.b64),c=>c.charCodeAt(0)),blob=new Blob([u8],{type:r.mime});
     await auPut(id,{blob,dur:0});auUrl[id]=URL.createObjectURL(blob);render()}
   catch(e){toast('No se pudo descargar el audio')}}
+/* Opciones separadas por «/» al final de una consigna con hueco: «図書館（　）勉強します。(で / に / へ)».
+   Se responden tocando; si ya había otra respuesta escrita, sigue como texto. */
+function eBarra(txt,r){if(!/_{2,}|（[\s　]*）|\([\s　]*\)/.test(txt))return null;
+  const m=txt.match(/[(（]([^()（）]*[\/／][^()（）]*)[)）]\s*[。.]?\s*$/);if(!m)return null;
+  const ops=m[1].split(/[\/／]/).map(x=>x.trim());if(ops.length<2||ops.length>5||ops.some(x=>!x||x.split(/\s+/).length>6))return null;
+  if(r&&!ops.includes(r))return null;return{q:txt.slice(0,m.index).trim(),ops}}
 function eItemHtmlBase(sid,sec,b,idx,locked){
   const w=eWork(sid),a=w.ans[b.id]||{},dis=locked?'disabled':'';
   const ja='lang="ja" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false"';
@@ -1421,7 +1427,10 @@ function eItemHtmlBase(sid,sec,b,idx,locked){
   if(sec.kind==='fuera')field=`<label class="echeck"><input type="checkbox" data-a="hecho" data-it="${b.id}" ${a.hecho?'checked':''} ${dis}> <span>${eRich(b.rt)}</span></label>`;
   else{
     const L=eLetras(ptxt(b.rt));
-    if(L){field=`<div class="eprompt"><span class="enum">${idx+1}</span><div>${esc(L.q)}${b.kids?`<div class="ekids">${eBlocks(b.kids)}</div>`:''}</div></div>
+    const B=!L&&!sec.oral&&eBarra(ptxt(b.rt),a.r);
+    if(B){field=`<div class="eprompt"><span class="enum">${idx+1}</span><div>${esc(B.q)}${b.kids?`<div class="ekids">${eBlocks(b.kids)}</div>`:''}</div></div>
+      <div class="eletras" lang="ja">${B.ops.map(o=>`<button class="eletra${a.r===o?' on':''}" data-e="pick" data-it="${b.id}" data-o="${esc(o)}" ${dis}>${esc(o)}</button>`).join('')}</div>`}
+    else if(L){field=`<div class="eprompt"><span class="enum">${idx+1}</span><div>${esc(L.q)}${b.kids?`<div class="ekids">${eBlocks(b.kids)}</div>`:''}</div></div>
       <div class="eletras" lang="ja">${L.ops.map(o=>{const v=o.k+') '+o.t;return `<button class="eletra${a.r===v?' on':''}" data-e="pick" data-it="${b.id}" data-o="${esc(v)}" ${dis}><b>${esc(o.k)}</b> ${esc(o.t)}</button>`}).join('')}</div>`}
     else field=`<div class="eprompt"><span class="enum">${idx+1}</span><div>${eRich(b.rt)}${b.kids?`<div class="ekids">${eBlocks(b.kids)}</div>`:''}</div></div>`+
       (sec.oral?auHtml(b.id,a,locked):sec.kind==='tarea'?`<textarea rows="2" data-a="r" data-it="${b.id}" ${ja} ${dis} placeholder="Escribe tu respuesta">${esc(a.r||'')}</textarea>`

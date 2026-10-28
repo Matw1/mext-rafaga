@@ -1689,13 +1689,13 @@ function lessonsHtml(){
 }
 
 /* ---------- 📋 Simulacros: hoja de respuestas (las preguntas se leen del PDF del examen) ----------
-   Los exámenes sellados (checkpoints y final) solo se habilitan desde su fecha. La app no corrige:
+   Los exámenes con fecha (prácticas programadas, checkpoints y final) solo se habilitan desde su fecha. La app no corrige:
    la fila llega a Notion y el instructor anota % total y % de lo enseñado. */
 // Preguntas por sección del Problema A (Elementary), según la hoja de respuestas oficial (igual de 2014 a 2018)
 const SIM_A=[['I',10],['II',10],['III',5],['IV',7],['V',5]];
 const SIM_EX=[
   {id:'2014',examen:'2014 · práctica',titulo:'MEXT 2014 · Secciones I y II',desde:null,secs:[['I',10],['II',10]],pdf:'2014_ke_ja.pdf',pags:[3,5],nota:'Práctica · dom 25 oct'},
-  {id:'2015',examen:'2015 · práctica',titulo:'MEXT 2015 · Secciones I y II',desde:null,secs:[['I',10],['II',10]],pdf:'2015_ke_ja.pdf',pags:[3,5],nota:'Práctica · dom 1 nov'},
+  {id:'2015',examen:'2015 · práctica',titulo:'MEXT 2015 · Secciones I y II',desde:'2026-11-01',secs:[['I',10],['II',10]],pdf:'2015_ke_ja.pdf',pags:[3,5],nota:'Práctica · dom 1 nov'},
   {id:'2016',secs:[['I',10],['II',10]],pdf:'2016_ke_ja.pdf',pags:[2,4],examen:'2016 · checkpoint día 30',titulo:'Checkpoint día 30 · MEXT 2016',desde:'2026-10-27',nota:'Sellado hasta el mar 27 oct'},
   {id:'2017',secs:SIM_A,pdf:'2017_ke_ja.pdf',examen:'2017 · checkpoint día 60',titulo:'Checkpoint día 60 · MEXT 2017',desde:'2026-11-26',nota:'Sellado hasta el jue 26 nov'},
   {id:'2018',secs:SIM_A,pdf:'2018_ke_ja.pdf',examen:'2018 · final',titulo:'Simulacro final · MEXT 2018',desde:'2027-05-01',nota:'Sellado hasta mayo de 2027'},

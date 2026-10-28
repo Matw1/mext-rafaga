@@ -1,6 +1,6 @@
-﻿// MEXT RÃ¡faga â€” service worker: guarda la app en el telÃ©fono para que funcione sin internet.
-// Al publicar una versiÃ³n nueva, sube el nÃºmero de VERSION para que el telÃ©fono la descargue.
-const VERSION = 'mext-rafaga-v49';
+// MEXT Ráfaga — service worker: guarda la app en el teléfono para que funcione sin internet.
+// Al publicar una versión nueva, sube el número de VERSION para que el teléfono la descargue.
+const VERSION = 'mext-rafaga-v50';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'vendor/pdf.min.js', 'vendor/pdf.worker.min.js'];
 
 self.addEventListener('install', e => {
@@ -23,8 +23,8 @@ self.addEventListener('fetch', e => {
   e.respondWith(caches.open(VERSION).then(async cache => {
     if (pagina) {
       // Solo sirve una respuesta que sea de verdad la app: un wifi con portal o el operador sin saldo
-      // pueden contestar Â«200Â» con otra pÃ¡gina, y esa no debe reemplazar a la copia guardada.
-      const MARCA = '<title>MEXT RÃ¡faga';
+      // pueden contestar «200» con otra página, y esa no debe reemplazar a la copia guardada.
+      const MARCA = '<title>MEXT Ráfaga';
       const esApp = async r => !!r && r.ok && !r.redirected && (await r.clone().text()).includes(MARCA);
       const net = fetch(e.request, { cache: 'no-cache' }).then(async r => {
         if (!(await esApp(r))) throw new Error('no es la app');
@@ -37,19 +37,19 @@ self.addEventListener('fetch', e => {
       catch (err) {
         for (const k of ['index.html', './']) { const c = await cache.match(k); if (await esApp(c)) return c; }
         try { return await net; } catch (e2) {
-          return new Response('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><body style="font-family:sans-serif;padding:24px"><h2>Sin conexiÃ³n</h2><p>Esta vez la app no quedÃ³ guardada en el telÃ©fono. Ãbrela una vez con internet y despuÃ©s funcionarÃ¡ sin conexiÃ³n.</p>', { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+          return new Response('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><body style="font-family:sans-serif;padding:24px"><h2>Sin conexión</h2><p>Esta vez la app no quedó guardada en el teléfono. Ábrela una vez con internet y después funcionará sin conexión.</p>', { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
         }
       }
     }
-    // Ãconos y manifiesto: la copia guardada y, en segundo plano, la versiÃ³n nueva.
+    // Íconos y manifiesto: la copia guardada y, en segundo plano, la versión nueva.
     const hit = await cache.match(e.request, { ignoreSearch: true });
     const net = fetch(e.request).then(r => { if (r.ok) cache.put(e.request, r.clone()); return r; }).catch(() => hit);
     return hit || net;
   }));
 });
 
-// EnvÃ­os pendientes sin conexiÃ³n (borradores del estudio y entregas): la app los deja en IndexedDB
-// y el telÃ©fono los manda solo cuando vuelve la conexiÃ³n, aunque la app estÃ© cerrada (Background Sync).
+// Envíos pendientes sin conexión (borradores del estudio y entregas): la app los deja en IndexedDB
+// y el teléfono los manda solo cuando vuelve la conexión, aunque la app esté cerrada (Background Sync).
 const idb = () => new Promise((ok, no) => {
   const r = indexedDB.open('mext-bg', 1);
   r.onupgradeneeded = () => r.result.createObjectStore('q');
@@ -72,6 +72,6 @@ async function enviarPendientes() {
       else falta = true;
     } catch (e) { falta = true; }
   }
-  if (falta) throw new Error('sin conexiÃ³n: se reintenta');
+  if (falta) throw new Error('sin conexión: se reintenta');
 }
 self.addEventListener('sync', e => { if (e.tag === 'mext-bg') e.waitUntil(enviarPendientes()); });

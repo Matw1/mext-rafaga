@@ -1696,7 +1696,7 @@ const SIM_A=[['I',10],['II',10],['III',5],['IV',7],['V',5]];
 const SIM_EX=[
   {id:'2014',examen:'2014 · práctica',titulo:'MEXT 2014 · Secciones I y II',desde:null,secs:[['I',10],['II',10]],pdf:'2014_ke_ja.pdf',pags:[3,5],nota:'Práctica · dom 25 oct'},
   {id:'2015',examen:'2015 · práctica',titulo:'MEXT 2015 · Secciones I y II',desde:null,secs:[['I',10],['II',10]],pdf:'2015_ke_ja.pdf',pags:[3,5],nota:'Práctica · dom 1 nov'},
-  {id:'2016',secs:SIM_A,pdf:'2016_ke_ja.pdf',examen:'2016 · checkpoint día 30',titulo:'Checkpoint día 30 · MEXT 2016',desde:'2026-10-27',nota:'Sellado hasta el mar 27 oct'},
+  {id:'2016',secs:[['I',10],['II',10]],pdf:'2016_ke_ja.pdf',pags:[2,4],examen:'2016 · checkpoint día 30',titulo:'Checkpoint día 30 · MEXT 2016',desde:'2026-10-27',nota:'Sellado hasta el mar 27 oct'},
   {id:'2017',secs:SIM_A,pdf:'2017_ke_ja.pdf',examen:'2017 · checkpoint día 60',titulo:'Checkpoint día 60 · MEXT 2017',desde:'2026-11-26',nota:'Sellado hasta el jue 26 nov'},
   {id:'2018',secs:SIM_A,pdf:'2018_ke_ja.pdf',examen:'2018 · final',titulo:'Simulacro final · MEXT 2018',desde:'2027-05-01',nota:'Sellado hasta mayo de 2027'},
 ];
@@ -1735,7 +1735,7 @@ async function simPdfCargar(id,file){const el=document.getElementById('simPdf');
     if(file)await pdfPut(id,file);
     simPdfImgs[id]=urls;const el2=document.getElementById('simPdf');if(el2)el2.innerHTML=simPdfHtml(E.sim);
   }catch(err){const el2=document.getElementById('simPdf');if(el2)el2.innerHTML=`<div class="muted small" style="padding:10px">No pude abrir el PDF: ${esc(err.message||String(err))}. Prueba con «Cambiar PDF».</div>`}}
-function simSec(i,d){const s=E.sim.secs[i];s[1]=Math.max(1,Math.min(40,s[1]+d));eSave();render()}
+function simSec(i,d){const s=E.sim.secs[i];s[1]=Math.max(0,Math.min(40,s[1]+d));eSave();render()} // 0 = esa sección no entra
 function simAddSec(){const n=E.sim.secs.length;if(n>=ROMANOS.length)return;E.sim.secs.push([ROMANOS[n],10]);eSave();render()}
 function simMarcar(q,r){if(!E.sim||!E.sim.start)return;E.sim.resp[q]=E.sim.resp[q]===r?undefined:r;eSave();
   document.querySelectorAll(`[data-q="${q}"]`).forEach(b=>b.classList.toggle('on',b.dataset.r===E.sim.resp[q]));
@@ -1772,7 +1772,7 @@ function renderSimHoja(){
   if(!s.start){ // preparación: confirmar cuántas preguntas tiene cada sección
     $('#app').innerHTML=`<div class="estudio"><div class="row"><button class="icon-btn" data-e="sim-back" aria-label="Volver">←</button><b class="etitle">${esc(s.titulo)}</b></div>
       <section class="esec"><b>Antes de empezar</b><p class="muted small">Ya puse cuántas preguntas tiene cada sección del Problema A según la hoja de respuestas oficial. Solo cámbialo si el instructor te pidió otras secciones. El cronómetro empieza al tocar «Empezar».</p>
-      ${s.secs.map(([sec,n],i)=>`<div class="set"><span>Sección ${sec}</span><span class="seg"><button data-e="sim-sec" data-i="${i}" data-d="-1">−</button><button class="on" disabled>${n}</button><button data-e="sim-sec" data-i="${i}" data-d="1">+</button></span></div>`).join('')}
+      ${s.secs.map(([sec,n],i)=>`<div class="set"${n?'':' style="opacity:.55"'}><span>Sección ${sec}${n?'':' · no entra'}</span><span class="seg"><button data-e="sim-sec" data-i="${i}" data-d="-1">−</button><button class="on" disabled>${n}</button><button data-e="sim-sec" data-i="${i}" data-d="1">+</button></span></div>`).join('')}
       ${s.secs.length<ROMANOS.length?'<button class="btn" data-e="sim-add" style="margin-top:8px">+ Añadir sección</button>':''}</section>
       <div class="eactions"><button class="btn eprimary" data-e="sim-go">Empezar (${tot} preguntas)</button><button class="btn" data-e="sim-cancel">Cancelar</button></div></div>`;
     return;
@@ -1998,7 +1998,7 @@ function eClick(t){
   else if(a==='sim-add')simAddSec();
   else if(a==='sim-pdf'){simPdfVer=!simPdfVer;render()}
   else if(a==='sim-pdf-otro'){delete simPdfImgs[E.sim.ex];simPdfVer=true;render();const el=document.getElementById('simPdf');if(el)el.innerHTML=`<div style="padding:10px"><label class="btn">Elegir PDF<input type="file" accept="application/pdf,.pdf" data-simpdf="${esc(E.sim.ex)}" hidden></label></div>`}
-  else if(a==='sim-go'){E.sim.start=Date.now();eSave();render()}
+  else if(a==='sim-go'){E.sim.secs=E.sim.secs.filter(x=>x[1]>0);if(!E.sim.secs.length)return toast('Pon al menos una pregunta');E.sim.start=Date.now();eSave();render()}
   else if(a==='sim-entregar')simEntregar();
   else if(a==='sim-cancel'){if(confirm('¿Descartar este simulacro? Se borran las respuestas marcadas.')){E.sim=null;eSave();view='estudio';render()}}
   else if(a==='sim-back'){view='estudio';render()}

@@ -227,7 +227,7 @@ button.pill{cursor:pointer;font-family:inherit}
 .ebody hr{border:0;border-top:1px solid var(--line);margin:12px 0}.ebody a{color:var(--focus)}
 .eintro{padding:0 2px 6px}.ekids{padding-left:12px;color:var(--muted);font-size:.92rem}
 .ecall{display:flex;gap:10px;padding:10px 12px;border-radius:10px;background:var(--surface2);margin:8px 0}
-.etw{overflow-x:auto;margin:8px 0}.epinw{position:relative;padding-top:4px}.epin{position:absolute;top:8px;right:4px;width:30px;height:30px;border-radius:9px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-size:.95rem;opacity:.55;z-index:1}.epin:hover,.epin.on{opacity:1}.epin.on{background:color-mix(in srgb,var(--part) 18%,var(--surface));border-color:var(--part)}
+.etw{overflow-x:auto;margin:8px 0}.epinw{position:relative;padding-top:34px}.epin{position:absolute;top:0;right:0;width:30px;height:30px;border-radius:9px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-size:.95rem;opacity:.55;z-index:1}.epin:hover,.epin.on{opacity:1}.epin.on{background:color-mix(in srgb,var(--part) 18%,var(--surface));border-color:var(--part)}
 #lado{position:fixed;left:0;top:0;bottom:0;width:min(380px,92vw);overflow-y:auto;background:var(--bg);border-right:1px solid var(--line);box-shadow:8px 0 30px rgba(0,0,0,.12);z-index:55;padding:10px 12px 24px}
 #lado .ld-it{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 10px;margin-bottom:10px}
 #lado .ld-h{display:flex;align-items:center;gap:8px;justify-content:space-between;font-size:.9rem}
@@ -329,6 +329,7 @@ button.pill{cursor:pointer;font-family:inherit}
 #lupa .lp-it{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px}#lupa .lp-it summary{cursor:pointer}#lupa table{font-size:.92rem}
 @media (min-width:1100px){body.lupa-on #app{margin-right:440px}}
 @media (max-width:759px){#lupa{top:auto;width:100vw;height:72vh;border-left:0;border-top:1px solid var(--line);border-radius:16px 16px 0 0;transform:translateY(105%)}#lupa.on{transform:none}}
+.lp-chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0 2px}.lp-chip{font:inherit;font-size:.85rem;padding:4px 10px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--text);cursor:pointer}.lp-chip span{color:var(--muted);font-size:.75rem}.lp-chip.on{background:var(--text);color:var(--bg)}.lp-chip.on span{color:var(--bg)}
 .lp-hit{margin:4px 0 6px;font-size:.78rem;color:var(--muted)}.lp-hit span{display:inline-block;margin:2px 4px 0 0;padding:1px 8px;border-radius:99px;background:color-mix(in srgb,var(--amar) 30%,transparent);color:var(--text)}
 </style>
 </head>
@@ -1451,7 +1452,7 @@ function eItemHtmlBase(sid,sec,b,idx,locked){
    Materia (tablas) y Referencia (teoría) sin salir. Solo aparece en tareas que no son «sin apuntes». */
 function lupaOk(sec){const t=(sec.title+' '+sec.head+' '+bText(sec.blocks.filter(b=>b.type!=='_item'))).toLowerCase();
   return !/sin apuntes|sin tablas|sin mirar|sin consultar|en fr[ií]o|sin ayuda|minisimulacro|simulacro/.test(t)}
-let lupaTab='mat',lupaQ='',lupaTodo=false,lupaCtx='';
+let lupaTab='mat',lupaQ='',lupaModo='ses',lupaCtx='',lupaChip='',lupaChipL='';
 /* «Relacionado»: material de cualquier clase que trata lo mismo que la tarea. Se toman los términos en japonés
    de cada tabla (celdas) y de cada teoría, y se muestran los que aparecen en el texto de la tarea
    (p. ej. そうです, 泣き/泣く, どれ), ordenados por cuántos coinciden. */
@@ -1460,37 +1461,47 @@ const JP=/[぀-ヿ㐀-鿿々ー〜～]/;
 function lpTerms(txt){const out=new Set();for(let w of String(txt||'').split(/[\s、。,，・／/()（）\[\]「」『』+＋=→←~〜…:：;；!?！？"'“”«»|]+/)){
     w=w.replace(/^[^぀-ヿ㐀-鿿]+|[^぀-ヿ㐀-鿿ー]+$/g,'');if([...w].length<2||!JP.test(w)||LP_STOP.has(w))continue;out.add(w);
     // verbos/adjetivos: también la raíz (泣く → 泣, 食べる → 食べ) para que coincida con 泣き o 食べ…
-    if(/[㐀-鿿]/.test(w[0])&&[...w].length>=2&&/[うくぐすつぬぶむるい]$/.test(w))out.add(w.slice(0,-1))}
+    if((/[㐀-鿿]/.test(w[0])||[...w].length>=4)&&[...w].length>=2&&/[うくぐすつぬぶむるい]$/.test(w))out.add(w.slice(0,-1))} // en hiragana solo si la raíz queda de 3+ (わすれる → わすれ)
   return out}
 function lpScore(terms,ctx){const hit=[];for(const t of terms)if([...t].length>=2||/[㐀-鿿]/.test(t)){if(ctx.includes(t))hit.push(t)}
   // si la raíz y la palabra completa coinciden, cuenta una vez
   return hit.filter(h=>!hit.some(o=>o!==h&&o.startsWith(h)))}
-function lupaAbrir(secId){lupaTodo=false;const cur=E.ses[eOpen];lupaCtx='';
+function lupaAbrir(secId){lupaModo=materiaDias().some(d=>d.s.id===eOpen&&d.tablas.length)?'ses':'rel';lupaChip='';const cur=E.ses[eOpen];lupaCtx='';
   if(cur&&cur.blocks){const sec=eParse(cur.blocks).secs.find(x=>x.id===secId);if(sec)lupaCtx=sec.head+' '+bText(sec.blocks.filter(b=>b.type!=='_item'))+' '+bText(sec.items)}
   let el=document.getElementById('lupa');
   if(!el){el=document.createElement('aside');el.id='lupa';document.body.appendChild(el);
-    el.innerHTML=`<div class="lp-head"><b>🔍 Consulta</b><div class="seg lp-tabs"><button data-lp="mat">📊 Materia</button><button data-lp="ref">📘 Referencia</button></div><div class="seg lp-tabs"><button data-lp="rel">Relacionado</button><button data-lp="todo">Todo</button></div><button class="lp-x" data-lp="x" aria-label="Cerrar">✕</button></div>
-      <input type="search" id="lpQ" class="ebuscar" placeholder="Palabra clave (ej. そうです, 開ける, どれ)" lang="ja" autocapitalize="off" autocorrect="off" spellcheck="false"><div class="muted small" id="lpN"></div><div id="lpRes"></div>`;
-    el.addEventListener('click',e=>{const b=e.target.closest('[data-lp]');if(!b)return;if(b.dataset.lp==='x')return lupaCerrar();if(b.dataset.lp==='rel'||b.dataset.lp==='todo')lupaTodo=b.dataset.lp==='todo';else lupaTab=b.dataset.lp;lupaPintar()});
-    el.querySelector('#lpQ').addEventListener('input',e=>{lupaQ=e.target.value;lupaPintar()});}
+    el.innerHTML=`<div class="lp-head"><b>🔍 Consulta</b><div class="seg lp-tabs"><button data-lp="mat">📊 Materia</button><button data-lp="ref">📘 Referencia</button></div><div class="seg lp-tabs"><button data-lp="ses">Esta sesión</button><button data-lp="rel">Relacionado</button><button data-lp="todo">Todo</button></div><button class="lp-x" data-lp="x" aria-label="Cerrar">✕</button></div>
+      <input type="search" id="lpQ" class="ebuscar" placeholder="Palabra clave (ej. そうです, 開ける, どれ)" lang="ja" autocapitalize="off" autocorrect="off" spellcheck="false"><div class="lp-chips" id="lpChips"></div><div class="muted small" id="lpN"></div><div id="lpRes"></div>`;
+    el.addEventListener('click',e=>{const b=e.target.closest('[data-lp]');if(!b)return;if(b.dataset.lp==='x')return lupaCerrar();if(b.dataset.lp==='chip'){const k=b.dataset.k;lupaChip=lupaChip===k?'':k;lupaChipL=b.textContent;lupaQ='';el.querySelector('#lpQ').value='';return lupaPintar()}
+      if(['ses','rel','todo'].includes(b.dataset.lp)){lupaModo=b.dataset.lp;lupaChip=''}else lupaTab=b.dataset.lp;lupaPintar()});
+    el.querySelector('#lpQ').addEventListener('input',e=>{lupaQ=e.target.value;lupaChip='';lupaPintar()});}
   lupaQ='';el.classList.add('on');document.body.classList.add('lupa-on');el.querySelector('#lpQ').value='';lupaPintar();
 }
 function lupaCerrar(){const el=document.getElementById('lupa');if(el)el.classList.remove('on');document.body.classList.remove('lupa-on')}
 function lupaPintar(){const el=document.getElementById('lupa');if(!el)return;
   el.querySelectorAll('[data-lp="mat"],[data-lp="ref"]').forEach(b=>b.classList.toggle('on',b.dataset.lp===lupaTab));
-  el.querySelectorAll('[data-lp="rel"],[data-lp="todo"]').forEach(b=>b.classList.toggle('on',(b.dataset.lp==='todo')===lupaTodo));
-  const q=lupaQ.trim().toLowerCase(),rel=!lupaTodo&&lupaCtx,res=[];
+  el.querySelectorAll('[data-lp="ses"],[data-lp="rel"],[data-lp="todo"]').forEach(b=>b.classList.toggle('on',b.dataset.lp===lupaModo));
+  // Accesos rápidos: palabras de esta tarea que aparecen en tablas o teoría (las que más material tienen primero). Tocar una filtra sin escribir.
+  const chipsEl=el.querySelector('#lpChips');
+  if(chipsEl){const cnt=new Map(),tx=[];
+    for(const d of materiaDias())for(const x of d.tablas)tx.push(tablaTxt(x.t));
+    for(const s2 of Object.values(E.ses)){if(!s2.blocks)continue;for(const sec of eParse(s2.blocks).secs)if(sec.kind==='consulta')tx.push(sec.title+' '+bText(sec.blocks))}
+    // la raíz (わすれ) se muestra con la palabra entera (わすれる) pero filtra por la raíz
+    if(lupaCtx)for(const x of tx){const ws=lpTerms(x);for(const t of lpScore(ws,lupaCtx)){const c=cnt.get(t)||{n:0,l:[...ws].find(w=>w!==t&&w.startsWith(t))||t};c.n++;cnt.set(t,c)}} // términos del material que también están en la tarea
+    const top=[...cnt].sort((a,b)=>b[1].n-a[1].n).slice(0,10);
+    chipsEl.innerHTML=top.length?`<span class="muted small">Accesos rápidos:</span>`+top.map(([t,c])=>`<button class="lp-chip${lupaChip===t?' on':''}" data-lp="chip" data-k="${esc(t)}" lang="ja">${esc(c.l)}</button>`).join(''):''}
+  const q=(lupaChip||lupaQ).trim().toLowerCase(),modo=lupaChip?'todo':lupaModo,rel=modo==='rel'&&lupaCtx,ses=modo==='ses',res=[];
   const chips=h=>h.length?`<div class="lp-hit">coincide: ${h.slice(0,6).map(x=>`<span>${esc(x)}</span>`).join('')}</div>`:'';
-  if(lupaTab==='mat'){for(const d of materiaDias())for(const x of d.tablas){const txt=((x.tema||'')+' '+tablaTxt(x.t));
+  if(lupaTab==='mat'){for(const d of materiaDias()){if(ses&&d.s.id!==eOpen)continue;for(const x of d.tablas){const txt=((x.tema||'')+' '+tablaTxt(x.t));
       if(q&&!txt.toLowerCase().includes(q))continue;const h=rel?lpScore(lpTerms(tablaTxt(x.t)),lupaCtx):[];if(rel&&!h.length)continue;
-      res.push({sc:h.length,f:d.s.fecha,html:`<div class="lp-it"><div class="muted small">${esc(eFechaCorta(d.s.fecha))} · ${esc(x.tema||d.s.titulo||'')}</div>${chips(h)}${eBlocks([x.t])}</div>`})}}
-  else{for(const s2 of Object.values(E.ses)){if(!s2.blocks)continue;
+      res.push({sc:h.length,f:d.s.fecha,html:`<div class="lp-it"><div class="muted small">${esc(eFechaCorta(d.s.fecha))} · ${esc(x.tema||d.s.titulo||'')}</div>${chips(h)}${eBlocks([x.t])}</div>`})}}}
+  else{for(const s2 of Object.values(E.ses)){if(!s2.blocks||(ses&&s2.id!==eOpen))continue;
       for(const sec of eParse(s2.blocks).secs){if(sec.kind!=='consulta')continue;const bt=bText(sec.blocks),t=(sec.title+' '+bt).toLowerCase();if(q&&!t.includes(q))continue;
         const h=rel?lpScore(lpTerms(sec.title+' '+bt),lupaCtx):[];if(rel&&!h.length)continue;
         res.push({sc:h.length,f:s2.fecha,html:`<details class="lp-it" ${q||rel?'open':''}><summary><span class="muted small">${esc(eFechaCorta(s2.fecha))}</span> <b>${esc(sec.title||'Consulta')}</b></summary>${chips(h)}${eBlocks(sinTablas(sec.blocks))}</details>`})}}}
   res.sort((a,b)=>b.sc-a.sc||b.f.localeCompare(a.f));const n=res.length;
-  el.querySelector('#lpRes').innerHTML=res.map(r=>r.html).join('')||`<div class="muted small" style="padding:10px 2px">${rel?'No encontré material relacionado con esta tarea. Prueba con «Todo».':q?'Nada con «'+esc(lupaQ.trim())+'».':'Aún no hay material.'}</div>`;
-  el.querySelector('#lpN').textContent=rel?`${n} relacionado${n===1?'':'s'} con esta tarea`:q?`${n} resultado${n===1?'':'s'}`:'';
+  el.querySelector('#lpRes').innerHTML=res.map(r=>r.html).join('')||`<div class="muted small" style="padding:10px 2px">${ses?(lupaTab==='mat'?'Esta sesión no trae tablas. Prueba con «Relacionado».':'Esta sesión no trae teoría. Prueba con «Relacionado».'):rel?'No encontré material relacionado con esta tarea. Prueba con «Todo».':q?'Nada con «'+esc(lupaChip||lupaQ.trim())+'».':'Aún no hay material.'}</div>`;
+  el.querySelector('#lpN').textContent=ses?`${n} de esta sesión`:rel?`${n} relacionado${n===1?'':'s'} con esta tarea`:lupaChip?`${n} con «${lupaChipL||lupaChip}» (toca otra vez para quitar)`:q?`${n} resultado${n===1?'':'s'}`:'';
   if(q)el.querySelectorAll('#lpRes td,#lpRes th').forEach(c=>c.classList.toggle('hit',c.textContent.toLowerCase().includes(q)));
 }
 function renderSesion(){

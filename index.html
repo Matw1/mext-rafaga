@@ -319,6 +319,53 @@ button.pill{cursor:pointer;font-family:inherit}
 .foot{margin-top:22px;text-align:center;font-size:.78rem;color:var(--muted);line-height:2}
 
 @media (max-width:420px){.prompt{font-size:1.38rem}.opt{font-size:1.18rem}.ring{width:92px;height:92px}.ring .in b{font-size:1.6rem}.hero{gap:12px;padding:14px}}
+/* ===== Animaciones (con «reducir movimiento» del sistema se apagan todas) ===== */
+@keyframes aIn{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes aFade{from{opacity:0}to{opacity:1}}
+@keyframes aGrow{from{width:0}}
+@keyframes aPop{0%{transform:scale(.9)}55%{transform:scale(1.06)}100%{transform:scale(1)}}
+@keyframes aRing{from{transform:rotate(-260deg);opacity:0}to{transform:rotate(-90deg);opacity:1}}
+@keyframes aSlideL{from{transform:translateX(-104%)}to{transform:none}}
+@keyframes aSlideUp{from{transform:translateY(104%)}to{transform:none}}
+@keyframes aGlow{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--part) 0%,transparent)}50%{box-shadow:0 0 0 6px color-mix(in srgb,var(--part) 22%,transparent)}}
+@keyframes aShine{from{background-position:-200% 0}to{background-position:200% 0}}
+/* entrada de pantalla: cada bloque aparece subiendo, uno detrás de otro */
+#app.enter>*,#app.enter .estudio>*,#app.enter .elist>*,#app.enter .modes>*,#app.enter .ebody>.eitem{animation:aIn .5s cubic-bezier(.2,.8,.2,1) both}
+#app.enter>*:nth-child(2),#app.enter .estudio>*:nth-child(2),#app.enter .elist>*:nth-child(2),#app.enter .modes>*:nth-child(2){animation-delay:.05s}
+#app.enter>*:nth-child(3),#app.enter .estudio>*:nth-child(3),#app.enter .elist>*:nth-child(3),#app.enter .modes>*:nth-child(3){animation-delay:.1s}
+#app.enter>*:nth-child(4),#app.enter .estudio>*:nth-child(4),#app.enter .elist>*:nth-child(4),#app.enter .modes>*:nth-child(4){animation-delay:.15s}
+#app.enter>*:nth-child(5),#app.enter .estudio>*:nth-child(5),#app.enter .elist>*:nth-child(5),#app.enter .modes>*:nth-child(5){animation-delay:.2s}
+#app.enter>*:nth-child(6),#app.enter .estudio>*:nth-child(6),#app.enter .elist>*:nth-child(6),#app.enter .modes>*:nth-child(6){animation-delay:.25s}
+#app.enter>*:nth-child(7),#app.enter .estudio>*:nth-child(7),#app.enter .elist>*:nth-child(7),#app.enter .modes>*:nth-child(7){animation-delay:.3s}
+#app.enter>*:nth-child(n+8),#app.enter .estudio>*:nth-child(n+8),#app.enter .elist>*:nth-child(n+8),#app.enter .modes>*:nth-child(n+8){animation-delay:.35s}
+#app.enter .ring svg{animation:aRing .9s cubic-bezier(.2,.8,.2,1) both}
+#app.enter .mb{animation:aGrow 1s .25s cubic-bezier(.2,.8,.2,1) both}
+.pleg.on .pleg-in .lesson,.pleg.on .pleg-in .catrow{animation:aIn .4s cubic-bezier(.2,.8,.2,1) both}
+.pleg.on .pleg-in .lrow:nth-child(2) .lesson,.pleg.on .pleg-in .catrow:nth-child(2){animation-delay:.04s}
+.pleg.on .pleg-in .lrow:nth-child(3) .lesson,.pleg.on .pleg-in .catrow:nth-child(3){animation-delay:.08s}
+.pleg.on .pleg-in .lrow:nth-child(n+4) .lesson,.pleg.on .pleg-in .catrow:nth-child(n+4){animation-delay:.12s}
+/* tocar: se hunde un poco */
+button,.btn,.ecard,.lesson,.mode,.eletra,.tk-opt,.lp-chip{transition:transform .16s cubic-bezier(.2,.8,.2,1),box-shadow .2s,background-color .2s,border-color .2s,opacity .2s}
+button:active:not(:disabled),.ecard:active,.lesson:active,.mode:active{transform:scale(.97)}
+/* selección: pequeño rebote */
+.eletra.on,.lp-chip.on,.epin.on,.simr.on,[data-e="sim-r"].on{animation:aPop .32s cubic-bezier(.2,.8,.2,1)}
+.everd{animation:aPop .4s cubic-bezier(.2,.8,.2,1) both}
+.etimer.on{animation:aGlow 1.8s ease-in-out infinite}
+.lp-it,#lado .ld-it{animation:aIn .4s cubic-bezier(.2,.8,.2,1) both}
+#lado{animation:aSlideL .35s cubic-bezier(.2,.8,.2,1)}
+#etoc{animation:aFade .5s .2s both}
+.evolver{background:linear-gradient(100deg,var(--surface) 40%,color-mix(in srgb,var(--part) 14%,var(--surface)) 50%,var(--surface) 60%) 0 0/200% 100%;animation:aIn .5s both,aShine 2.6s 1s ease-in-out 2}
+/* PC (mouse): al pasar por encima se levanta */
+@media (hover:hover) and (pointer:fine){
+  .ecard:hover,.lesson:hover,.mode:hover,.card.chart:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(0,0,0,.10)}
+  .btn:hover,.icon-btn:hover,.eletra:hover,.tk-opt:hover,.lp-chip:hover,.etimer:hover,.elupa:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.08)}
+  .icon-btn:hover{transform:translateY(-1px) rotate(-4deg)}
+  .start:hover{transform:translateY(-3px) scale(1.01);box-shadow:0 14px 34px rgba(200,40,40,.28)}
+  .start:hover .play{animation:aPop .5s}
+  #etoc button:hover i{width:32px}
+  .etw tr{transition:background-color .15s}.etw tr:hover td{background:color-mix(in srgb,var(--part) 7%,transparent)}
+}
+@media (max-width:1099px){#lado{animation:aSlideUp .35s cubic-bezier(.2,.8,.2,1)}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 #matCuenta{margin:0 2px 6px}td.hit,th.hit{background:color-mix(in srgb,var(--amar) 35%,transparent)}
 .eletras{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 4px}.eletra{font:inherit;font-size:1.05rem;min-height:44px;min-width:64px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--text);cursor:pointer}.eletra b{color:var(--muted);margin-right:6px}.eletra.on{border-color:var(--part);background:color-mix(in srgb,var(--part) 14%,transparent);font-weight:700}.eletra.on b{color:var(--part)}
@@ -1046,8 +1093,9 @@ function renderStats(){
   </div>`;
 }
 let lastView=null,lastOpen=null;
-function render(){applyTheme();const y=window.scrollY;if(view==='tabla')return renderTablaDia();if(view==='home')renderHome();else if(view==='drill')renderDrill();else if(view==='end')renderEnd();else if(view==='estudio')renderEstudio();else if(view==='sesion')renderSesion();else if(view==='prog')renderProg();else if(view==='simu')renderSimHoja();else renderStats();
-  if(view!=='drill'&&(view!==lastView||eOpen!==lastOpen))window.scrollTo(0,0);else if(view==='sesion'||view==='estudio')window.scrollTo(0,y);lastView=view;lastOpen=eOpen;ladoPintar();tocPintar()}
+function render(){applyTheme();const y=window.scrollY,cambio=view!==lastView||eOpen!==lastOpen;if(view==='tabla')return renderTablaDia();if(view==='home')renderHome();else if(view==='drill')renderDrill();else if(view==='end')renderEnd();else if(view==='estudio')renderEstudio();else if(view==='sesion')renderSesion();else if(view==='prog')renderProg();else if(view==='simu')renderSimHoja();else renderStats();
+  if(view!=='drill'&&(view!==lastView||eOpen!==lastOpen))window.scrollTo(0,0);else if(view==='sesion'||view==='estudio')window.scrollTo(0,y);lastView=view;lastOpen=eOpen;ladoPintar();tocPintar();
+  if(cambio&&view!=='drill'){const a=document.getElementById('app');a.classList.remove('enter');void a.offsetWidth;a.classList.add('enter');clearTimeout(render.t);render.t=setTimeout(()=>a.classList.remove('enter'),1400)}}
 
 /* =========================================================
    ESTUDIO DIARIO CON EL INSTRUCTOR (solo japonés)

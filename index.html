@@ -330,6 +330,16 @@ button.pill{cursor:pointer;font-family:inherit}
 @media (min-width:1100px){body.lupa-on #app{margin-right:440px}}
 @media (max-width:759px){#lupa{top:auto;width:100vw;height:72vh;border-left:0;border-top:1px solid var(--line);border-radius:16px 16px 0 0;transform:translateY(105%)}#lupa.on{transform:none}}
 .evolver{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;margin:8px 0;border-left:4px solid var(--part);cursor:pointer}
+.lecs>summary{list-style:none;cursor:pointer;margin-bottom:10px}.lecs>summary::-webkit-details-marker{display:none}.lecs[open] .lchev{transform:rotate(180deg)}.lchev{transition:transform .15s}
+#etoc{position:fixed;top:84px;right:14px;z-index:58;display:flex;flex-direction:column;align-items:flex-end;gap:2px;transition:right .2s ease}
+#etoc button{position:relative;display:flex;align-items:center;justify-content:flex-end;width:34px;height:16px;padding:0;border:0;background:none;cursor:pointer;color:var(--muted)}
+#etoc button i{display:block;width:16px;height:3px;border-radius:2px;background:var(--line);transition:width .15s,background .15s}
+#etoc button.on i{width:26px;background:var(--part)}#etoc button:hover i{width:30px;background:var(--text)}
+#etoc .toc-top{height:24px;font-size:1rem;font-weight:700;margin-bottom:4px}
+#etoc .toc-l{position:absolute;right:38px;white-space:nowrap;background:var(--text);color:var(--bg);font-size:.78rem;padding:3px 8px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .12s}
+#etoc button:hover .toc-l,#etoc button:focus-visible .toc-l{opacity:1}
+@media (min-width:760px){body.lupa-on #etoc{right:min(434px,calc(100vw - 40px))}}
+@media (max-width:759px){#etoc{right:4px;top:72px}}
 .dchips{display:flex;gap:6px;align-items:center;overflow-x:auto;padding:6px 0 4px;-webkit-overflow-scrolling:touch}.dchips .lp-chip{flex:none}.dchips>span{flex:none}
 .lp-chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0 2px}.lp-chip{font:inherit;font-size:.85rem;padding:4px 10px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--text);cursor:pointer}.lp-chip span{color:var(--muted);font-size:.75rem}.lp-chip.on{background:var(--text);color:var(--bg)}.lp-chip.on span{color:var(--bg)}
 .lp-hit{margin:4px 0 6px;font-size:.78rem;color:var(--muted)}.lp-hit span{display:inline-block;margin:2px 4px 0 0;padding:1px 8px;border-radius:99px;background:color-mix(in srgb,var(--amar) 30%,transparent);color:var(--text)}
@@ -1029,7 +1039,7 @@ function renderStats(){
 }
 let lastView=null,lastOpen=null;
 function render(){applyTheme();const y=window.scrollY;if(view==='tabla')return renderTablaDia();if(view==='home')renderHome();else if(view==='drill')renderDrill();else if(view==='end')renderEnd();else if(view==='estudio')renderEstudio();else if(view==='sesion')renderSesion();else if(view==='prog')renderProg();else if(view==='simu')renderSimHoja();else renderStats();
-  if(view!=='drill'&&(view!==lastView||eOpen!==lastOpen))window.scrollTo(0,0);else if(view==='sesion'||view==='estudio')window.scrollTo(0,y);lastView=view;lastOpen=eOpen;ladoPintar()}
+  if(view!=='drill'&&(view!==lastView||eOpen!==lastOpen))window.scrollTo(0,0);else if(view==='sesion'||view==='estudio')window.scrollTo(0,y);lastView=view;lastOpen=eOpen;ladoPintar();tocPintar()}
 
 /* =========================================================
    ESTUDIO DIARIO CON EL INSTRUCTOR (solo japonés)
@@ -1712,12 +1722,13 @@ function lessonsHtml(){
       <span class="glyph" style="--c:var(--dia)">日</span><span class="lt"><b>${esc(title)}</b><span class="muted small">${sub}${isNew?' · <span class="lnew">nueva</span>':''}</span></span>
       <span class="pct">${p==null?'▶':Math.round(p*100)+'%'}</span>${p!=null?`<span class="mb" style="width:${p*100}%;background:var(--dia)"></span>`:''}</button>${pmode&&pn?`<button class="lprod" data-mode="${esc(pmode)}" title="Escribir las respuestas" aria-label="Producción: escribir">✏️<small>${pn}</small></button>`:''}</div>`};
   const pAll=prodKeys();
-  return `<h3>📅 Lecciones de días estudiados</h3><div class="lessons">
+  return `<details class="lecs" ${lecAbiertas?'open':''} ontoggle="lecAbiertas=this.open"><summary class="lesson lsum"><span class="glyph" style="--c:var(--dia)">📅</span><span class="lt"><b>Lecciones de días estudiados</b><span class="muted small">${L.length} día${L.length>1?'s':''} · ${allK.length} preguntas${pAll.length?` · ✏️ ${pAll.length} para escribir`:''}</span></span><span class="pct lchev">▾</span></summary><div class="lessons">
     ${pAll.length?`<button class="lesson lp ${S.settings.mode==='prod'?'on':''}" data-mode="prod"><span class="glyph" style="--c:var(--esc)">書</span><span class="lt"><b>✏️ Producción: escribir</b><span class="muted small">${pAll.length} tarjetas · tus errores corregidos y las preguntas del juego</span></span><span class="pct">▶</span></button>`:''}
     ${L.length>1?card('days','Todas las lecciones',`${L.length} días · ${allK.length} preguntas`,allK,false,'prod',pAll.length):''}
     ${L.map(s=>{const ks=lessonKeys(s.id);const pk=prodKeys(s.id).length;return card('day:'+s.id,s.titulo||'Día estudiado',`${esc(eFechaCorta(s.fecha))} · ${ks.length} preguntas`,ks,!ks.some(k=>S.items[k]),'prod:'+s.id,pk)}).join('')}
-  </div>`;
+  </div></details>`;
 }
+var lecAbiertas=false; // las lecciones se muestran plegadas en un solo botón
 
 /* ---------- 📋 Simulacros: hoja de respuestas (las preguntas se leen del PDF del examen) ----------
    Los exámenes con fecha (prácticas programadas, checkpoints y final) solo se habilitan desde su fecha. La app no corrige:
@@ -1856,6 +1867,25 @@ function ladoBuscar(id){for(const s of Object.values(E.ses)){if(!s.blocks)contin
 function ladoToggle(id){E.lado=E.lado||[];const i=E.lado.findIndex(x=>x.id===id);
   if(i>=0)E.lado.splice(i,1);else{const x=ladoBuscar(id);if(!x){toast('No encontré esa tabla');return}E.lado.push({id,...x})}
   eSave();render()}
+/* Índice de la sesión: rayitas arriba a la derecha (junto a la barra de desplazamiento), una por actividad.
+   Al pasar el mouse muestran el nombre; al tocar llevan a esa actividad. ⤒ sube al inicio. Con la 🔍 abierta se corren a su borde. */
+function tocPintar(){let el=document.getElementById('etoc');
+  const secs=view==='sesion'?[...document.querySelectorAll('#app .esec')]:[];
+  if(!secs.length){if(el)el.remove();return}
+  if(!el){el=document.createElement('nav');el.id='etoc';el.setAttribute('aria-label','Índice de la sesión');document.body.appendChild(el);
+    el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+      if(b.dataset.toc==='top')return window.scrollTo({top:0,behavior:'smooth'});
+      const t=document.querySelectorAll('#app .esec')[+b.dataset.toc];if(t)window.scrollTo({top:t.getBoundingClientRect().top+window.scrollY-12,behavior:'smooth'})})}
+  el.innerHTML=`<button data-toc="top" class="toc-top" title="Volver al inicio"><span class="toc-l">Volver al inicio</span>⤒</button>`+secs.map((x,i)=>{
+    const k=x.querySelector('.ek'),b=x.querySelector('.ehead b')||x.querySelector('summary');
+    const kt=k?k.textContent.trim():'',bt=b?b.textContent.replace(kt,'').trim():'';
+    const t=(kt&&bt?kt+' · '+bt:kt||bt).slice(0,70);
+    return `<button data-toc="${i}" title="${esc(t)}"><span class="toc-l">${esc(t)}</span><i></i></button>`}).join('');
+  tocActual()}
+function tocActual(){const el=document.getElementById('etoc');if(!el)return;let cur=0;
+  document.querySelectorAll('#app .esec').forEach((x,i)=>{if(x.getBoundingClientRect().top<160)cur=i});
+  el.querySelectorAll('[data-toc]').forEach(b=>b.classList.toggle('on',b.dataset.toc===String(cur)))}
+window.addEventListener('scroll',()=>{if(view==='sesion')tocActual()},{passive:true});
 function ladoPintar(){let el=document.getElementById('lado');const ver=(E.lado||[]).length&&(view==='sesion'||view==='estudio'||view==='simu');
   document.body.classList.toggle('lado-on',!!ver);
   if(!ver){if(el)el.remove();return}

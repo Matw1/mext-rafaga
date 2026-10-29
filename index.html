@@ -227,7 +227,14 @@ button.pill{cursor:pointer;font-family:inherit}
 .ebody hr{border:0;border-top:1px solid var(--line);margin:12px 0}.ebody a{color:var(--focus)}
 .eintro{padding:0 2px 6px}.ekids{padding-left:12px;color:var(--muted);font-size:.92rem}
 .ecall{display:flex;gap:10px;padding:10px 12px;border-radius:10px;background:var(--surface2);margin:8px 0}
-.etw{overflow-x:auto;margin:8px 0}.etw table{border-collapse:collapse;min-width:100%;font-size:.92rem}.etw td,.etw th{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}.etw th{background:var(--surface2)}
+.etw{overflow-x:auto;margin:8px 0}.epinw{position:relative;padding-top:4px}.epin{position:absolute;top:8px;right:4px;width:30px;height:30px;border-radius:9px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-size:.95rem;opacity:.55;z-index:1}.epin:hover,.epin.on{opacity:1}.epin.on{background:color-mix(in srgb,var(--part) 18%,var(--surface));border-color:var(--part)}
+#lado{position:fixed;left:0;top:0;bottom:0;width:min(380px,92vw);overflow-y:auto;background:var(--bg);border-right:1px solid var(--line);box-shadow:8px 0 30px rgba(0,0,0,.12);z-index:55;padding:10px 12px 24px}
+#lado .ld-it{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 10px;margin-bottom:10px}
+#lado .ld-h{display:flex;align-items:center;gap:8px;justify-content:space-between;font-size:.9rem}
+#lado .ld-x{width:28px;height:28px;flex:none;border-radius:8px;border:1px solid var(--line);background:var(--bg);cursor:pointer;font-size:.8rem}
+#lado table{font-size:.86rem}
+@media (min-width:1100px){body.lado-on #app{margin-left:400px}}
+@media (max-width:1099px){#lado{top:auto;width:100vw;max-height:36vh;border-right:0;border-top:1px solid var(--line);border-radius:16px 16px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.14)}body.lado-on #app{padding-bottom:38vh}}.etw table{border-collapse:collapse;min-width:100%;font-size:.92rem}.etw td,.etw th{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}.etw th{background:var(--surface2)}
 .etimer{flex:none;border:1px solid var(--line);background:var(--surface2);border-radius:99px;padding:6px 14px;min-height:40px;font-variant-numeric:tabular-nums;font-weight:700}
 .etimer.on{background:var(--text);color:var(--bg);border-color:var(--text)}
 .eitem{padding:10px 0;border-top:1px solid var(--line)}.eitem:first-child{border-top:0}
@@ -1011,7 +1018,7 @@ function renderStats(){
 }
 let lastView=null,lastOpen=null;
 function render(){applyTheme();const y=window.scrollY;if(view==='tabla')return renderTablaDia();if(view==='home')renderHome();else if(view==='drill')renderDrill();else if(view==='end')renderEnd();else if(view==='estudio')renderEstudio();else if(view==='sesion')renderSesion();else if(view==='prog')renderProg();else if(view==='simu')renderSimHoja();else renderStats();
-  if(view!=='drill'&&(view!==lastView||eOpen!==lastOpen))window.scrollTo(0,0);else if(view==='sesion'||view==='estudio')window.scrollTo(0,y);lastView=view;lastOpen=eOpen}
+  if(view!=='drill'&&(view!==lastView||eOpen!==lastOpen))window.scrollTo(0,0);else if(view==='sesion'||view==='estudio')window.scrollTo(0,y);lastView=view;lastOpen=eOpen;ladoPintar()}
 
 /* =========================================================
    ESTUDIO DIARIO CON EL INSTRUCTOR (solo japonés)
@@ -1081,7 +1088,7 @@ function eBlocks(list){
       case 'code':h+=`<pre lang="ja">${esc(ptxt(b.rt))}</pre>`;break;
       case 'divider':h+='<hr>';break;
       case 'toggle':h+=`<details><summary>${eRich(b.rt)}</summary>${b.kids?eBlocks(b.kids):''}</details>`;break;
-      case 'table':{const rows=b.kids||[];h+=`<div class="etw"><table>${rows.map((r,ri)=>`<tr>${(r.cells||[]).map(c=>ri===0&&b.header?`<th>${eRich(c)}</th>`:`<td>${eRich(c)}</td>`).join('')}</tr>`).join('')}</table></div>`;break}
+      case 'table':{const rows=b.kids||[],on=b.id&&ladoOn(b.id);h+=`<div class="etw${b.id&&!eBlocks.sinPin?' epinw':''}">${b.id&&!eBlocks.sinPin?`<button class="epin${on?' on':''}" data-e="lado" data-id="${esc(b.id)}" title="${on?'Quitar del lado izquierdo':'Fijar a la izquierda de la pantalla'}" aria-label="Fijar tabla">📌</button>`:''}<table>${rows.map((r,ri)=>`<tr>${(r.cells||[]).map(c=>ri===0&&b.header?`<th>${eRich(c)}</th>`:`<td>${eRich(c)}</td>`).join('')}</tr>`).join('')}</table></div>`;break}
       default:if(b.rt&&b.rt.length)h+=`<p>${eRich(b.rt)}</p>`;
     }
     if(b.kids&&!['toggle','callout','table'].includes(b.type))h+=`<div class="ekids">${eBlocks(b.kids)}</div>`;
@@ -1815,6 +1822,23 @@ function sinTablas(list){return (list||[]).map(b=>b.type==='table'?{type:'paragr
 function eTables(list,out){for(const b of list||[]){if(b.type==='table')out.push(b);else if(b.kids)eTables(b.kids,out)}return out}
 /* 📌 Tabla del día: las tablas de la clase más reciente, a pantalla completa y sin menús.
    Se abre con el atajo del ícono (index.html#tabla), que puede quedar en la pantalla de inicio. */
+/* 📌 Tablas al lado: el 📌 de cualquier tabla la deja fija a la izquierda de la pantalla mientras estudias
+   (aparte de la 🔍 Consulta, que va a la derecha). Se quita con su ✕ o tocando otra vez el 📌. Solo en este dispositivo. */
+const ladoOn=id=>(E.lado||[]).some(x=>x.id===id);
+function ladoBuscar(id){for(const s of Object.values(E.ses)){if(!s.blocks)continue;
+    for(const sec of eParse(s.blocks).secs){const t=eTables(sec.blocks,[]).find(x=>x.id===id);if(t)return{b:t,tit:sec.title||s.titulo||'',f:s.fecha}}
+    const t=eTables(s.blocks,[]).find(x=>x.id===id);if(t)return{b:t,tit:s.titulo||'',f:s.fecha}}
+  return null}
+function ladoToggle(id){E.lado=E.lado||[];const i=E.lado.findIndex(x=>x.id===id);
+  if(i>=0)E.lado.splice(i,1);else{const x=ladoBuscar(id);if(!x){toast('No encontré esa tabla');return}E.lado.push({id,...x})}
+  eSave();render()}
+function ladoPintar(){let el=document.getElementById('lado');const ver=(E.lado||[]).length&&(view==='sesion'||view==='estudio'||view==='simu');
+  document.body.classList.toggle('lado-on',!!ver);
+  if(!ver){if(el)el.remove();return}
+  if(!el){el=document.createElement('aside');el.id='lado';document.body.appendChild(el)}
+  eBlocks.sinPin=true;
+  try{el.innerHTML=E.lado.map(x=>`<div class="ld-it"><div class="ld-h"><span>📌 <b>${esc(x.tit)}</b> <span class="muted small">${esc(eFechaCorta(x.f||''))}</span></span><button class="ld-x" data-e="lado" data-id="${esc(x.id)}" aria-label="Quitar">✕</button></div>${eBlocks([x.b])}</div>`).join('')}
+  finally{eBlocks.sinPin=false}}
 /* 📌 Tablas fijadas: se fijan desde Materia y quedan arriba (también en la Tabla del día y el fondo de pantalla).
    Se sincronizan entre el teléfono y la PC. */
 const tPinned=id=>!!(E.pins&&E.pins[id]&&E.pins[id].on);
@@ -2013,6 +2037,7 @@ function eClick(t){
   else if(a==='au-del'){const w=eWork(eOpen);if(w.sent||!confirm('¿Borrar esta grabación?'))return;const an=w.ans[t.dataset.it]||{};an.r='';an.t=Date.now();bMark(eOpen,'a:'+t.dataset.it);eSave();bSoon(2500);render()}
   else if(a==='ref2mat'){matQ=t.dataset.q||'';eSub='mat';render()}
   else if(a==='pin')tTogglePin(t.dataset.id);
+  else if(a==='lado')ladoToggle(t.dataset.id);
   else if(a==='tabla-img')tablaImagen();
   else if(a==='tabla-cerrar'){history.replaceState(null,'',location.pathname);view='home';render()}
   else if(a==='open'){eOpen=t.dataset.id;view='sesion';render();bSync()}

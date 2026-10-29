@@ -329,6 +329,8 @@ button.pill{cursor:pointer;font-family:inherit}
 #lupa .lp-it{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px}#lupa .lp-it summary{cursor:pointer}#lupa table{font-size:.92rem}
 @media (min-width:1100px){body.lupa-on #app{margin-right:440px}}
 @media (max-width:759px){#lupa{top:auto;width:100vw;height:72vh;border-left:0;border-top:1px solid var(--line);border-radius:16px 16px 0 0;transform:translateY(105%)}#lupa.on{transform:none}}
+.evolver{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;margin:8px 0;border-left:4px solid var(--part);cursor:pointer}
+.dchips{display:flex;gap:6px;align-items:center;overflow-x:auto;padding:6px 0 4px;-webkit-overflow-scrolling:touch}.dchips .lp-chip{flex:none}.dchips>span{flex:none}
 .lp-chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0 2px}.lp-chip{font:inherit;font-size:.85rem;padding:4px 10px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--text);cursor:pointer}.lp-chip span{color:var(--muted);font-size:.75rem}.lp-chip.on{background:var(--text);color:var(--bg)}.lp-chip.on span{color:var(--bg)}
 .lp-hit{margin:4px 0 6px;font-size:.78rem;color:var(--muted)}.lp-hit span{display:inline-block;margin:2px 4px 0 0;padding:1px 8px;border-radius:99px;background:color-mix(in srgb,var(--amar) 30%,transparent);color:var(--text)}
 </style>
@@ -883,6 +885,13 @@ function catRows(){
       <div class="sub">${st&&st.n?`${st.n} resp. · total ${Math.round(100*st.ok/st.n)}% · ${(st.ms/st.n/1000).toFixed(1)} s/resp.${rec!=null?' · barra = últimas '+st.r.length:''}`:'Sin datos todavía'}</div>
     </div>`}).join('');
 }
+/* ↩ Volver a la tarea: se recuerda la sesión sin entregar y el punto donde ibas; en el inicio un botón te lleva de vuelta ahí */
+function volverHtml(){const u=E.ultimo,s=u&&E.ses[u.id];if(!s||s.estado!=='Publicada'||eWork(u.id).sent)return'';
+  return `<button class="ecard evolver" data-e="volver"><span class="muted small">↩ Volver a la tarea${u.sec?` · ${esc(u.sec)}`:''}</span><b>${esc(s.titulo||'Sesión')}</b></button>`}
+let volverT=null;
+window.addEventListener('scroll',()=>{if(view!=='sesion'||!eOpen)return;clearTimeout(volverT);volverT=setTimeout(()=>{
+  let sec='';for(const el of document.querySelectorAll('.esec')){if(el.getBoundingClientRect().top>140)break;const b=el.querySelector('.ehead b, summary');if(b)sec=b.textContent.trim()}
+  E.ultimo={id:eOpen,y:Math.round(window.scrollY),sec:sec.slice(0,60),t:Date.now()};eSave()},400)},{passive:true});
 function renderHome(){
   const td=S.days[today()]||{n:0,ok:0},bufN=Object.keys(S.buffer).length,m=S.settings.mode;
   const exam=daysTo('2027-07-15'),cp=daysTo('2026-11-26'),total=daysTo('2027-07-15')-daysTo('2026-07-29');
@@ -890,6 +899,7 @@ function renderHome(){
   $('#app').innerHTML=`${tabsHtml('juego')}
     <div class="row"><div class="brand"><span class="hanko">朱</span><div><b>MEXT Ráfaga${nivelBadge()}</b><small>Modo aburrimiento · 60–90 s</small></div></div><span class="sp"></span>
       <button class="icon-btn" data-act="prog" aria-label="Panel de progreso" title="Panel de progreso">📈</button><button class="icon-btn" data-act="stats" aria-label="Estadísticas" title="Estadísticas (S)">📊</button></div>
+    ${volverHtml()}
     <section class="hero">
       <div class="ring" aria-label="${exam} días para el examen">
         <svg viewBox="0 0 100 100"><defs><linearGradient id="g1" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#ffb547"/><stop offset="1" stop-color="var(--accent)"/></linearGradient></defs>
@@ -1471,8 +1481,9 @@ function lupaAbrir(secId){lupaModo=materiaDias().some(d=>d.s.id===eOpen&&d.tabla
   let el=document.getElementById('lupa');
   if(!el){el=document.createElement('aside');el.id='lupa';document.body.appendChild(el);
     el.innerHTML=`<div class="lp-head"><b>🔍 Consulta</b><div class="seg lp-tabs"><button data-lp="mat">📊 Materia</button><button data-lp="ref">📘 Referencia</button></div><div class="seg lp-tabs"><button data-lp="ses">Esta sesión</button><button data-lp="rel">Relacionado</button><button data-lp="todo">Todo</button></div><button class="lp-x" data-lp="x" aria-label="Cerrar">✕</button></div>
-      <input type="search" id="lpQ" class="ebuscar" placeholder="Palabra clave (ej. そうです, 開ける, どれ)" lang="ja" autocapitalize="off" autocorrect="off" spellcheck="false"><div class="lp-chips" id="lpChips"></div><div class="muted small" id="lpN"></div><div id="lpRes"></div>`;
-    el.addEventListener('click',e=>{const b=e.target.closest('[data-lp]');if(!b)return;if(b.dataset.lp==='x')return lupaCerrar();if(b.dataset.lp==='chip'){const k=b.dataset.k;lupaChip=lupaChip===k?'':k;lupaChipL=b.textContent;lupaQ='';el.querySelector('#lpQ').value='';return lupaPintar()}
+      <input type="search" id="lpQ" class="ebuscar" placeholder="Palabra clave (ej. そうです, 開ける, どれ)" lang="ja" autocapitalize="off" autocorrect="off" spellcheck="false"><div class="lp-chips" id="lpChips"></div><div id="lpDias"></div><div class="muted small" id="lpN"></div><div id="lpRes"></div>`;
+    el.addEventListener('click',e=>{const dd=e.target.closest('[data-lpdia]');if(dd){const v=dd.dataset.lpdia;lupaQ=lupaQ.trim().toLowerCase()===v.toLowerCase()?'':v;lupaChip='';el.querySelector('#lpQ').value=lupaQ;return lupaPintar()}
+      const b=e.target.closest('[data-lp]');if(!b)return;if(b.dataset.lp==='x')return lupaCerrar();if(b.dataset.lp==='chip'){const k=b.dataset.k;lupaChip=lupaChip===k?'':k;lupaChipL=b.textContent;lupaQ='';el.querySelector('#lpQ').value='';return lupaPintar()}
       if(['ses','rel','todo'].includes(b.dataset.lp)){lupaModo=b.dataset.lp;lupaChip=''}else lupaTab=b.dataset.lp;lupaPintar()});
     el.querySelector('#lpQ').addEventListener('input',e=>{lupaQ=e.target.value;lupaChip='';lupaPintar()});}
   lupaQ='';el.classList.add('on');document.body.classList.add('lupa-on');el.querySelector('#lpQ').value='';lupaPintar();
@@ -1490,18 +1501,20 @@ function lupaPintar(){const el=document.getElementById('lupa');if(!el)return;
     if(lupaCtx)for(const x of tx){const ws=lpTerms(x);for(const t of lpScore(ws,lupaCtx)){const c=cnt.get(t)||{n:0,l:[...ws].find(w=>w!==t&&w.startsWith(t))||t};c.n++;cnt.set(t,c)}} // términos del material que también están en la tarea
     const top=[...cnt].sort((a,b)=>b[1].n-a[1].n).slice(0,10);
     chipsEl.innerHTML=top.length?`<span class="muted small">Accesos rápidos:</span>`+top.map(([t,c])=>`<button class="lp-chip${lupaChip===t?' on':''}" data-lp="chip" data-k="${esc(t)}" lang="ja">${esc(c.l)}</button>`).join(''):''}
-  const q=(lupaChip||lupaQ).trim().toLowerCase(),modo=lupaChip?'todo':lupaModo,rel=modo==='rel'&&lupaCtx,ses=modo==='ses',res=[];
+  const dEl=el.querySelector('#lpDias');if(dEl)dEl.innerHTML=diasChips('data-lpdia',lupaQ.trim());
+  const dm=!lupaChip&&diaDe(lupaQ);
+  const q=dm?'':(lupaChip||lupaQ).trim().toLowerCase(),modo=lupaChip||dm?'todo':lupaModo,rel=modo==='rel'&&lupaCtx,ses=modo==='ses',res=[];
   const chips=h=>h.length?`<div class="lp-hit">coincide: ${h.slice(0,6).map(x=>`<span>${esc(x)}</span>`).join('')}</div>`:'';
-  if(lupaTab==='mat'){for(const d of materiaDias()){if(ses&&d.s.id!==eOpen)continue;for(const x of d.tablas){const txt=((x.tema||'')+' '+tablaTxt(x.t));
+  if(lupaTab==='mat'){for(const d of materiaDias()){if(ses&&d.s.id!==eOpen||dm&&!dm(d.s))continue;for(const x of d.tablas){const txt=((x.tema||'')+' '+tablaTxt(x.t));
       if(q&&!txt.toLowerCase().includes(q))continue;const h=rel?lpScore(lpTerms(tablaTxt(x.t)),lupaCtx):[];if(rel&&!h.length)continue;
       res.push({sc:h.length,f:d.s.fecha,html:`<div class="lp-it"><div class="muted small">${esc(eFechaCorta(d.s.fecha))} · ${esc(x.tema||d.s.titulo||'')}</div>${chips(h)}${eBlocks([x.t])}</div>`})}}}
-  else{for(const s2 of Object.values(E.ses)){if(!s2.blocks||(ses&&s2.id!==eOpen))continue;
+  else{for(const s2 of Object.values(E.ses)){if(!s2.blocks||(ses&&s2.id!==eOpen)||dm&&!dm(s2))continue;
       for(const sec of eParse(s2.blocks).secs){if(sec.kind!=='consulta')continue;const bt=bText(sec.blocks),t=(sec.title+' '+bt).toLowerCase();if(q&&!t.includes(q))continue;
         const h=rel?lpScore(lpTerms(sec.title+' '+bt),lupaCtx):[];if(rel&&!h.length)continue;
         res.push({sc:h.length,f:s2.fecha,html:`<details class="lp-it" ${q||rel?'open':''}><summary><span class="muted small">${esc(eFechaCorta(s2.fecha))}</span> <b>${esc(sec.title||'Consulta')}</b></summary>${chips(h)}${eBlocks(sinTablas(sec.blocks))}</details>`})}}}
   res.sort((a,b)=>b.sc-a.sc||b.f.localeCompare(a.f));const n=res.length;
   el.querySelector('#lpRes').innerHTML=res.map(r=>r.html).join('')||`<div class="muted small" style="padding:10px 2px">${ses?(lupaTab==='mat'?'Esta sesión no trae tablas. Prueba con «Relacionado».':'Esta sesión no trae teoría. Prueba con «Relacionado».'):rel?'No encontré material relacionado con esta tarea. Prueba con «Todo».':q?'Nada con «'+esc(lupaChip||lupaQ.trim())+'».':'Aún no hay material.'}</div>`;
-  el.querySelector('#lpN').textContent=ses?`${n} de esta sesión`:rel?`${n} relacionado${n===1?'':'s'} con esta tarea`:lupaChip?`${n} con «${lupaChipL||lupaChip}» (toca otra vez para quitar)`:q?`${n} resultado${n===1?'':'s'}`:'';
+  el.querySelector('#lpN').textContent=dm?`${n} de ${lupaQ.trim()}`:ses?`${n} de esta sesión`:rel?`${n} relacionado${n===1?'':'s'} con esta tarea`:lupaChip?`${n} con «${lupaChipL||lupaChip}» (toca otra vez para quitar)`:q?`${n} resultado${n===1?'':'s'}`:'';
   if(q)el.querySelectorAll('#lpRes td,#lpRes th').forEach(c=>c.classList.toggle('hit',c.textContent.toLowerCase().includes(q)));
 }
 function renderSesion(){
@@ -1949,8 +1962,23 @@ function renderTemas(){
 }
 /* 🔍 Búsqueda en Materia: deja solo las tablas que contienen lo escrito, abre su día y resalta las celdas */
 var matQ='';
+/* Buscar por día: «día 34», «dia34», «34», «29 oct», «29/10» o «2026-10-29» → función que dice si una sesión es de ese día */
+const MESES={ene:1,feb:2,mar:3,abr:4,may:5,jun:6,jul:7,ago:8,sep:9,set:9,oct:10,nov:11,dic:12};
+function diaDe(q){q=String(q||'').trim().toLowerCase();if(!q)return null;let m;
+  if(m=q.match(/^(?:d[ií]a|d)\s*(\d{1,3})$/)||q.match(/^(\d{1,3})$/)){const re=new RegExp('^d[ií]a\\s*'+m[1]+'(?!\\d)','i');return s=>re.test(s.titulo||'')}
+  if(/^\d{4}-\d\d-\d\d$/.test(q))return s=>s.fecha===q;
+  if(m=q.match(/^(\d{1,2})\s*(?:\/|-|\s|\s+de\s+)\s*(\d{1,2}|[a-z]{3})[a-z]*$/)){const mes=/^\d/.test(m[2])?+m[2]:MESES[m[2]];if(!mes)return null;
+    const fin='-'+String(mes).padStart(2,'0')+'-'+m[1].padStart(2,'0');return s=>(s.fecha||'').endsWith(fin)}
+  return null}
+const diaCorto=s=>{const m=(s.titulo||'').match(/^d[ií]a\s*\d+/i);return m?m[0].replace(/^d[ií]a\s*/i,'Día '):eFechaCorta(s.fecha)};
+function diasChips(attr,activo){const ds=materiaDias().filter(d=>d.tablas.length);if(!ds.length)return'';
+  return `<div class="dchips"><span class="muted small">Por día:</span>${ds.map(d=>{const l=diaCorto(d.s);return `<button class="lp-chip${activo&&activo.toLowerCase()===l.toLowerCase()?' on':''}" ${attr}="${esc(l)}">${esc(l)}</button>`}).join('')}</div>`}
 function matFiltrar(){
-  const q=matQ.trim().toLowerCase();let n=0;
+  const q=matQ.trim().toLowerCase();let n=0;const dm=diaDe(q);
+  document.querySelectorAll('[data-matdia]').forEach(b=>b.classList.toggle('on',b.dataset.matdia.toLowerCase()===q));
+  if(dm){document.querySelectorAll('details.emat').forEach(d=>{const s=E.ses[d.dataset.mat],ok=!!s&&dm(s);d.style.display=ok?'':'none';d.open=ok||(!ok&&false);
+      d.querySelectorAll('.mtab').forEach(t=>{t.style.display='';if(ok)n++;t.querySelectorAll('td,th').forEach(c=>c.classList.remove('hit'))})});
+    const c=document.getElementById('matCuenta');if(c)c.textContent=n?`${n} tabla${n>1?'s':''} de ${matQ.trim()} (toca otra vez el día para quitar)`:`No hay tablas de ${matQ.trim()}`;return}
   document.querySelectorAll('details.emat').forEach(d=>{let hay=0;
     d.querySelectorAll('.mtab').forEach(t=>{const ok=!q||t.dataset.q.includes(q);t.style.display=ok?'':'none';if(ok&&q){hay++;n++}
       t.querySelectorAll('td,th').forEach(c=>c.classList.toggle('hit',!!q&&ok&&c.textContent.toLowerCase().includes(q)))});
@@ -1964,7 +1992,7 @@ function renderMateria(){
     <div class="row"><h1 style="font-size:1.2rem">Estudio diario</h1><span class="sp"></span><button class="btn" data-e="refresh">Actualizar</button></div>
     <div class="estat" id="eStat" data-s="${sc}">${esc(st)}</div>
     ${eSubTabs()}
-    ${dias.length?`<input type="search" id="matBuscar" class="ebuscar" placeholder="🔍 Buscar en las tablas (ej. 開ける, どれ, そうです)" lang="ja" value="${esc(matQ)}" autocapitalize="off" autocorrect="off" spellcheck="false"><div class="muted small" id="matCuenta"></div>`:''}
+    ${dias.length?`<input type="search" id="matBuscar" class="ebuscar" placeholder="🔍 Buscar en las tablas (ej. 開ける, どれ, día 34, 29 oct)" lang="ja" value="${esc(matQ)}" autocapitalize="off" autocorrect="off" spellcheck="false">${diasChips('data-e="matdia" data-matdia',matQ.trim())}<div class="muted small" id="matCuenta"></div>`:''}
     ${(()=>{const f=tFijadas();return f.length?`<details class="esec emat efij" data-mat="fij" ${matAbiertos.has('fij')?'open':''}><summary><span class="ek">${f.length} tabla${f.length>1?'s':''} fijada${f.length>1?'s':''}</span><b>📌 Fijadas</b></summary><div class="ebody">${tTablasHtml(f,true)}</div></details>`:''})()}
     ${dias.length?dias.map((d,i)=>`<details class="esec emat" data-mat="${esc(d.s.id)}" ${matAbiertos.has(d.s.id)?'open':''}><summary><span class="ek">${esc(eFecha(d.s.fecha))} · ${d.tablas.length} tabla${d.tablas.length>1?'s':''}</span><b>${esc(d.s.titulo||'Sesión')}</b></summary>
       <div class="ebody">${tTablasHtml(d.tablas,true)}</div></details>`).join('')
@@ -2046,12 +2074,14 @@ function eClick(t){
   else if(a==='au-retry'){delete auEst[t.dataset.it];auSubir(eOpen,t.dataset.it)}
   else if(a==='au-oir')auOir(t.dataset.id);
   else if(a==='au-del'){const w=eWork(eOpen);if(w.sent||!confirm('¿Borrar esta grabación?'))return;const an=w.ans[t.dataset.it]||{};an.r='';an.t=Date.now();bMark(eOpen,'a:'+t.dataset.it);eSave();bSoon(2500);render()}
+  else if(a==='matdia'){const v=t.dataset.matdia;matQ=matQ.trim().toLowerCase()===v.toLowerCase()?'':v;const i=document.getElementById('matBuscar');if(i)i.value=matQ;matFiltrar()}
   else if(a==='ref2mat'){matQ=t.dataset.q||'';eSub='mat';render()}
   else if(a==='pin')tTogglePin(t.dataset.id);
   else if(a==='lado')ladoToggle(t.dataset.id);
   else if(a==='tabla-img')tablaImagen();
   else if(a==='tabla-cerrar'){history.replaceState(null,'',location.pathname);view='home';render()}
-  else if(a==='open'){eOpen=t.dataset.id;view='sesion';render();bSync()}
+  else if(a==='open'){eOpen=t.dataset.id;view='sesion';render();bSync();if(!E.ultimo||E.ultimo.id!==eOpen){E.ultimo={id:eOpen,y:0,sec:'',t:Date.now()};eSave()}}
+  else if(a==='volver'){const u=E.ultimo;if(!u||!E.ses[u.id])return;eOpen=u.id;view='sesion';render();bSync();requestAnimationFrame(()=>window.scrollTo(0,u.y||0))}
   else if(a==='back'){lupaCerrar();if(eOpen){const w=eWork(eOpen);if(eRunning(w)){eStopAll(w);eSave()}}view='estudio';eOpen=null;render()}
   else if(a==='timer'){eToggle(eOpen,t.dataset.sec);render()}
   else if(a==='entregar')eEntregar();

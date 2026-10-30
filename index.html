@@ -344,11 +344,11 @@ button.pill{cursor:pointer;font-family:inherit}
 .ehoy .efecha{color:var(--part)}.ecard.eses.ehoy .etit{font-size:1.16rem}
 .echip,.enota{font-family:"Nunito",sans-serif;font-weight:800}
 /* ===== Fondo propio (imagen de este dispositivo; la paleta sale de la imagen) ===== */
-#fondo{position:fixed;inset:0;z-index:-1;background:var(--bg) center/cover no-repeat;pointer-events:none;animation:aFade .6s both}
+#fondo{position:fixed;top:0;left:0;width:100%;height:100vh;height:100lvh;z-index:-1;background:var(--bg) center/cover no-repeat;pointer-events:none;animation:aFade .6s both}
 #fondo::after{content:"";position:absolute;inset:0;background:var(--bg);opacity:var(--fvel,.35);transition:opacity .2s}
 html.fondo body{background:transparent}
 html.fondo .card,html.fondo .ecard,html.fondo .lesson,html.fondo .mode,html.fondo .icon-btn,html.fondo .pill{-webkit-backdrop-filter:blur(14px) saturate(1.3);backdrop-filter:blur(14px) saturate(1.3)}
-html.fondo .start{background:linear-gradient(120deg,color-mix(in srgb,var(--accent) 80%,#000),color-mix(in srgb,var(--accent) 58%,#000) 55%,color-mix(in srgb,var(--accent2) 50%,#000))}
+html.fondo .start{background:linear-gradient(120deg,color-mix(in srgb,var(--accent) 62%,#000),color-mix(in srgb,var(--accent) 45%,#000) 55%,color-mix(in srgb,var(--accent2) 38%,#000))}
 html.fondo h3,html.fondo .foot{text-shadow:0 0 6px var(--bg),0 0 2px var(--bg)}
 .fgal{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .fgal .fth{position:relative;width:78px;height:54px;border-radius:10px;border:2px solid var(--line);background:var(--surface2) center/cover;padding:0}
@@ -378,21 +378,22 @@ html.fondo h3,html.fondo .foot{text-shadow:0 0 6px var(--bg),0 0 2px var(--bg)}
 #app.enter>*:nth-child(n+8),#app.enter .estudio>*:nth-child(n+8),#app.enter .elist>*:nth-child(n+8),#app.enter .modes>*:nth-child(n+8){animation-delay:.35s}
 #app.enter .ring svg{animation:aRing .9s cubic-bezier(.2,.8,.2,1) both}
 #app.enter .mb{animation:aGrow 1s .25s cubic-bezier(.2,.8,.2,1) both}
-.pleg.on .pleg-in .lesson,.pleg.on .pleg-in .catrow{animation:aIn .4s cubic-bezier(.2,.8,.2,1) both}
-.pleg.on .pleg-in .lrow:nth-child(2) .lesson,.pleg.on .pleg-in .catrow:nth-child(2){animation-delay:.04s}
-.pleg.on .pleg-in .lrow:nth-child(3) .lesson,.pleg.on .pleg-in .catrow:nth-child(3){animation-delay:.08s}
-.pleg.on .pleg-in .lrow:nth-child(n+4) .lesson,.pleg.on .pleg-in .catrow:nth-child(n+4){animation-delay:.12s}
+.pleg.abre .pleg-in .lesson,.pleg.abre .pleg-in .catrow{animation:aIn .4s cubic-bezier(.2,.8,.2,1) both}
+.pleg.abre .pleg-in .lrow:nth-child(2) .lesson,.pleg.abre .pleg-in .catrow:nth-child(2){animation-delay:.04s}
+.pleg.abre .pleg-in .lrow:nth-child(3) .lesson,.pleg.abre .pleg-in .catrow:nth-child(3){animation-delay:.08s}
+.pleg.abre .pleg-in .lrow:nth-child(n+4) .lesson,.pleg.abre .pleg-in .catrow:nth-child(n+4){animation-delay:.12s}
 /* tocar: se hunde un poco */
 button,.btn,.ecard,.lesson,.mode,.eletra,.tk-opt,.lp-chip{transition:transform .16s cubic-bezier(.2,.8,.2,1),box-shadow .2s,background-color .2s,border-color .2s,opacity .2s}
 button:active:not(:disabled),.ecard:active,.lesson:active,.mode:active{transform:scale(.97)}
 /* selección: pequeño rebote */
-.eletra.on,.lp-chip.on,.epin.on,.simr.on,[data-e="sim-r"].on{animation:aPop .32s cubic-bezier(.2,.8,.2,1)}
-.everd{animation:aPop .4s cubic-bezier(.2,.8,.2,1) both}
+.pop{animation:aPop .32s cubic-bezier(.2,.8,.2,1)}
+#app.enter .everd{animation:aPop .4s cubic-bezier(.2,.8,.2,1) both}
 .etimer.on{animation:aGlow 1.8s ease-in-out infinite}
-.lp-it,#lado .ld-it{animation:aIn .4s cubic-bezier(.2,.8,.2,1) both}
+.lp-it{animation:aIn .4s cubic-bezier(.2,.8,.2,1) both}
 #lado{animation:aSlideL .35s cubic-bezier(.2,.8,.2,1)}
 #etoc{animation:aFade .5s .2s both}
-.evolver{background:linear-gradient(100deg,var(--surface) 40%,color-mix(in srgb,var(--part) 14%,var(--surface)) 50%,var(--surface) 60%) 0 0/200% 100%;animation:aIn .5s both,aShine 2.6s 1s ease-in-out 2}
+.evolver{background:linear-gradient(100deg,var(--surface) 40%,color-mix(in srgb,var(--part) 14%,var(--surface)) 50%,var(--surface) 60%) 0 0/200% 100%}
+#app.enter .evolver{animation:aIn .5s both,aShine 2.6s 1s ease-in-out 2}
 /* PC (mouse): al pasar por encima se levanta */
 @media (hover:hover) and (pointer:fine){
   .ecard:hover,.lesson:hover,.mode:hover,.card.chart:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(0,0,0,.10)}
@@ -1025,10 +1026,10 @@ function fondoPintar(f,th){const r=document.documentElement,modo=th==='auto'?(ma
   el.style.backgroundImage=`url("${FONDO.url}")`}
 function fondoCargarImg(file){return new Promise((ok,no)=>{const u=URL.createObjectURL(file),im=new Image();
   im.onload=()=>{URL.revokeObjectURL(u);ok(im)};im.onerror=()=>{URL.revokeObjectURL(u);no(new Error('img'))};im.src=u})}
-const fondoBlob=c=>new Promise(ok=>c.toBlob(ok,'image/jpeg',.88));
+const fondoBlob=c=>new Promise(ok=>c.toBlob(b=>ok(b),'image/webp',.95)).then(b=>b&&b.type==='image/webp'?b:new Promise(ok=>c.toBlob(ok,'image/jpeg',.95)));
 async function fondoAgregar(files){let ult=null,mal=0;
   for(const [i,file] of files.entries()){if(FONDO.lista.length>=12){toast('Máximo 12 fondos: quita alguno primero');break}
-    try{const im=await fondoCargarImg(file),blob=await fondoBlob(fondoLienzo(im,2560)),thumb=fondoLienzo(im,180).toDataURL('image/jpeg',.8);
+    try{const im=await fondoCargarImg(file),blob=/^image\/(jpeg|webp)$/.test(file.type)&&Math.max(im.width,im.height)<=3840?file:await fondoBlob(fondoLienzo(im,3840)),thumb=fondoLienzo(im,180).toDataURL('image/jpeg',.8);
       const rec={id:'f'+Date.now().toString(36)+i,t:Date.now(),blob,thumb,pal:fondoPaleta(fondoLienzo(im,64))};
       await fondoTx('readwrite',st=>st.put(rec));FONDO.lista.push(rec);ult=rec.id}catch(e){mal++}}
   if(mal)toast(mal===1?'No se pudo abrir esa imagen (usa JPG, PNG o WebP)':`No se pudieron abrir ${mal} imágenes (usa JPG, PNG o WebP)`);
@@ -1078,7 +1079,7 @@ function renderHome(){
       <div class="ring" aria-label="${exam} días para el examen">
         <svg viewBox="0 0 100 100"><defs><linearGradient id="g1" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#ffb547"/><stop offset="1" stop-color="var(--accent)"/></linearGradient></defs>
           <circle cx="50" cy="50" r="44" fill="none" stroke="var(--surface2)" stroke-width="9"/>
-          <circle cx="50" cy="50" r="44" fill="none" stroke="url(#g1)" stroke-width="9" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-prog)}"/></svg>
+          <circle cx="50" cy="50" r="44" fill="none" stroke="url(#g1)" stroke-width="9" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${(C*(1-prog)).toFixed(1)}"/></svg>
         <div class="in"><div><b>${exam}</b><small>días</small></div></div>
       </div>
       <div>
@@ -2275,7 +2276,7 @@ function eClick(t){
   else if(a==='au-oir')auOir(t.dataset.id);
   else if(a==='au-del'){const w=eWork(eOpen);if(w.sent||!confirm('¿Borrar esta grabación?'))return;const an=w.ans[t.dataset.it]||{};an.r='';an.t=Date.now();bMark(eOpen,'a:'+t.dataset.it);eSave();bSoon(2500);render()}
   else if(a==='matdia'){const v=t.dataset.matdia;matQ=matQ.trim().toLowerCase()===v.toLowerCase()?'':v;const i=document.getElementById('matBuscar');if(i)i.value=matQ;matFiltrar()}
-  else if(a==='pleg'){const w=t.closest('.pleg'),k=t.dataset.k;PLEG[k]=!PLEG[k];w.classList.toggle('on',PLEG[k]);t.setAttribute('aria-expanded',PLEG[k])}
+  else if(a==='pleg'){const w=t.closest('.pleg'),k=t.dataset.k;PLEG[k]=!PLEG[k];w.classList.toggle('on',PLEG[k]);if(PLEG[k]){w.classList.add('abre');setTimeout(()=>w.classList.remove('abre'),900)}t.setAttribute('aria-expanded',PLEG[k])}
   else if(a==='ref2mat'){matQ=t.dataset.q||'';eSub='mat';render()}
   else if(a==='pin')tTogglePin(t.dataset.id);
   else if(a==='lado')ladoToggle(t.dataset.id);
@@ -2298,6 +2299,16 @@ function eInput(el){
   if(k==='hecho')eSave();
 }
 
+/* Sin parpadeos: la sincronización de fondo vuelve a pintar la pantalla cada poco. Si el resultado es idéntico
+   y no acabas de tocar nada, no se toca el DOM; y el rebote de selección va solo en el botón que tocaste. */
+let ultToque=0,popSel='';
+['pointerdown','keydown','input'].forEach(t=>document.addEventListener(t,()=>{ultToque=Date.now()},true));
+document.addEventListener('click',e=>{ultToque=Date.now();popSel='';const b=e.target.closest&&e.target.closest('button');if(!b)return;
+  const at=[...b.attributes].filter(a=>a.name.startsWith('data-')).map(a=>`[${a.name}="${CSS.escape(a.value)}"]`).join('');if(at){popSel='button'+at;setTimeout(popAplicar,0)}},true);
+function popAplicar(){const b=popSel&&document.querySelector(popSel);popSel='';if(!b||!b.classList.contains('on'))return;
+  b.classList.remove('pop');void b.offsetWidth;b.classList.add('pop');b.addEventListener('animationend',()=>b.classList.remove('pop'),{once:true})}
+(function(){const app=document.getElementById('app'),d=Object.getOwnPropertyDescriptor(Element.prototype,'innerHTML');let ult=null;
+  Object.defineProperty(app,'innerHTML',{configurable:true,get(){return d.get.call(this)},set(v){if(v===ult&&Date.now()-ultToque>1500)return;ult=v;d.set.call(this,v)}})})();
 /* ---------- Actualización de la app ---------- */
 let swReg=null,recargaPendiente=false;
 function buscarVersion(){try{swReg&&swReg.update()}catch(e){}}

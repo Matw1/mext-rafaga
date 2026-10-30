@@ -415,7 +415,18 @@ button:active:not(:disabled),.ecard:active,.lesson:active,.mode:active{transform
 @media (min-width:1100px){body.lupa-on #app{margin-right:440px}}
 @media (max-width:759px){#lupa{top:auto;width:100vw;height:72vh;border-left:0;border-top:1px solid var(--line);border-radius:16px 16px 0 0;transform:translateY(105%)}#lupa.on{transform:none}}
 .evolver{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;margin:8px 0;border-left:4px solid var(--part);cursor:pointer}
-.pleg{margin-bottom:10px}.pleg-h{cursor:pointer}.lchev{transition:transform .3s ease}.pleg.on .lchev{transform:rotate(180deg)}
+.pleg{margin-bottom:10px}
+/* Lecciones y Precisión: dos cuadros a la par; lo que se abre baja a lo ancho debajo de ambos */
+.duo{display:grid;grid-template-columns:1fr 1fr;column-gap:12px;row-gap:0;margin:20px 0 4px}
+.duo>.pleg{display:contents}
+.duo .pleg-h{order:0;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:10px;min-height:132px;height:100%;padding:16px;border-radius:18px}
+.duo .pleg-h .glyph{width:44px;height:44px;font-size:1.3rem;border-radius:13px}
+.duo .pleg-h .lt{gap:3px}.duo .pleg-h .lt b{white-space:normal;font-size:1rem;line-height:1.25}
+.duo .pleg-h .lchev{position:absolute;top:14px;right:14px;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--surface2);font-size:.8rem}
+.duo .pleg.on .pleg-h{border-color:var(--part);box-shadow:0 0 0 3px color-mix(in srgb,var(--part) 18%,transparent),var(--shadow)}
+.duo .pleg-b{order:1;grid-column:1/-1}.duo .pleg.on .pleg-in{padding-top:12px}
+.duo .lempty{cursor:default}
+@media (max-width:420px){.duo .pleg-h{min-height:150px;padding:14px}}.pleg-h{cursor:pointer}.lchev{transition:transform .3s ease}.pleg.on .lchev{transform:rotate(180deg)}
 .pleg-b{display:grid;grid-template-rows:0fr;opacity:0;transform:translateY(-6px);transition:grid-template-rows .35s ease,opacity .3s ease,transform .35s ease}
 .pleg.on .pleg-b{grid-template-rows:1fr;opacity:1;transform:none}.pleg-in{overflow:hidden;min-height:0}.pleg.on .pleg-in{padding-top:10px}
 .pleg-in .lessons,.pleg-in>.card{margin:0}
@@ -1077,7 +1088,9 @@ function renderHome(){
       </div>
     </section>
     <button class="start" data-act="start"><span class="play">▶</span><span><b>Ráfaga de ${S.settings.dur} s</b><small>${mode[1]} · Enter</small></span></button>
-    ${lessonsHtml()}
+    <div class="duo">${lessonsHtml()}
+    ${plegHtml('prec',`<span class="glyph" style="--c:var(--part)">🎯</span><span class="lt"><b>Precisión por debilidad</b><span class="muted small">${catResumen()}</span></span>`,`<div class="card">${catRows()}</div>`)}
+    </div>
     <h3>Otros</h3>
     <div class="modes">${MODES.map(([k,n,s])=>{
       const p=CATS[k]?catAcc(k):null;
@@ -1085,7 +1098,6 @@ function renderHome(){
         <span class="glyph">${CUI[k].g}</span><span class="mn">${n}</span><span class="ms">${k==='buf'?(bufN?bufN+' por liberar':'Vacío 🎉'):s}</span>
         ${k==='buf'&&bufN?`<span class="badge">${bufN}</span>`:p!=null?`<span class="acc">${Math.round(p*100)}%</span>`:''}
         ${p!=null?`<span class="mb" style="width:${p*100}%"></span>`:''}</button>`}).join('')}</div>
-    ${plegHtml('prec',`<span class="glyph" style="--c:var(--part)">🎯</span><span class="lt"><b>Precisión por debilidad</b><span class="muted small">${catResumen()}</span></span>`,`<div class="card">${catRows()}</div>`)}
     <h3>Ajustes</h3>
     <details class="card" data-aj ${ajAbierto?'open':''}><summary>⚙️ Duración, presión, furigana, tema y respaldo</summary><div class="stack" style="margin-top:14px">
       <div class="set"><span>Duración</span><span class="seg">${[60,75,90].map(d=>`<button data-dur="${d}" class="${S.settings.dur===d?'on':''}">${d}s</button>`).join('')}</span></div>
@@ -1874,7 +1886,7 @@ function buildProd(key,a){
 
 function lessonsHtml(){
   const L=lessons();
-  if(!L.length)return `<h3>📅 Lecciones de días estudiados</h3><div class="card lempty"><b>Aún no hay lecciones.</b><div class="muted small">Cada vez que el instructor corrija un día y agregue la sección «🎮 Juego», aparecerá aquí una lección nueva para jugar.</div></div>`;
+  if(!L.length)return `<div class="pleg"><div class="lesson pleg-h lempty"><span class="glyph" style="--c:var(--dia)">📅</span><span class="lt"><b>Aún no hay lecciones</b><span class="muted small">Aparecen cuando el instructor corrige un día con la sección «🎮 Juego».</span></span></div></div>`;
   const allK=lessonKeys();
   const acc=keys=>{let n=0,ok=0;for(const k of keys){const it=S.items[k];if(it){n+=it.n;ok+=it.ok}}return n?ok/n:null};
   const card=(mode,title,sub,keys,isNew,pmode,pn)=>{const p=acc(keys);return `<div class="lrow"><button class="lesson ${S.settings.mode===mode?'on':''}" data-mode="${esc(mode)}">

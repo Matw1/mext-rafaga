@@ -1,6 +1,6 @@
 // MEXT Ráfaga — service worker: guarda la app en el teléfono para que funcione sin internet.
 // Al publicar una versión nueva, sube el número de VERSION para que el teléfono la descargue.
-const VERSION = 'mext-rafaga-v57';
+const VERSION = 'mext-rafaga-v58';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'vendor/pdf.min.js', 'vendor/pdf.worker.min.js'];
 
 self.addEventListener('install', e => {

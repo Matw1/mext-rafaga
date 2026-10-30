@@ -442,6 +442,7 @@ button:active:not(:disabled),.ecard:active,.lesson:active,.mode:active{transform
 @media (max-width:759px){#etoc{right:4px;top:72px}}
 .dchips{display:flex;gap:6px;align-items:center;overflow-x:auto;padding:6px 0 4px;-webkit-overflow-scrolling:touch}.dchips .lp-chip{flex:none}.dchips>span{flex:none}
 .lp-chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0 2px}.lp-chip{font:inherit;font-size:.85rem;padding:4px 10px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--text);cursor:pointer}.lp-chip span{color:var(--muted);font-size:.75rem}.lp-chip.on{background:var(--text);color:var(--bg)}.lp-chip.on span{color:var(--bg)}
+.lp-tar{margin:6px 0 4px;padding-left:22px}.lp-tar li{margin:6px 0}.lp-resp{color:var(--part);font-size:.92em;margin-top:2px;white-space:pre-wrap}
 .lp-hit{margin:4px 0 6px;font-size:.78rem;color:var(--muted)}.lp-hit span{display:inline-block;margin:2px 4px 0 0;padding:1px 8px;border-radius:99px;background:color-mix(in srgb,var(--amar) 30%,transparent);color:var(--text)}
 </style>
 </head>
@@ -1662,7 +1663,7 @@ function lupaAbrir(secId){lupaModo=materiaDias().some(d=>d.s.id===eOpen&&d.tabla
   if(cur&&cur.blocks){const sec=eParse(cur.blocks).secs.find(x=>x.id===secId);if(sec)lupaCtx=sec.head+' '+bText(sec.blocks.filter(b=>b.type!=='_item'))+' '+bText(sec.items)}
   let el=document.getElementById('lupa');
   if(!el){el=document.createElement('aside');el.id='lupa';document.body.appendChild(el);
-    el.innerHTML=`<div class="lp-head"><b>🔍 Consulta</b><div class="seg lp-tabs"><button data-lp="mat">📊 Materia</button><button data-lp="ref">📘 Referencia</button></div><div class="seg lp-tabs"><button data-lp="ses">Esta sesión</button><button data-lp="rel">Relacionado</button><button data-lp="todo">Todo</button></div><button class="lp-x" data-lp="x" aria-label="Cerrar">✕</button></div>
+    el.innerHTML=`<div class="lp-head"><b>🔍 Consulta</b><div class="seg lp-tabs"><button data-lp="mat">📊 Materia</button><button data-lp="ref">📘 Referencia</button><button data-lp="retro">🧑‍🏫 Retro</button><button data-lp="tar">✍️ Tareas</button></div><div class="seg lp-tabs"><button data-lp="ses">Esta sesión</button><button data-lp="rel">Relacionado</button><button data-lp="todo">Todo</button></div><button class="lp-x" data-lp="x" aria-label="Cerrar">✕</button></div>
       <input type="search" id="lpQ" class="ebuscar" placeholder="Palabra clave (ej. そうです, 開ける, どれ)" lang="ja" autocapitalize="off" autocorrect="off" spellcheck="false"><div class="lp-chips" id="lpChips"></div><div id="lpDias"></div><div class="muted small" id="lpN"></div><div id="lpRes"></div>`;
     el.addEventListener('click',e=>{const dd=e.target.closest('[data-lpdia]');if(dd){const v=dd.dataset.lpdia;lupaQ=lupaQ.trim().toLowerCase()===v.toLowerCase()?'':v;lupaChip='';el.querySelector('#lpQ').value=lupaQ;return lupaPintar()}
       const b=e.target.closest('[data-lp]');if(!b)return;if(b.dataset.lp==='x')return lupaCerrar();if(b.dataset.lp==='chip'){const k=b.dataset.k;lupaChip=lupaChip===k?'':k;lupaChipL=b.textContent;lupaQ='';el.querySelector('#lpQ').value='';return lupaPintar()}
@@ -1672,7 +1673,7 @@ function lupaAbrir(secId){lupaModo=materiaDias().some(d=>d.s.id===eOpen&&d.tabla
 }
 function lupaCerrar(){const el=document.getElementById('lupa');if(el)el.classList.remove('on');document.body.classList.remove('lupa-on')}
 function lupaPintar(){const el=document.getElementById('lupa');if(!el)return;
-  el.querySelectorAll('[data-lp="mat"],[data-lp="ref"]').forEach(b=>b.classList.toggle('on',b.dataset.lp===lupaTab));
+  el.querySelectorAll('[data-lp="mat"],[data-lp="ref"],[data-lp="retro"],[data-lp="tar"]').forEach(b=>b.classList.toggle('on',b.dataset.lp===lupaTab));
   el.querySelectorAll('[data-lp="ses"],[data-lp="rel"],[data-lp="todo"]').forEach(b=>b.classList.toggle('on',b.dataset.lp===lupaModo));
   // Accesos rápidos: palabras de esta tarea que aparecen en tablas o teoría (las que más material tienen primero). Tocar una filtra sin escribir.
   const chipsEl=el.querySelector('#lpChips');
@@ -1690,12 +1691,25 @@ function lupaPintar(){const el=document.getElementById('lupa');if(!el)return;
   if(lupaTab==='mat'){for(const d of materiaDias()){if(ses&&d.s.id!==eOpen||dm&&!dm(d.s))continue;for(const x of d.tablas){const txt=((x.tema||'')+' '+tablaTxt(x.t));
       if(q&&!txt.toLowerCase().includes(q))continue;const h=rel?lpScore(lpTerms(tablaTxt(x.t)),lupaCtx):[];if(rel&&!h.length)continue;
       res.push({sc:h.length,f:d.s.fecha,html:`<div class="lp-it"><div class="muted small">${esc(eFechaCorta(d.s.fecha))} · ${esc(x.tema||d.s.titulo||'')}</div>${chips(h)}${eBlocks([x.t])}</div>`})}}}
+  else if(lupaTab==='retro'){for(const s2 of Object.values(E.ses)){if(!s2.blocks||(ses&&s2.id!==eOpen)||dm&&!dm(s2))continue;
+      // Retroalimentación y corrección por consigna del instructor
+      const p=eParse(s2.blocks);for(const sec of p.feedback.concat(p.corr)){const bt=bText(sec.blocks),t=(sec.head+' '+bt).toLowerCase();if(q&&!t.includes(q))continue;
+        const h=rel?lpScore(lpTerms(sec.head+' '+bt),lupaCtx):[];if(rel&&!h.length)continue;
+        res.push({sc:h.length,f:s2.fecha,html:`<details class="lp-it" ${q||rel?'open':''}><summary><span class="muted small">${esc(eFechaCorta(s2.fecha))} · ${esc(s2.titulo||'')}</span> <b>${esc(sec.head)}</b></summary>${chips(h)}${eBlocks(sec.blocks)}</details>`})}}}
+  else if(lupaTab==='tar'){const resp=r=>String(r||'').replace(/^\[audio:[^\]]*\]\s*/,'🎙️ ');
+    for(const s2 of Object.values(E.ses)){if(!s2.blocks||(ses&&s2.id!==eOpen)||dm&&!dm(s2))continue;const ans=(E.work[s2.id]||{}).ans||{};
+      // Consignas de Tarea y Práctica con tu respuesta; si buscas una palabra, solo las consignas donde aparece
+      for(const sec of eParse(s2.blocks).secs){if(sec.kind!=='tarea'&&sec.kind!=='practica')continue;
+        const its=sec.items.map(b=>({b,r:resp(ans[b.id]&&ans[b.id].r)})),tx=x=>(bText([x.b])+' '+x.r).toLowerCase();
+        const sel=q&&!sec.title.toLowerCase().includes(q)?its.filter(x=>tx(x).includes(q)):its;if(!sel.length)continue;
+        const h=rel?lpScore(lpTerms(sec.title+' '+its.map(tx).join(' ')),lupaCtx):[];if(rel&&!h.length)continue;
+        res.push({sc:h.length,f:s2.fecha,html:`<details class="lp-it" ${q||rel?'open':''}><summary><span class="muted small">${esc(eFechaCorta(s2.fecha))}</span> <b>${E_LABEL[sec.kind]}: ${esc(sec.title)}</b></summary>${chips(h)}<ol class="lp-tar">${sel.map(x=>`<li>${eRich(x.b.rt)}${x.r?`<div class="lp-resp">↳ ${esc(x.r)}</div>`:''}</li>`).join('')}</ol></details>`})}}}
   else{for(const s2 of Object.values(E.ses)){if(!s2.blocks||(ses&&s2.id!==eOpen)||dm&&!dm(s2))continue;
       for(const sec of eParse(s2.blocks).secs){if(sec.kind!=='consulta')continue;const bt=bText(sec.blocks),t=(sec.title+' '+bt).toLowerCase();if(q&&!t.includes(q))continue;
         const h=rel?lpScore(lpTerms(sec.title+' '+bt),lupaCtx):[];if(rel&&!h.length)continue;
         res.push({sc:h.length,f:s2.fecha,html:`<details class="lp-it" ${q||rel?'open':''}><summary><span class="muted small">${esc(eFechaCorta(s2.fecha))}</span> <b>${esc(sec.title||'Consulta')}</b></summary>${chips(h)}${eBlocks(sinTablas(sec.blocks))}</details>`})}}}
   res.sort((a,b)=>b.sc-a.sc||b.f.localeCompare(a.f));const n=res.length;
-  el.querySelector('#lpRes').innerHTML=res.map(r=>r.html).join('')||`<div class="muted small" style="padding:10px 2px">${ses?(lupaTab==='mat'?'Esta sesión no trae tablas. Prueba con «Relacionado».':'Esta sesión no trae teoría. Prueba con «Relacionado».'):rel?'No encontré material relacionado con esta tarea. Prueba con «Todo».':q?'Nada con «'+esc(lupaChip||lupaQ.trim())+'».':'Aún no hay material.'}</div>`;
+  el.querySelector('#lpRes').innerHTML=res.map(r=>r.html).join('')||`<div class="muted small" style="padding:10px 2px">${ses?`Esta sesión no trae ${({mat:'tablas',ref:'teoría',retro:'retroalimentación todavía',tar:'tareas'})[lupaTab]}. Prueba con «Relacionado».`:rel?'No encontré material relacionado con esta tarea. Prueba con «Todo».':q?'Nada con «'+esc(lupaChip||lupaQ.trim())+'».':'Aún no hay material.'}</div>`;
   el.querySelector('#lpN').textContent=dm?`${n} de ${lupaQ.trim()}`:ses?`${n} de esta sesión`:rel?`${n} relacionado${n===1?'':'s'} con esta tarea`:lupaChip?`${n} con «${lupaChipL||lupaChip}» (toca otra vez para quitar)`:q?`${n} resultado${n===1?'':'s'}`:'';
   if(q)el.querySelectorAll('#lpRes td,#lpRes th').forEach(c=>c.classList.toggle('hit',c.textContent.toLowerCase().includes(q)));
 }

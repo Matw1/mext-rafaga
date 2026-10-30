@@ -2130,20 +2130,21 @@ function materiaDias(){
 /* ---------- 🗺️ Temas por fase: lista del instructor con el % de cada tema (no visto = 0) ----------
    Si una sesión más reciente trae el mismo tema en «Tema» (por código, p. ej. «1.2», o por nombre)
    con «Dominio tema %», se usa ese valor: así el tema del día está al día aunque la fila no se haya tocado. */
-const tNorm=s=>String(s||'').toLowerCase().normalize('NFKC').replace(/s+/g,' ').trim();
-function temaDeSesion(t){
+const tNorm=s=>String(s||'').toLowerCase().normalize('NFKC').replace(/\s+/g,' ').trim();
+// hasta (AAAA-MM-DD, opcional): el valor que tenía el tema ese día, para la curva histórica
+function temaDeSesion(t,hasta){
   let best=null;
   for(const s of Object.values(E.ses)){
-    if(typeof s.domTema!=='number'||!s.tema)continue;
+    if(typeof s.domTema!=='number'||!s.tema||hasta&&s.fecha>hasta)continue;
     const st=tNorm(s.tema),cod=tNorm(t.codigo);
     // por código: «1.2» al inicio, sin confundirlo con «1.20»
     const ok=!!cod&&st.startsWith(cod)&&!/^[\d.]/.test(st.slice(cod.length));
     if(!ok&&!(st===tNorm(t.tema)||st.includes(tNorm(t.tema))))continue;
     if(!best||(s.edited||s.fecha)>(best.edited||best.fecha))best=s;
   }
-  return best&&(!t.edited||(best.edited||'')>t.edited)?best:null;
+  return best&&(!t.edited||(best.edited||'')>t.edited||hasta&&t.edited.slice(0,10)>hasta)?best:null;
 }
-function temaPct(t){const s=temaDeSesion(t);let v=s?s.domTema:t.dom;if(typeof v!=='number')return null;if(v>0&&v<1)v*=100;return Math.max(0,Math.min(100,Math.round(v)))}
+function temaPct(t,hasta){const s=temaDeSesion(t,hasta),fila=!hasta||(t.edited||'').slice(0,10)<=hasta;let v=s?s.domTema:fila?t.dom:null;if(typeof v!=='number')return null;if(v>0&&v<1)v*=100;return Math.max(0,Math.min(100,Math.round(v)))}
 function renderTemas(){
   const[st,sc]=eStatus(),ts=E.temas||[],fases=[...new Set(ts.map(t=>t.fase))];
   const actual=eFaseActual();
@@ -2370,9 +2371,19 @@ function renderProg(){
   html+=card('Calificación por sesión',prom==null?'La nota de 1 a 10 que pone el instructor':`<b style="color:${notaColor(prom)}">Promedio ${nf(prom)}/10</b> (${todas.length} ${todas.length===1?'sesión':'sesiones'})`,notas.length?barras(notas.map(s=>({v:Math.min(10,s.nota),c:notaColor(Math.min(10,s.nota)),label:eFechaCorta(s.fecha),tip:`${eFechaCorta(s.fecha)} · ${s.titulo} · ${nf(s.nota)}/10`})),{max:10,paso:2,fmt:nf,refV:prom,refTxt:'Prom. '+nf(prom),refColor:'var(--part)',color:'var(--part)'})
     +tabla(['Fecha','Sesión','Nota'],todas.map(s=>[s.fecha,s.titulo,String(s.nota)]).concat([['','Promedio',nf(prom)]])):vacio('Aparecerá cuando el instructor ponga la Calificación en tus sesiones.'));
   // 2) Dominio de la fase actual
-  const conDom=ses.filter(s=>typeof s.dominio==='number'),fase=conDom.length?conDom[conDom.length-1].fase:null,dom=conDom.filter(s=>s.fase===fase);
-  const dv=s=>s.dominio>0&&s.dominio<1?s.dominio*100:s.dominio;
-  html+=card(`Dominio de la ${esc(fase||'fase')}`,'Lo estima el instructor · línea punteada = checkpoint del 50%',dom.length?lineas(dom.map(s=>({t:dms(s.fecha),v:dv(s),tip:`${eFechaCorta(s.fecha)} · ${Math.round(dv(s))}%`})),{max:100,paso:25,fmt:v=>Math.round(v)+'%',x0:dms(dom[0].fecha)-864e5,x1:Math.max(dms(dom[dom.length-1].fecha)+864e5,dms(dom[0].fecha)+6*864e5),refV:50,refTxt:'50%',color:'var(--part)'})
+  // Con la lista de 🗺️ Temas, la curva es la misma cuenta que la píldora del inicio (temas en 100% ÷ temas de la fase),
+  // calculada para cada día de sesión; el «Dominio %» antiguo por sesión solo se usa si no hay temas.
+  const faseT=eFaseActual(),tsF=(E.temas||[]).filter(t=>t.fase===faseT);
+  let conDom,fase,dom,dv,subDom='Lo estima el instructor · línea punteada = checkpoint del 50%';
+  if(faseT&&tsF.length){
+    const dias=[...new Set(ses.filter(s=>s.fase===faseT).map(s=>s.fecha).concat(today()))].filter(f=>f<=today()).sort();
+    fase=faseT;dom=dias.map(f=>({fecha:f,fase:faseT,v:100*tsF.filter(t=>temaPct(t,f)===100).length/tsF.length}));dv=x=>x.v;
+    subDom=`Temas en 100% ÷ ${tsF.length} temas de la fase (los % los pone el instructor) · línea punteada = checkpoint del 50%`;
+  }else{
+    conDom=ses.filter(s=>typeof s.dominio==='number');fase=conDom.length?conDom[conDom.length-1].fase:null;dom=conDom.filter(s=>s.fase===fase);
+    dv=s=>s.dominio>0&&s.dominio<1?s.dominio*100:s.dominio;
+  }
+  html+=card(`Dominio de la ${esc(fase||'fase')}`,subDom,dom.length?lineas(dom.map(s=>({t:dms(s.fecha),v:dv(s),tip:`${eFechaCorta(s.fecha)} · ${Math.round(dv(s))}%`})),{max:100,paso:25,fmt:v=>Math.round(v)+'%',x0:dms(dom[0].fecha)-864e5,x1:Math.max(dms(dom[dom.length-1].fecha)+864e5,dms(dom[0].fecha)+6*864e5),refV:50,refTxt:'50%',color:'var(--part)'})
     +tabla(['Fecha','Fase','Dominio'],dom.map(s=>[s.fecha,s.fase||'',Math.round(dv(s))+'%'])):vacio('Aparecerá cuando el instructor ponga «Dominio %» en tus sesiones.'));
   // 3) Horas reales vs ritmo necesario
   const hs=ses.filter(s=>typeof s.horas==='number');

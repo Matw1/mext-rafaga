@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0c0e1b">
 <title>MEXT Ráfaga</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400..900&family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -14,20 +16,20 @@
 :root{--bg:#f6f0e4;--surface:#fffdf8;--surface2:#f2eadb;--text:#211b17;--muted:#74695e;--line:#e4d8c4;
   --accent:#d63a2f;--accent2:#b07d12;--accent-t:#fff;--ok:#1d8a50;--okbg:#e2f3e8;--bad:#c9302c;--badbg:#fbe6e2;--warn:#b26b00;--warnbg:#fbefd9;--amar:#e3b100;--focus:#2457d6;
   --glow:rgba(214,58,47,.18);--shadow:0 1px 2px rgba(60,40,20,.06),0 6px 20px rgba(60,40,20,.07);
-  --part:#0b8aa3;--jita:#7348d1;--ctr:#bb7400;--kanji:#d63a2f;--syn:#1c9459;--morph:#c23c7c;--mix:#211b17;--buf:#b26b00;--dia:#2563c9;--days:#2563c9;--esc:#0f8a6a;--prod:#0f8a6a}
+  --part:#0b8aa3;--jita:#7348d1;--ctr:#bb7400;--kanji:#d63a2f;--syn:#1c9459;--morph:#c23c7c;--mix:#211b17;--buf:#b26b00;--dia:#2563c9;--days:#2563c9;--esc:#0f8a6a;--prod:#0f8a6a;--cel:#0b93c9}
 /* ===== Tema 夜 (oscuro) ===== */
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0c0e1b;--surface:#161a2d;--surface2:#1f2440;--text:#f2efe8;--muted:#a2a5bc;--line:#2a2f4f;
   --accent:#ff5a4e;--accent2:#ffc857;--accent-t:#1a0705;--ok:#3ddc84;--okbg:rgba(61,220,132,.13);--bad:#ff6b6b;--badbg:rgba(255,107,107,.13);--warn:#ffb347;--warnbg:rgba(255,179,71,.13);--amar:#ffd84d;--focus:#8fb0ff;
   --glow:rgba(255,90,78,.22);--shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.25);
-  --part:#3cc8e6;--jita:#ad90ff;--ctr:#ffb84d;--kanji:#ff6b5e;--syn:#4fe090;--morph:#ff7ab6;--mix:#f2efe8;--buf:#ffb347;--dia:#7fb2ff;--days:#7fb2ff;--esc:#4fd1a8;--prod:#4fd1a8}}
+  --part:#3cc8e6;--jita:#ad90ff;--ctr:#ffb84d;--kanji:#ff6b5e;--syn:#4fe090;--morph:#ff7ab6;--mix:#f2efe8;--buf:#ffb347;--dia:#7fb2ff;--days:#7fb2ff;--esc:#4fd1a8;--prod:#4fd1a8;--cel:#62d2ff}}
 :root[data-theme="dark"]{--bg:#0c0e1b;--surface:#161a2d;--surface2:#1f2440;--text:#f2efe8;--muted:#a2a5bc;--line:#2a2f4f;
   --accent:#ff5a4e;--accent2:#ffc857;--accent-t:#1a0705;--ok:#3ddc84;--okbg:rgba(61,220,132,.13);--bad:#ff6b6b;--badbg:rgba(255,107,107,.13);--warn:#ffb347;--warnbg:rgba(255,179,71,.13);--amar:#ffd84d;--focus:#8fb0ff;
   --glow:rgba(255,90,78,.22);--shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.25);
-  --part:#3cc8e6;--jita:#ad90ff;--ctr:#ffb84d;--kanji:#ff6b5e;--syn:#4fe090;--morph:#ff7ab6;--mix:#f2efe8;--buf:#ffb347;--dia:#7fb2ff;--days:#7fb2ff;--esc:#4fd1a8;--prod:#4fd1a8}
+  --part:#3cc8e6;--jita:#ad90ff;--ctr:#ffb84d;--kanji:#ff6b5e;--syn:#4fe090;--morph:#ff7ab6;--mix:#f2efe8;--buf:#ffb347;--dia:#7fb2ff;--days:#7fb2ff;--esc:#4fd1a8;--prod:#4fd1a8;--cel:#62d2ff}
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;color:var(--text);background-color:var(--bg)}
-body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP","Hiragino Sans","Yu Gothic UI","Meiryo",sans-serif;font-size:16px;line-height:1.45;min-height:100dvh;
+body{font-family:"Nunito","Zen Maru Gothic",system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP","Hiragino Sans","Yu Gothic UI","Meiryo",sans-serif;font-size:16px;line-height:1.45;min-height:100dvh;
   background-image:radial-gradient(900px 420px at 50% -120px,var(--glow),transparent 70%),var(--pat,none);background-attachment:fixed}
 #app{max-width:780px;margin:0 auto;padding:14px 16px calc(28px + env(safe-area-inset-bottom))}
 button{font:inherit;color:inherit;cursor:pointer}
@@ -272,7 +274,7 @@ button.pill{cursor:pointer;font-family:inherit}
 .esub button{white-space:nowrap;padding:8px 6px}
 .echips{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap;align-self:flex-start}
 .enota{font-size:.72rem;font-weight:800;padding:2px 9px;border-radius:99px;background:var(--surface2);font-variant-numeric:tabular-nums}
-.enota[data-n="a"]{color:var(--ok)}.enota[data-n="b"]{color:var(--amar)}.enota[data-n="c"]{color:var(--bad)}
+.enota[data-n="a"]{color:var(--ok)}.enota[data-n="b"]{color:var(--amar)}.enota[data-n="c"]{color:var(--bad)}.enota[data-n="d"]{color:var(--cel)}
 .eitem.v-ok,.eitem.v-bad,.eitem.v-mid{border-left:4px solid;padding-left:12px;border-radius:4px;margin:6px 0}
 .eitem.v-ok{border-color:var(--ok);background:var(--okbg)}.eitem.v-bad{border-color:var(--bad);background:var(--badbg)}.eitem.v-mid{border-color:var(--warn);background:var(--warnbg)}
 .everd{display:inline-block;margin-top:8px;font-size:.78rem;font-weight:800;padding:2px 10px;border-radius:99px;background:var(--surface)}
@@ -319,6 +321,42 @@ button.pill{cursor:pointer;font-family:inherit}
 .foot{margin-top:22px;text-align:center;font-size:.78rem;color:var(--muted);line-height:2}
 
 @media (max-width:420px){.prompt{font-size:1.38rem}.opt{font-size:1.18rem}.ring{width:92px;height:92px}.ring .in b{font-size:1.6rem}.hero{gap:12px;padding:14px}}
+.etop{display:flex;align-items:center;gap:12px;margin:4px 0 2px}
+.etop h1{margin:0;font-family:"Zen Maru Gothic","Nunito",sans-serif;font-weight:900;font-size:1.65rem;letter-spacing:-.01em;line-height:1.1}
+.etop h1 .ejp{display:block;font-size:.72rem;font-weight:700;letter-spacing:.35em;color:var(--accent);margin-bottom:2px}
+.etop .btn{border-radius:99px;padding:8px 16px;min-height:40px;font-weight:700;display:inline-flex;align-items:center;gap:6px}
+.estudio h1,.etitle,.brand b,.start b,.ecard.eses .etit{font-family:"Zen Maru Gothic","Nunito",sans-serif}
+.tabs button{font-weight:800;letter-spacing:.01em}
+.ecard.eses{flex-direction:row;align-items:center;gap:14px;padding:12px 14px;border-radius:16px;box-shadow:var(--shadow)}
+.edia{flex:none;width:56px;height:56px;border-radius:14px;display:grid;place-content:center;text-align:center;line-height:1;background:var(--surface2);color:var(--text)}
+.edia small{font-size:.6rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.edia b{font-family:"Nunito",sans-serif;font-size:1.55rem;font-weight:900;font-variant-numeric:tabular-nums;margin-top:2px}
+.ecuerpo{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.efecha{font-size:.74rem;font-weight:700;letter-spacing:.03em;color:var(--muted)}.efecha::first-letter{text-transform:uppercase}
+.ecard.eses .etit{font-size:1.04rem;font-weight:700;line-height:1.35;overflow-wrap:anywhere}
+.ecard.eses .echips{margin-top:3px}
+.echev{flex:none;font-size:1.4rem;color:var(--muted);transition:transform .2s}
+@media (hover:hover) and (pointer:fine){.ecard.eses:hover .echev{transform:translateX(4px);color:var(--text)}}
+.ecard.eses.ehoy{border-left:1px solid var(--line);position:relative;overflow:hidden;padding:16px;background:linear-gradient(120deg,color-mix(in srgb,var(--part) 13%,var(--surface)),var(--surface) 60%)}
+.ecard.eses.ehoy::before{content:"";position:absolute;inset:0 auto 0 0;width:5px;background:var(--part)}
+.ehoy .edia{width:64px;height:64px;background:linear-gradient(140deg,var(--part),color-mix(in srgb,var(--part) 62%,#0a1a3a));color:#fff;box-shadow:0 6px 18px color-mix(in srgb,var(--part) 35%,transparent)}
+.ehoy .edia small{color:rgba(255,255,255,.85)}.ehoy .edia b{font-size:1.8rem}
+.ehoy .efecha{color:var(--part)}.ecard.eses.ehoy .etit{font-size:1.16rem}
+.echip,.enota{font-family:"Nunito",sans-serif;font-weight:800}
+/* ===== Fondo propio (imagen de este dispositivo; la paleta sale de la imagen) ===== */
+#fondo{position:fixed;inset:0;z-index:-1;background:var(--bg) center/cover no-repeat;pointer-events:none;animation:aFade .6s both}
+#fondo::after{content:"";position:absolute;inset:0;background:var(--bg);opacity:var(--fvel,.35);transition:opacity .2s}
+html.fondo body{background:transparent}
+html.fondo .card,html.fondo .ecard,html.fondo .lesson,html.fondo .mode,html.fondo .icon-btn,html.fondo .pill{-webkit-backdrop-filter:blur(14px) saturate(1.3);backdrop-filter:blur(14px) saturate(1.3)}
+html.fondo .start{background:linear-gradient(120deg,color-mix(in srgb,var(--accent) 80%,#000),color-mix(in srgb,var(--accent) 58%,#000) 55%,color-mix(in srgb,var(--accent2) 50%,#000))}
+html.fondo h3,html.fondo .foot{text-shadow:0 0 6px var(--bg),0 0 2px var(--bg)}
+.fgal{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.fgal .fth{position:relative;width:78px;height:54px;border-radius:10px;border:2px solid var(--line);background:var(--surface2) center/cover;padding:0}
+.fgal .fth.on{border-color:var(--accent);box-shadow:0 0 0 3px var(--glow)}
+.fgal .fx{position:absolute;top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;background:var(--surface);border:1px solid var(--line);font-size:.7rem;display:grid;place-items:center;color:var(--muted)}
+.fgal .fadd{width:78px;height:54px;border-radius:10px;border:2px dashed var(--line);background:none;font-size:1.4rem;color:var(--muted)}
+.fpal{display:flex;gap:4px;align-items:center}.fpal i{width:16px;height:16px;border-radius:5px;border:1px solid var(--line)}
+#fVel{width:min(220px,50vw);accent-color:var(--accent)}
 /* ===== Animaciones (con «reducir movimiento» del sistema se apagan todas) ===== */
 @keyframes aIn{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
 @keyframes aFade{from{opacity:0}to{opacity:1}}
@@ -926,11 +964,70 @@ function seigaiha(bg,st){
   return `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='40' height='20'><g fill='${bg}' stroke='${st}' stroke-width='1'>${c(20,0)}${c(0,10)}${c(40,10)}${c(20,20)}</g></svg>`)}")`;
 }
 function applyTheme(){
-  const r=document.documentElement;
-  if(S.settings.theme==='auto')r.removeAttribute('data-theme');else r.setAttribute('data-theme',S.settings.theme);
+  const r=document.documentElement,f=fondoActual(),th=S.settings.theme==='auto'&&f?f.pal.modo:S.settings.theme;
+  if(th==='auto')r.removeAttribute('data-theme');else r.setAttribute('data-theme',th);
+  fondoPintar(f,th);
   if(!applyTheme.done){applyTheme.done=1;const L=seigaiha('#f6f0e4','#ece1cd'),D=seigaiha('#0c0e1b','#151a31'),st=document.createElement('style');
     st.textContent=`:root{--pat:${L}}@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--pat:${D}}}:root[data-theme="dark"]{--pat:${D}}`;document.head.appendChild(st)}
 }
+/* ---------- Fondo propio: imágenes elegidas en este dispositivo (IndexedDB; no se sincronizan) ----------
+   De cada imagen se saca el color medio (decide claro/oscuro y el tinte de las tarjetas) y los dos
+   tonos más vivos (acento y acento 2). Las tarjetas quedan translúcidas para que se vea la imagen. */
+const FONDO={lista:[],cargado:false,act:null,pal0:null,url:'',urlId:'',vel:35};
+try{const a=JSON.parse(localStorage.getItem('rafaga-fondo-act')||'null');if(a){FONDO.act=a.id;FONDO.pal0=a.pal}FONDO.vel=+(localStorage.getItem('rafaga-fondo-vel')||35)}catch(e){}
+function fondoIdb(){return new Promise((ok,no)=>{const r=indexedDB.open('rafaga-fondo',1);r.onupgradeneeded=()=>r.result.createObjectStore('f',{keyPath:'id'});r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)})}
+async function fondoTx(modo,fn){const db=await fondoIdb();return await new Promise((ok,no)=>{const t=db.transaction('f',modo),q=fn(t.objectStore('f'));t.oncomplete=()=>ok(q&&q.result);t.onerror=()=>no(t.error)})}
+async function fondoInit(){try{FONDO.lista=(await fondoTx('readonly',st=>st.getAll()))||[];FONDO.lista.sort((a,b)=>a.t-b.t)}catch(e){FONDO.lista=[]}
+  FONDO.cargado=true;if(FONDO.act&&!FONDO.lista.some(x=>x.id===FONDO.act))fondoUsar(null);applyTheme();if(view==='home')render()}
+function fondoActual(){if(!FONDO.act)return null;return FONDO.lista.find(x=>x.id===FONDO.act)||(!FONDO.cargado&&FONDO.pal0?{id:FONDO.act,pal:FONDO.pal0}:null)}
+function fondoUsar(id){FONDO.act=id;const f=id&&FONDO.lista.find(x=>x.id===id);
+  try{if(f)localStorage.setItem('rafaga-fondo-act',JSON.stringify({id,pal:f.pal}));else localStorage.removeItem('rafaga-fondo-act')}catch(e){}}
+function rgb2hsl(r,g,b){r/=255;g/=255;b/=255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2,d=mx-mn;let h=0,s=0;
+  if(d){s=d/(1-Math.abs(2*l-1));h=mx===r?((g-b)/d)%6:mx===g?(b-r)/d+2:(r-g)/d+4;h*=60;if(h<0)h+=360}return[h,s,l]}
+function fondoLienzo(img,max){const k=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement('canvas');
+  c.width=Math.max(1,Math.round(img.width*k));c.height=Math.max(1,Math.round(img.height*k));c.getContext('2d').drawImage(img,0,0,c.width,c.height);return c}
+function fondoPaleta(c){const g=c.getContext('2d').getImageData(0,0,c.width,c.height).data,bins=Array.from({length:12},(_,k)=>({k,w:0,r:0,g:0,b:0}));
+  let R=0,G=0,B=0,n=0;
+  for(let i=0;i<g.length;i+=4){const r=g[i],gg=g[i+1],b=g[i+2];R+=r;G+=gg;B+=b;n++;
+    const[h,s,l]=rgb2hsl(r,gg,b),w=s*(1-Math.abs(2*l-1));if(w<.1)continue;const x=bins[Math.floor(h/30)%12];x.w+=w;x.r+=r*w;x.g+=gg*w;x.b+=b*w}
+  const avg=[R/n,G/n,B/n],lum=(.2126*avg[0]+.7152*avg[1]+.0722*avg[2])/255,m=rgb2hsl(...avg);
+  const ord=bins.filter(x=>x.w>0).sort((a,b)=>b.w-a.w),col=x=>rgb2hsl(x.r/x.w,x.g/x.w,x.b/x.w);
+  const a1=ord[0]?col(ord[0]):[m[0],.55,.5];
+  const o2=ord[0]&&ord.find(x=>Math.min(Math.abs(x.k-ord[0].k),12-Math.abs(x.k-ord[0].k))>=2&&x.w>ord[0].w*.08);
+  const a2=o2?col(o2):[(a1[0]+35)%360,a1[1],a1[2]];
+  return{h:Math.round(a1[0]),s:+a1[1].toFixed(2),h2:Math.round(a2[0]),s2:+a2[1].toFixed(2),bh:Math.round(m[0]),bs:+m[1].toFixed(2),modo:lum<.5?'dark':'light'}}
+function fondoVars(p,modo){const cl=(v,a,b)=>Math.max(a,Math.min(b,v)),hs=(h,s,l,a)=>`hsl(${h} ${Math.round(s*100)}% ${l}%${a!=null?' / '+a:''})`;
+  const s1=cl(p.s,.5,.9),s2=cl(p.s2,.45,.85),bs=cl(p.bs,0,.35);
+  if(modo==='dark')return{'--bg':hs(p.bh,bs,8),'--surface':hs(p.bh,bs*.8,12,.74),'--surface2':hs(p.bh,bs*.8,19,.8),'--line':hs(p.bh,.2,62,.22),'--text':hs(p.bh,.15,95),'--muted':hs(p.bh,.12,74),
+    '--accent':hs(p.h,s1,64),'--accent2':hs(p.h2,s2,68),'--accent-t':hs(p.h,.6,8),'--glow':hs(p.h,s1,55,.26),'--focus':hs(p.h2,s2,72)};
+  return{'--bg':hs(p.bh,bs,93),'--surface':hs(p.bh,bs*.6,99,.76),'--surface2':hs(p.bh,bs*.7,94,.82),'--line':hs(p.bh,.2,40,.2),'--text':hs(p.bh,.25,11),'--muted':hs(p.bh,.12,35),
+    '--accent':hs(p.h,s1,44),'--accent2':hs(p.h2,s2,36),'--accent-t':'#fff','--glow':hs(p.h,s1,50,.22),'--focus':hs(p.h2,s2,40)}}
+function fondoPintar(f,th){const r=document.documentElement,modo=th==='auto'?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):th;
+  const k=f?[f.id,!!f.blob,modo,FONDO.vel].join('|'):'';if(fondoPintar.k===k)return;fondoPintar.k=k;
+  for(const v of fondoPintar.vars||[])r.style.removeProperty(v);fondoPintar.vars=[];
+  let el=document.getElementById('fondo');
+  if(!f){r.classList.remove('fondo');if(el)el.remove();if(FONDO.url){URL.revokeObjectURL(FONDO.url);FONDO.url=FONDO.urlId=''}return}
+  const vs=fondoVars(f.pal,modo);vs['--fvel']=(FONDO.vel/100).toFixed(2);for(const v in vs){r.style.setProperty(v,vs[v]);fondoPintar.vars.push(v)}
+  r.classList.add('fondo');if(!f.blob)return;
+  if(!el){el=document.createElement('div');el.id='fondo';document.body.prepend(el)}
+  if(FONDO.urlId!==f.id){if(FONDO.url)URL.revokeObjectURL(FONDO.url);FONDO.url=URL.createObjectURL(f.blob);FONDO.urlId=f.id}
+  el.style.backgroundImage=`url("${FONDO.url}")`}
+function fondoCargarImg(file){return new Promise((ok,no)=>{const u=URL.createObjectURL(file),im=new Image();
+  im.onload=()=>{URL.revokeObjectURL(u);ok(im)};im.onerror=()=>{URL.revokeObjectURL(u);no(new Error('img'))};im.src=u})}
+const fondoBlob=c=>new Promise(ok=>c.toBlob(ok,'image/jpeg',.88));
+async function fondoAgregar(files){let ult=null,mal=0;
+  for(const [i,file] of files.entries()){if(FONDO.lista.length>=12){toast('Máximo 12 fondos: quita alguno primero');break}
+    try{const im=await fondoCargarImg(file),blob=await fondoBlob(fondoLienzo(im,2560)),thumb=fondoLienzo(im,180).toDataURL('image/jpeg',.8);
+      const rec={id:'f'+Date.now().toString(36)+i,t:Date.now(),blob,thumb,pal:fondoPaleta(fondoLienzo(im,64))};
+      await fondoTx('readwrite',st=>st.put(rec));FONDO.lista.push(rec);ult=rec.id}catch(e){mal++}}
+  if(mal)toast(mal===1?'No se pudo abrir esa imagen (usa JPG, PNG o WebP)':`No se pudieron abrir ${mal} imágenes (usa JPG, PNG o WebP)`);
+  if(ult){fondoUsar(ult);toast('Fondo aplicado · los colores salen de la imagen')}render()}
+async function fondoQuitar(id){try{await fondoTx('readwrite',st=>st.delete(id))}catch(e){}
+  FONDO.lista=FONDO.lista.filter(x=>x.id!==id);if(FONDO.act===id)fondoUsar(null);render()}
+function fondoAjustes(){const f=fondoActual(),p=f&&f.pal;
+  return `<div class="set"><span>Fondo <span class="muted small">· imágenes de este dispositivo</span></span>${p?`<span class="fpal" title="Colores sacados de la imagen"><i style="background:hsl(${p.h} ${Math.round(p.s*100)}% 50%)"></i><i style="background:hsl(${p.h2} ${Math.round(p.s2*100)}% 50%)"></i><i style="background:hsl(${p.bh} ${Math.round(p.bs*100)}% ${p.modo==='dark'?15:88}%)"></i></span>`:''}</div>
+      <div class="fgal">${FONDO.lista.map(x=>`<button class="fth${FONDO.act===x.id?' on':''}" data-fondo="${x.id}" style="background-image:url(${x.thumb})" title="Usar este fondo" aria-pressed="${FONDO.act===x.id}"><span class="fx" title="Quitar esta imagen">✕</span></button>`).join('')}<button class="fadd" data-act="fondoadd" title="Agregar imágenes de la compu">＋</button>${FONDO.act?'<button class="btn" data-fondo="none">Sin fondo</button>':''}<input type="file" id="fImg" accept="image/*" multiple hidden></div>
+      ${FONDO.act?`<div class="set"><span>Atenuar imagen</span><input type="range" id="fVel" min="0" max="85" step="5" value="${FONDO.vel}" aria-label="Atenuar imagen"></div>`:''}`}
 function streak(){let n=0;const d=new Date();if(!S.days[today(d)])d.setDate(d.getDate()-1);while(S.days[today(d)]&&S.days[today(d)].n>0){n++;d.setDate(d.getDate()-1)}return n}
 function meterCls(p){return p==null?'none':p<.6?'bad':p<.8?'warn':''}
 function catAcc(c){const r=catRecent(c),st=S.cats[c];return r!=null?r:st&&st.n?st.ok/st.n:null}
@@ -990,11 +1087,12 @@ function renderHome(){
         ${p!=null?`<span class="mb" style="width:${p*100}%"></span>`:''}</button>`}).join('')}</div>
     ${plegHtml('prec',`<span class="glyph" style="--c:var(--part)">🎯</span><span class="lt"><b>Precisión por debilidad</b><span class="muted small">${catResumen()}</span></span>`,`<div class="card">${catRows()}</div>`)}
     <h3>Ajustes</h3>
-    <details class="card"><summary>⚙️ Duración, presión, furigana, tema y respaldo</summary><div class="stack" style="margin-top:14px">
+    <details class="card" data-aj ${ajAbierto?'open':''}><summary>⚙️ Duración, presión, furigana, tema y respaldo</summary><div class="stack" style="margin-top:14px">
       <div class="set"><span>Duración</span><span class="seg">${[60,75,90].map(d=>`<button data-dur="${d}" class="${S.settings.dur===d?'on':''}">${d}s</button>`).join('')}</span></div>
       <div class="set"><span>Tiempo por pregunta</span><span class="seg"><button data-press="1" class="${S.settings.pressure?'on':''}">Sí</button><button data-press="0" class="${!S.settings.pressure?'on':''}">No</button></span></div>
       <div class="set"><span>Furigana</span><span class="seg"><button data-furi="1" class="${S.settings.furi?'on':''}">Sí</button><button data-furi="0" class="${!S.settings.furi?'on':''}">No</button></span></div>
       <div class="set"><span>Tema</span><span class="seg">${[['auto','Auto'],['light','和紙'],['dark','夜']].map(([k,n])=>`<button data-theme="${k}" class="${S.settings.theme===k?'on':''}">${n}</button>`).join('')}</span></div>
+      ${fondoAjustes()}
       <div class="syncbox"><b>☁ Sincronización y Notion</b>
         <div class="muted small">Comparte el progreso entre teléfono y PC y envía cada ráfaga a tu página de Notion. Sin conexión todo sigue funcionando y se envía después.</div>
         <label>URL del Worker<input id="sUrl" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://mext-rafaga-sync.TU-CUENTA.workers.dev" value="${esc(S.settings.syncUrl)}"></label>
@@ -1317,14 +1415,19 @@ const eFecha=f=>new Date(f+'T12:00:00').toLocaleDateString('es',{weekday:'long',
 const E_CHIP={Publicada:'Por hacer',Entregada:'Entregada',Corregida:'Corregida'};
 function eChip(s){const w=E.work[s.id],st=w&&w.sent&&s.estado==='Publicada'?'Entregada':s.estado;return `<span class="echips"><span class="echip" data-st="${esc(st)}">${esc(E_CHIP[st]||st)}${w&&w.sent&&E.outbox.some(o=>o.page===s.id)?' · en cola':''}</span>${eNota(s)}</span>`}
 // Calificación 1–10 que pone el instructor: solo una referencia, la app no la usa para nada
-// Color de una nota: rojo < 7 · amarillo 7–8,5 · verde > 8,5
-const notaNivel=v=>v>8.5?'a':v>=7?'b':'c',notaColor=v=>({a:'var(--ok)',b:'var(--amar)',c:'var(--bad)'})[notaNivel(v)];
+// Color de una nota: rojo < 7 · amarillo 7–7,9 · celeste 8–8,5 · verde > 8,5
+const notaNivel=v=>v>8.5?'a':v>=8?'d':v>=7?'b':'c',notaColor=v=>({a:'var(--ok)',d:'var(--cel)',b:'var(--amar)',c:'var(--bad)'})[notaNivel(v)];
 function eNota(s){
   if(typeof s.nota!=='number'||s.nota<0)return'';
   const v=Math.min(10,Math.round(s.nota*10)/10);
   return `<span class="enota" data-n="${notaNivel(v)}" title="Calificación del instructor (referencia)">${String(v).replace('.',',')}/10</span>`;
 }
 function tabsHtml(on){return `<nav class="tabs" role="tablist"><button role="tab" aria-selected="${on==='juego'}" data-e="tab-juego" class="${on==='juego'?'on':''}">🎮 Juego</button><button role="tab" aria-selected="${on==='estudio'}" data-e="tab-estudio" class="${on==='estudio'?'on':''}">📝 Estudio</button></nav>`}
+/* Tarjeta de sesión: «Día 35 — Título» → número grande a la izquierda y el título limpio */
+function eSesCard(s,hoy){const m=/^\s*D[ií]a\s*(\d+)\s*[—–:-]+\s*(.*)$/i.exec(s.titulo||''),f=new Date(s.fecha+'T12:00:00');
+  const num=m?m[1]:String(f.getDate()),pre=m?'Día':f.toLocaleDateString('es',{month:'short'}).replace('.',''),tit=m?m[2]:(s.titulo||'Sesión');
+  const fe=hoy?`${s.fecha===today()?'Hoy':'Pendiente'} · ${eFecha(s.fecha)}`:eFecha(s.fecha);
+  return `<button class="ecard eses${hoy?' ehoy':''}" data-e="open" data-id="${s.id}"><span class="edia"><small>${esc(pre)}</small><b>${esc(num)}</b></span><span class="ecuerpo"><span class="efecha">${esc(fe)}</span><span class="etit">${esc(tit)}</span>${eChip(s)}</span><span class="echev" aria-hidden="true">›</span></button>`}
 let eSub='ses';
 function renderEstudio(){
   if(eSub==='ref')return renderRef();
@@ -1335,12 +1438,12 @@ function renderEstudio(){
   const hoy=list.find(s=>s.fecha===today())||list.find(s=>s.estado==='Publicada'&&!(E.work[s.id]&&E.work[s.id].sent));
   const rest=list.filter(s=>s!==hoy);const[st,sc]=eStatus();
   $('#app').innerHTML=`<div class="estudio">${tabsHtml('estudio')}
-    <div class="row"><h1 style="font-size:1.2rem">Estudio diario</h1><span class="sp"></span><button class="btn" data-e="refresh">Actualizar</button></div>
+    <div class="etop"><h1><span class="ejp">毎日の勉強</span>Estudio diario</h1><span class="sp"></span><button class="btn" data-e="refresh">↻ Actualizar</button></div>
     <div class="estat" id="eStat" data-s="${sc}">${esc(st)}</div>
     ${eSubTabs()}
-    ${hoy?`<button class="ecard ehoy" data-e="open" data-id="${hoy.id}"><span class="muted small">${hoy.fecha===today()?'Hoy':'Pendiente'} · ${esc(eFecha(hoy.fecha))}</span><b>${esc(hoy.titulo||'Sesión')}</b>${eChip(hoy)}</button>`
+    ${hoy?eSesCard(hoy,true)
       :`<div class="ecard eempty"><b>Todavía no hay sesión para hoy.</b><span class="muted small">Cuando el instructor la publique en Notion, toca «Actualizar».</span></div>`}
-    ${rest.length?`<h3>Sesiones anteriores</h3><div class="elist">${rest.map(s=>`<button class="ecard" data-e="open" data-id="${s.id}"><span class="muted small">${esc(eFecha(s.fecha))}</span><b>${esc(s.titulo||'Sesión')}</b>${eChip(s)}</button>`).join('')}</div>`:''}
+    ${rest.length?`<h3>Sesiones anteriores</h3><div class="elist">${rest.map(s=>eSesCard(s,false)).join('')}</div>`:''}
   </div>`;
 }
 /* ---------- Corrección por consigna (la marca el instructor; la app solo la muestra) ---------- */
@@ -1849,7 +1952,7 @@ function renderSimLista(){
   const[st,sc]=eStatus(),hoyF=today(),hechos=new Set((E.sims||[]).map(x=>x.examen));
   const fmtP=v=>typeof v==='number'?Math.round(v)+'%':'—';
   $('#app').innerHTML=`<div class="estudio">${tabsHtml('estudio')}
-    <div class="row"><h1 style="font-size:1.2rem">Estudio diario</h1><span class="sp"></span><button class="btn" data-e="refresh">Actualizar</button></div>
+    <div class="etop"><h1><span class="ejp">毎日の勉強</span>Estudio diario</h1><span class="sp"></span><button class="btn" data-e="refresh">↻ Actualizar</button></div>
     <div class="estat" id="eStat" data-s="${sc}">${esc(st)}</div>
     ${eSubTabs()}
     ${E.sim?`<button class="ecard ehoy" data-e="sim-open"><span class="muted small">Simulacro en curso</span><b>${esc(E.sim.titulo)}</b><span class="muted small">Toca para continuar</span></button>`:''}
@@ -1895,7 +1998,7 @@ function renderRef(){
   }
   const[st,sc]=eStatus();
   $('#app').innerHTML=`<div class="estudio">${tabsHtml('estudio')}
-    <div class="row"><h1 style="font-size:1.2rem">Estudio diario</h1><span class="sp"></span><button class="btn" data-e="refresh">Actualizar</button></div>
+    <div class="etop"><h1><span class="ejp">毎日の勉強</span>Estudio diario</h1><span class="sp"></span><button class="btn" data-e="refresh">↻ Actualizar</button></div>
     <div class="estat" id="eStat" data-s="${sc}">${esc(st)}</div>
     ${eSubTabs()}
     ${items.length?`<input type="search" id="eBuscar" class="ebuscar" placeholder="Buscar en el material (ej. で, contadores, 消す)" lang="ja" autocapitalize="off" autocorrect="off" spellcheck="false">
@@ -2032,7 +2135,7 @@ function renderTemas(){
   const[st,sc]=eStatus(),ts=E.temas||[],fases=[...new Set(ts.map(t=>t.fase))];
   const actual=eFaseActual();
   $('#app').innerHTML=`<div class="estudio">${tabsHtml('estudio')}
-    <div class="row"><h1 style="font-size:1.2rem">Estudio diario</h1><span class="sp"></span><button class="btn" data-e="refresh">Actualizar</button></div>
+    <div class="etop"><h1><span class="ejp">毎日の勉強</span>Estudio diario</h1><span class="sp"></span><button class="btn" data-e="refresh">↻ Actualizar</button></div>
     <div class="estat" id="eStat" data-s="${sc}">${esc(st)}</div>
     ${eSubTabs()}
     ${fases.length?fases.map((f,i)=>{const l=ts.filter(t=>t.fase===f),ps=l.map(temaPct),dom=ps.filter(v=>v===100).length;
@@ -2074,7 +2177,7 @@ function tablasCon(q){let n=0;for(const d of materiaDias())for(const x of d.tabl
 function renderMateria(){
   const dias=materiaDias(),[st,sc]=eStatus();
   $('#app').innerHTML=`<div class="estudio">${tabsHtml('estudio')}
-    <div class="row"><h1 style="font-size:1.2rem">Estudio diario</h1><span class="sp"></span><button class="btn" data-e="refresh">Actualizar</button></div>
+    <div class="etop"><h1><span class="ejp">毎日の勉強</span>Estudio diario</h1><span class="sp"></span><button class="btn" data-e="refresh">↻ Actualizar</button></div>
     <div class="estat" id="eStat" data-s="${sc}">${esc(st)}</div>
     ${eSubTabs()}
     ${dias.length?`<input type="search" id="matBuscar" class="ebuscar" placeholder="🔍 Buscar en las tablas (ej. 開ける, どれ, día 34, 29 oct)" lang="ja" value="${esc(matQ)}" autocapitalize="off" autocorrect="off" spellcheck="false">${diasChips('data-e="matdia" data-matdia',matQ.trim())}<div class="muted small" id="matCuenta"></div>`:''}
@@ -2301,6 +2404,7 @@ function onClick(e){
   if(d.press){S.settings.pressure=d.press==='1';save();render();return}
   if(d.furi){S.settings.furi=d.furi==='1';save();render();return}
   if(d.theme){S.settings.theme=d.theme;save();render();return}
+  if(d.fondo){if(e.target.closest('.fx'))fondoQuitar(d.fondo);else{fondoUsar(d.fondo==='none'?null:d.fondo);render()}return}
   if(d.dev){S.dev.name=d.dev;save();render();return}
   switch(d.act){
     case 'start':case 'again':startSession(S.settings.mode);break;
@@ -2314,6 +2418,7 @@ function onClick(e){
     case 'prodok':answer(0,{ok:true,exact:false,typed:sess.typed});break;
     case 'prodnext':cont();break;
     case 'export':exportData();break;
+    case 'fondoadd':{const i=document.getElementById('fImg');if(i)i.click();break}
     case 'syncpill':{const det=document.querySelector('details.card');if(!syncConfigured()&&det){det.open=true;det.scrollIntoView({behavior:'smooth'})}else syncNow(true);break}
     case 'syncsave':S.settings.syncUrl=$('#sUrl').value.trim();S.settings.syncKey=$('#sKey').value.trim();save();
       if(!syncConfigured()){toast('Sincronización desactivada');render()}else syncNow(true);break;
@@ -2358,7 +2463,10 @@ if(typeof document!=='undefined'){
   document.addEventListener('change',e=>{const it=e.target.dataset&&e.target.dataset.auFile,f=e.target.files&&e.target.files[0];if(it&&f){e.target.value='';auArchivo(it,f)}});
   document.addEventListener('change',e=>{const id=e.target.dataset&&e.target.dataset.simpdf,f=e.target.files&&e.target.files[0];if(!id||!f)return;
     const el=document.getElementById('simPdf');if(el)el.innerHTML='<div class="muted small" style="padding:10px">Cargando las preguntas…</div>';simPdfCargar(id,f)});
+  document.addEventListener('change',e=>{if(e.target.id==='fImg'&&e.target.files.length){const fs=[...e.target.files];e.target.value='';fondoAgregar(fs)}});
+  document.addEventListener('input',e=>{if(e.target.id!=='fVel')return;FONDO.vel=+e.target.value;try{localStorage.setItem('rafaga-fondo-vel',FONDO.vel)}catch(_){}applyTheme()});
   setInterval(eTick,1000);
+  fondoInit();
   render();requestAnimationFrame(tick);
   syncNow();
   addEventListener('online',()=>{syncNow();eSync();bSync()});
@@ -2385,7 +2493,8 @@ if(typeof document!=='undefined'){
 
 /* Materia: los bloques se abren solo al tocarlos y siguen abiertos aunque la pantalla se actualice al sincronizar */
 var matAbiertos=new Set();
-document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.matches&&d.matches('details[data-mat]')){if(d.open)matAbiertos.add(d.dataset.mat);else matAbiertos.delete(d.dataset.mat)}},true);
+var ajAbierto=false; // Ajustes sigue abierto al volver a pintar (p. ej. al elegir un fondo)
+document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.matches&&d.matches('details[data-aj]'))ajAbierto=d.open;if(d&&d.matches&&d.matches('details[data-mat]')){if(d.open)matAbiertos.add(d.dataset.mat);else matAbiertos.delete(d.dataset.mat)}},true);
 </script>
 </body>
 </html>

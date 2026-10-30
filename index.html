@@ -2379,8 +2379,9 @@ function renderProg(){
     // La curva empieza cuando el instructor pasó a 🗺️ Temas: las estimaciones antiguas («Dominio %» > 0) eran otra medida y no se dibujan
     const dvE=s=>s.dominio>0&&s.dominio<1?s.dominio*100:s.dominio;
     est=ses.filter(s=>s.fase===faseT&&typeof s.dominio==='number'&&s.dominio>0).map(s=>({fecha:s.fecha,fase:faseT,v:dvE(s),ant:true}));
-    const ult=est.length?est[est.length-1].fecha:'';
-    const dias=[...new Set(ses.filter(s=>s.fase===faseT).map(s=>s.fecha).concat(today()))].filter(f=>f<=today()&&f>ult).sort();
+    // el cambio a temas = el primer día con «Dominio tema %» en una sesión
+    const ult=ses.filter(s=>typeof s.domTema==='number').map(s=>s.fecha).sort()[0]||'';
+    const dias=[...new Set(ses.filter(s=>s.fase===faseT).map(s=>s.fecha).concat(today()))].filter(f=>f<=today()&&f>=ult).sort();
     fase=faseT;dom=dias.map(f=>({fecha:f,fase:faseT,v:100*tsF.filter(t=>temaPct(t,f)===100).length/tsF.length}));dv=x=>x.v;
     subDom=`Temas en 100% ÷ ${tsF.length} temas de la fase (los % los pone el instructor)${ult?` · desde el cambio a temas`:''} · punteada = checkpoint del 50%`;
     est=[];

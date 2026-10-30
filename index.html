@@ -1789,8 +1789,8 @@ function eFaseActual(){
 function eDominioFase(){
   const fase=eFaseActual(),ts=(E.temas||[]).filter(t=>t.fase===fase);
   if(fase&&ts.length){
-    const dom=ts.filter(t=>temaCuenta(t)).length;
-    let fecha='';for(const t of ts){const s=temaDeSesion(t),f=(s&&s.edited)||t.edited||'';if(f>fecha)fecha=f;if(t.f100&&t.f100>fecha.slice(0,10))fecha=t.f100}
+    const dom=ts.filter(t=>temaPct(t)===100).length;
+    let fecha='';for(const t of ts){const s=temaDeSesion(t),f=(s&&s.edited)||t.edited||'';if(f>fecha)fecha=f}
     return{fase,v:Math.round(1000*dom/ts.length)/10,dom,n:ts.length,fecha:fecha.slice(0,10),temas:true};
   }
   return eDominio();
@@ -2144,9 +2144,6 @@ function temaDeSesion(t,hasta){
   }
   return best&&(!t.edited||(best.edited||'')>t.edited||hasta&&t.edited.slice(0,10)>hasta)?best:null;
 }
-// ¿El tema cuenta como dominado ese día? Con «Fecha 100%» manda esa fecha (el día que se pasó en frío);
-// si la fase ya usa fechas, un tema sin fecha no cuenta; sin fechas en la fase, el % del tema tiene que estar en 100.
-function temaCuenta(t,dia){if(t.f100)return t.f100<=(dia||today());if((E.temas||[]).some(x=>x.fase===t.fase&&x.f100))return false;return temaPct(t,dia)===100}
 function temaPct(t,hasta){const s=temaDeSesion(t,hasta),fila=!hasta||(t.edited||'').slice(0,10)<=hasta;let v=s?s.domTema:fila?t.dom:null;if(typeof v!=='number')return null;if(v>0&&v<1)v*=100;return Math.max(0,Math.min(100,Math.round(v)))}
 function renderTemas(){
   const[st,sc]=eStatus(),ts=E.temas||[],fases=[...new Set(ts.map(t=>t.fase))];
@@ -2155,7 +2152,7 @@ function renderTemas(){
     <div class="etop"><h1><span class="ejp">毎日の勉強</span>Estudio diario</h1><span class="sp"></span><button class="btn" data-e="refresh">↻ Actualizar</button></div>
     <div class="estat" id="eStat" data-s="${sc}">${esc(st)}</div>
     ${eSubTabs()}
-    ${fases.length?fases.map((f,i)=>{const l=ts.filter(t=>t.fase===f),ps=l.map(t=>temaCuenta(t)?100:temaPct(t)),dom=ps.filter(v=>v===100).length;
+    ${fases.length?fases.map((f,i)=>{const l=ts.filter(t=>t.fase===f),ps=l.map(temaPct),dom=ps.filter(v=>v===100).length;
       return `<details class="esec etf" ${(actual?f===actual:i===0)?'open':''}><summary><b>${esc(f)} (Temas)</b><span class="muted small">${dom}/${l.length} dominados · ${String(Math.round(1000*dom/l.length)/10).replace('.',',')}%</span></summary>
         ${l.map((t,j)=>{const v=ps[j],cls=v===100?'ok':v===0?'cero':v==null?'sin':'';
           return `<div class="etema"><span class="en">${t.codigo?`<span class="ec">${esc(t.codigo)}</span>`:''}${esc(t.tema)}</span><span class="ep ${cls}">${v==null?'sin medir':v===100?'✅ 100%':v+'%'}</span>
@@ -2374,24 +2371,13 @@ function renderProg(){
   html+=card('Calificación por sesión',prom==null?'La nota de 1 a 10 que pone el instructor':`<b style="color:${notaColor(prom)}">Promedio ${nf(prom)}/10</b> (${todas.length} ${todas.length===1?'sesión':'sesiones'})`,notas.length?barras(notas.map(s=>({v:Math.min(10,s.nota),c:notaColor(Math.min(10,s.nota)),label:eFechaCorta(s.fecha),tip:`${eFechaCorta(s.fecha)} · ${s.titulo} · ${nf(s.nota)}/10`})),{max:10,paso:2,fmt:nf,refV:prom,refTxt:'Prom. '+nf(prom),refColor:'var(--part)',color:'var(--part)'})
     +tabla(['Fecha','Sesión','Nota'],todas.map(s=>[s.fecha,s.titulo,String(s.nota)]).concat([['','Promedio',nf(prom)]])):vacio('Aparecerá cuando el instructor ponga la Calificación en tus sesiones.'));
   // 2) Dominio de la fase actual
-  // Con la lista de 🗺️ Temas, la curva es la misma cuenta que la píldora del inicio (temas en 100% ÷ temas de la fase),
-  // calculada para cada día de sesión; el «Dominio %» antiguo por sesión solo se usa si no hay temas.
-  const faseT=eFaseActual(),tsF=(E.temas||[]).filter(t=>t.fase===faseT);
-  let conDom,fase,dom,dv,subDom='Lo estima el instructor · línea punteada = checkpoint del 50%',est=[];
-  if(faseT&&tsF.length){
-    // La curva empieza cuando el instructor pasó a 🗺️ Temas: las estimaciones antiguas («Dominio %» > 0) eran otra medida y no se dibujan
-    const dvE=s=>s.dominio>0&&s.dominio<1?s.dominio*100:s.dominio;
-    est=ses.filter(s=>s.fase===faseT&&typeof s.dominio==='number'&&s.dominio>0).map(s=>({fecha:s.fecha,fase:faseT,v:dvE(s),ant:true}));
-    // el cambio a temas = el primer día con «Dominio tema %» en una sesión
-    const ult=ses.filter(s=>typeof s.domTema==='number').map(s=>s.fecha).sort()[0]||'';
-    const dias=[...new Set(ses.filter(s=>s.fase===faseT).map(s=>s.fecha).concat(today()))].filter(f=>f<=today()&&f>=ult).sort();
-    fase=faseT;dom=dias.map(f=>({fecha:f,fase:faseT,v:100*tsF.filter(t=>temaCuenta(t,f)).length/tsF.length}));dv=x=>x.v;
-    subDom=`Temas en 100% ÷ ${tsF.length} temas de la fase (los % los pone el instructor)${ult?` · desde el cambio a temas`:''} · punteada = checkpoint del 50%`;
-    est=[];
-  }else{
-    conDom=ses.filter(s=>typeof s.dominio==='number');fase=conDom.length?conDom[conDom.length-1].fase:null;dom=conDom.filter(s=>s.fase===fase);
-    dv=s=>s.dominio>0&&s.dominio<1?s.dominio*100:s.dominio;
-  }
+  // 2) Dominio de la fase: el «Dominio %» que pone el instructor en cada sesión, desde el cambio a 🗺️ Temas
+  // (el primer día con «Dominio tema %»); las estimaciones de antes eran otra medida y no se dibujan.
+  const conDom=ses.filter(s=>typeof s.dominio==='number'),fase=conDom.length?conDom[conDom.length-1].fase:null;
+  const ini=ses.filter(s=>typeof s.domTema==='number').map(s=>s.fecha).sort()[0]||'';
+  const dom=conDom.filter(s=>s.fase===fase&&s.fecha>=ini),est=[];
+  const dv=s=>s.dominio>0&&s.dominio<1?s.dominio*100:s.dominio;
+  const subDom=`Lo pone el instructor en cada sesión${ini?' · desde el cambio a temas':''} · línea punteada = checkpoint del 50%`;
   html+=card(`Dominio de la ${esc(fase||'fase')}`,subDom,dom.length?lineas(dom.map(s=>({t:dms(s.fecha),v:dv(s),tip:`${eFechaCorta(s.fecha)} · ${Math.round(dv(s))}%`})),{max:100,paso:25,fmt:v=>Math.round(v)+'%',x0:dms((est[0]||dom[0]).fecha)-864e5,x1:Math.max(dms(dom[dom.length-1].fecha)+864e5,dms((est[0]||dom[0]).fecha)+6*864e5),refV:50,refTxt:'50%',color:'var(--part)',
       serie2:est.length?est.map(s=>({t:dms(s.fecha),v:s.v,tip:`${eFechaCorta(s.fecha)} · ${Math.round(s.v)}% · estimación anterior`})):null,color2:'var(--jita)'})
     +tabla(['Fecha','Fase','Dominio'],est.concat(dom).map(s=>[s.fecha,s.fase||'',Math.round(s.ant?s.v:dv(s))+'%'+(s.ant?' (estimación anterior)':'')])):vacio('Aparecerá cuando el instructor ponga «Dominio %» en tus sesiones.'));

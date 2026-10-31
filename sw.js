@@ -1,6 +1,6 @@
 // MEXT Ráfaga — service worker: guarda la app en el teléfono para que funcione sin internet.
 // Al publicar una versión nueva, sube el número de VERSION para que el teléfono la descargue.
-const VERSION = 'mext-rafaga-v66';
+const VERSION = 'mext-rafaga-v67';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'vendor/pdf.min.js', 'vendor/pdf.worker.min.js'];
 
 self.addEventListener('install', e => {
@@ -10,7 +10,8 @@ self.addEventListener('install', e => {
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k !== VERSION).map(k => caches.delete(k))))
+      // Solo las cachés viejas de ESTA app: el dominio matw1.github.io lo comparten varias apps y sus cachés no se tocan
+      .then(keys => Promise.all(keys.filter(k => k.startsWith('mext-rafaga-') && k !== VERSION).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });

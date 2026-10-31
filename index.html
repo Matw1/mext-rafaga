@@ -2145,11 +2145,10 @@ function materiaDias(){
    Si una sesión más reciente trae el mismo tema en «Tema» (por código, p. ej. «1.2», o por nombre)
    con «Dominio tema %», se usa ese valor: así el tema del día está al día aunque la fila no se haya tocado. */
 const tNorm=s=>String(s||'').toLowerCase().normalize('NFKC').replace(/\s+/g,' ').trim();
-// hasta (AAAA-MM-DD, opcional): el valor que tenía el tema ese día, para la curva histórica
-function temaDeSesion(t,hasta){
+function temaDeSesion(t){
   let best=null;
   for(const s of Object.values(E.ses)){
-    if(typeof s.domTema!=='number'||!s.tema||hasta&&s.fecha>hasta)continue;
+    if(typeof s.domTema!=='number'||!s.tema)continue;
     const st=tNorm(s.tema),cod=tNorm(t.codigo);
     // por código: «1.2» al inicio, sin confundirlo con «1.20»
     const ok=!!cod&&st.startsWith(cod)&&!/^[\d.]/.test(st.slice(cod.length));
@@ -2158,9 +2157,9 @@ function temaDeSesion(t,hasta){
     if(!best||s.fecha>best.fecha||(s.fecha===best.fecha&&(s.edited||'')>(best.edited||'')))best=s;
   }
   // la sesión solo manda si es de un día posterior a la última edición de la fila del tema
-  return best&&(!t.edited||best.fecha>t.edited.slice(0,10)||hasta&&t.edited.slice(0,10)>hasta)?best:null;
+  return best&&(!t.edited||best.fecha>t.edited.slice(0,10))?best:null;
 }
-function temaPct(t,hasta){const s=temaDeSesion(t,hasta),fila=!hasta||(t.edited||'').slice(0,10)<=hasta;let v=s?s.domTema:fila?t.dom:null;if(typeof v!=='number')return null;if(v>0&&v<1)v*=100;return Math.max(0,Math.min(100,Math.round(v)))}
+function temaPct(t){const s=temaDeSesion(t);let v=s?s.domTema:t.dom;if(typeof v!=='number')return null;if(v>0&&v<1)v*=100;return Math.max(0,Math.min(100,Math.round(v)))}
 function renderTemas(){
   const[st,sc]=eStatus(),ts=E.temas||[],fases=[...new Set(ts.map(t=>t.fase))];
   const actual=eFaseActual();
@@ -2168,7 +2167,7 @@ function renderTemas(){
     <div class="etop"><h1><span class="ejp">毎日の勉強</span>Estudio diario</h1><span class="sp"></span><button class="btn" data-e="refresh">↻ Actualizar</button></div>
     <div class="estat" id="eStat" data-s="${sc}">${esc(st)}</div>
     ${eSubTabs()}
-    ${fases.length?fases.map((f,i)=>{const l=ts.filter(t=>t.fase===f),ps=l.map(temaPct),dom=ps.filter(v=>v===100).length;
+    ${fases.length?fases.map((f,i)=>{const l=ts.filter(t=>t.fase===f),ps=l.map(t=>temaPct(t)),dom=ps.filter(v=>v===100).length;
       return `<details class="esec etf" ${(actual?f===actual:i===0)?'open':''}><summary><b>${esc(f)} (Temas)</b><span class="muted small">${dom}/${l.length} dominados · ${String(Math.round(1000*dom/l.length)/10).replace('.',',')}%</span></summary>
         ${l.map((t,j)=>{const v=ps[j],cls=v===100?'ok':v===0?'cero':v==null?'sin':'';
           return `<div class="etema"><span class="en">${t.codigo?`<span class="ec">${esc(t.codigo)}</span>`:''}${esc(t.tema)}</span><span class="ep ${cls}">${v==null?'sin medir':v===100?'✅ 100%':v+'%'}</span>

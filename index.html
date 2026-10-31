@@ -2154,9 +2154,11 @@ function temaDeSesion(t,hasta){
     // por código: «1.2» al inicio, sin confundirlo con «1.20»
     const ok=!!cod&&st.startsWith(cod)&&!/^[\d.]/.test(st.slice(cod.length));
     if(!ok&&!(st===tNorm(t.tema)||st.includes(tNorm(t.tema))))continue;
-    if(!best||(s.edited||s.fecha)>(best.edited||best.fecha))best=s;
+    // la más reciente por FECHA de sesión (retocar una sesión vieja no la vuelve «nueva»)
+    if(!best||s.fecha>best.fecha||(s.fecha===best.fecha&&(s.edited||'')>(best.edited||'')))best=s;
   }
-  return best&&(!t.edited||(best.edited||'')>t.edited||hasta&&t.edited.slice(0,10)>hasta)?best:null;
+  // la sesión solo manda si es de un día posterior a la última edición de la fila del tema
+  return best&&(!t.edited||best.fecha>t.edited.slice(0,10)||hasta&&t.edited.slice(0,10)>hasta)?best:null;
 }
 function temaPct(t,hasta){const s=temaDeSesion(t,hasta),fila=!hasta||(t.edited||'').slice(0,10)<=hasta;let v=s?s.domTema:fila?t.dom:null;if(typeof v!=='number')return null;if(v>0&&v<1)v*=100;return Math.max(0,Math.min(100,Math.round(v)))}
 function renderTemas(){

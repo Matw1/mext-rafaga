@@ -439,6 +439,7 @@ button:active:not(:disabled),.ecard:active,.lesson:active,.mode:active{transform
 #etoc button{position:relative;display:flex;align-items:center;justify-content:flex-end;width:34px;height:16px;padding:0;border:0;background:none;cursor:pointer;color:var(--muted)}
 #etoc button i{display:block;width:16px;height:3px;border-radius:2px;background:var(--line);transition:width .15s,background .15s}
 #etoc button.on i{width:26px;background:var(--part)}#etoc button:hover i{width:30px;background:var(--text)}
+#etoc .toc-p{height:22px;margin-top:4px}#etoc .toc-p b{display:grid;place-items:center;width:20px;height:20px;border-radius:50%;font-size:.7rem;background:var(--ok);color:#fff}#etoc .toc-p.sig b{background:var(--part)}#etoc .toc-p:hover b{transform:scale(1.15)}
 #etoc .toc-top{height:24px;font-size:1rem;font-weight:700;margin-bottom:4px}
 #etoc .toc-l{position:absolute;right:38px;white-space:nowrap;background:var(--text);color:var(--bg);font-size:.78rem;padding:3px 8px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .12s}
 #etoc button:hover .toc-l,#etoc button:focus-visible .toc-l{opacity:1}
@@ -1742,10 +1743,13 @@ function renderSesion(){
     return `<section class="esec" data-k="${sec.kind}"><div class="ehead"><div><span class="ek">${E_LABEL[sec.oral?'oral':sec.kind]||''}</span><b>${esc(sec.kind==='texto'?sec.head:sec.title)}</b>${typeof cuenta!=='undefined'?cuenta:''}${sec.min?`<span class="muted small"> · sugerido ${sec.min} min</span>`:''}</div><div class="eheadr">${(sec.kind==='tarea'||sec.kind==='practica')&&!locked&&lupaOk(sec)?`<button class="elupa" data-e="lupa" data-sec="${sec.id}" title="Consultar Materia y Referencia sin salir" aria-label="Consultar Materia y Referencia">🔍</button>`:''}${timer}</div></div><div class="ebody">${body}</div></section>`;
   };
   // Por páginas (prueba): una actividad por página; la 📘 Consulta va en la misma página que la tarea que sigue
-  const pags=[];let pend=[];
-  for(const x of p.secs){const h=secHtml(x);if(!h)continue;pend.push(h);if(x.kind!=='consulta'&&x.kind!=='texto'){pags.push(pend);pend=[]}}
-  if(pend.length){if(pags.length)pags[pags.length-1].push(...pend);else pags.push(pend)}
-  const np=Math.max(1,pags.length);E.pag=E.pag||{};const pi=Math.max(0,Math.min(E.pag[s.id]||0,np-1));
+  const pags=[],meta=[];let pend=[],pendS=[];
+  for(const x of p.secs){const h=secHtml(x);if(!h)continue;pend.push(h);pendS.push(x);if(x.kind!=='consulta'&&x.kind!=='texto'){pags.push(pend);meta.push(pendS);pend=[];pendS=[]}}
+  if(pend.length){if(pags.length){pags[pags.length-1].push(...pend);meta[meta.length-1].push(...pendS)}else{pags.push(pend);meta.push(pendS)}}
+  // para el índice de la derecha: título de cada página y si ya escribiste algo en ella
+  const escrito=x=>x.items.some(b=>{const a=w.ans[b.id];return a&&(String(a.r||'').trim()||a.hecho||a.duda)});
+  ePagMeta=meta.map(l=>{const m=l.find(x=>x.kind!=='consulta'&&x.kind!=='texto')||l[0];return{t:(E_LABEL[m.oral?'oral':m.kind]||'')+' · '+(m.title||m.head||''),ok:l.some(escrito)}});
+  const np=Math.max(1,pags.length);E.pag=E.pag||{};const pi=Math.max(0,Math.min(E.pag[s.id]||0,np-1));ePagMeta.pi=pi;
   const nav=`<nav class="epag">${pi>0?'<button class="btn" data-e="pag" data-d="-1">← Anterior</button>':'<span></span>'}<span class="epag-n">${pags.map((_,i)=>i<pi?`<button class="ok" data-e="pagir" data-i="${i}" title="Ver la actividad ${i+1}" aria-label="Ver la actividad ${i+1}"></button>`:`<i class="${i===pi?'on':''}"></i>`).join('')}<small>Actividad ${pi+1} de ${np}</small></span>${pi<np-1?'<button class="btn eprimary" data-e="pag" data-d="1">Siguiente →</button>':'<span></span>'}</nav>`;
   const tot=Object.values(w.tim).reduce((a,t)=>a+eMs(t),0);
   $('#app').innerHTML=`<div class="estudio">
@@ -2065,18 +2069,22 @@ function ladoToggle(id){E.lado=E.lado||[];const i=E.lado.findIndex(x=>x.id===id)
   eSave();render()}
 /* Índice de la sesión: rayitas arriba a la derecha (junto a la barra de desplazamiento), una por actividad.
    Al pasar el mouse muestran el nombre; al tocar llevan a esa actividad. ⤒ sube al inicio. Con la 🔍 abierta se corren a su borde. */
+var ePagMeta=[];
 function tocPintar(){let el=document.getElementById('etoc');
   const secs=view==='sesion'?[...document.querySelectorAll('#app .esec')]:[];
   if(!secs.length){if(el)el.remove();return}
   if(!el){el=document.createElement('nav');el.id='etoc';el.setAttribute('aria-label','Índice de la sesión');document.body.appendChild(el);
     el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
       if(b.dataset.toc==='top')return window.scrollTo({top:0,behavior:'smooth'});
+      if(b.dataset.tocp!=null){E.pag[eOpen]=+b.dataset.tocp;eSave();render();return window.scrollTo({top:0})}
       const t=document.querySelectorAll('#app .esec')[+b.dataset.toc];if(t)window.scrollTo({top:t.getBoundingClientRect().top+window.scrollY-12,behavior:'smooth'})})}
   el.innerHTML=`<button data-toc="top" class="toc-top" title="Volver al inicio"><span class="toc-l">Volver al inicio</span>⤒</button>`+secs.map((x,i)=>{
     const k=x.querySelector('.ek'),b=x.querySelector('.ehead b')||x.querySelector('summary');
     const kt=k?k.textContent.trim():'',bt=b?b.textContent.replace(kt,'').trim():'';
     const t=(kt&&bt?kt+' · '+bt:kt||bt).slice(0,70);
-    return `<button data-toc="${i}" title="${esc(t)}"><span class="toc-l">${esc(t)}</span><i></i></button>`}).join('');
+    return `<button data-toc="${i}" title="${esc(t)}"><span class="toc-l">${esc(t)}</span><i></i></button>`}).join('')
+    // otras páginas: las anteriores siempre; las siguientes solo si ya escribiste algo en ellas
+    +ePagMeta.map((m,i)=>i===ePagMeta.pi||(i>ePagMeta.pi&&!m.ok)?'':`<button data-tocp="${i}" class="toc-p${i<ePagMeta.pi?'':' sig'}" title="${esc('Actividad '+(i+1)+': '+m.t)}"><span class="toc-l">${esc('Actividad '+(i+1)+': '+m.t).slice(0,80)}</span><b>${i+1}</b></button>`).join('');
   tocActual()}
 function tocActual(){const el=document.getElementById('etoc');if(!el)return;let cur=0;
   document.querySelectorAll('#app .esec').forEach((x,i)=>{if(x.getBoundingClientRect().top<160)cur=i});

@@ -416,6 +416,10 @@ button:active:not(:disabled),.ecard:active,.lesson:active,.mode:active{transform
 @media (min-width:1100px){body.lupa-on #app{margin-right:440px}}
 @media (max-width:759px){#lupa{top:auto;width:100vw;height:72vh;border-left:0;border-top:1px solid var(--line);border-radius:16px 16px 0 0;transform:translateY(105%)}#lupa.on{transform:none}}
 .evolver{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;margin:8px 0;border-left:4px solid var(--part);cursor:pointer}
+.epag{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:18px 0 10px}.epag .btn{min-width:120px;font-weight:800}
+.epag-n{display:flex;flex-direction:column;align-items:center;gap:6px}.epag-n small{color:var(--muted);font-size:.78rem}.epag-n{flex-wrap:wrap}.epag-n i{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--line);margin:0 2px}.epag-n i.on{background:var(--part);width:20px;border-radius:4px}.epag-n i.ok{background:var(--ok)}
+.epag-n{flex-direction:row;justify-content:center}.epag-n small{flex-basis:100%;text-align:center}
+.epagina.aIn{animation:aIn .4s cubic-bezier(.2,.8,.2,1) both}
 .pleg{margin-bottom:10px}
 /* Lecciones y Precisión: dos cuadros a la par; lo que se abre baja a lo ancho debajo de ambos */
 .duo{display:grid;grid-template-columns:1fr 1fr;column-gap:12px;row-gap:0;margin:20px 0 4px}
@@ -1737,14 +1741,21 @@ function renderSesion(){
     if(sec.kind==='consulta')return `<details class="esec econs" open><summary><span class="ek">${E_LABEL.consulta}</span> ${esc(sec.title)}</summary><div class="ebody">${body}</div></details>`;
     return `<section class="esec" data-k="${sec.kind}"><div class="ehead"><div><span class="ek">${E_LABEL[sec.oral?'oral':sec.kind]||''}</span><b>${esc(sec.kind==='texto'?sec.head:sec.title)}</b>${typeof cuenta!=='undefined'?cuenta:''}${sec.min?`<span class="muted small"> · sugerido ${sec.min} min</span>`:''}</div><div class="eheadr">${(sec.kind==='tarea'||sec.kind==='practica')&&!locked&&lupaOk(sec)?`<button class="elupa" data-e="lupa" data-sec="${sec.id}" title="Consultar Materia y Referencia sin salir" aria-label="Consultar Materia y Referencia">🔍</button>`:''}${timer}</div></div><div class="ebody">${body}</div></section>`;
   };
+  // Por páginas (prueba): una actividad por página; la 📘 Consulta va en la misma página que la tarea que sigue
+  const pags=[];let pend=[];
+  for(const x of p.secs){const h=secHtml(x);if(!h)continue;pend.push(h);if(x.kind!=='consulta'&&x.kind!=='texto'){pags.push(pend);pend=[]}}
+  if(pend.length){if(pags.length)pags[pags.length-1].push(...pend);else pags.push(pend)}
+  const np=Math.max(1,pags.length);E.pag=E.pag||{};const pi=Math.max(0,Math.min(E.pag[s.id]||0,np-1));
+  const nav=`<nav class="epag">${pi>0?'<button class="btn" data-e="pag" data-d="-1">← Anterior</button>':'<span></span>'}<span class="epag-n">${pags.map((_,i)=>`<i class="${i===pi?'on':i<pi?'ok':''}"></i>`).join('')}<small>Actividad ${pi+1} de ${np}</small></span>${pi<np-1?'<button class="btn eprimary" data-e="pag" data-d="1">Siguiente →</button>':'<span></span>'}</nav>`;
   const tot=Object.values(w.tim).reduce((a,t)=>a+eMs(t),0);
   $('#app').innerHTML=`<div class="estudio">
     <div class="row"><button class="icon-btn" data-e="back" aria-label="Volver">←</button><div style="min-width:0"><div class="muted small">${esc(eFecha(s.fecha))}</div><b class="etitle">${esc(s.titulo||'Sesión')}</b></div><span class="sp"></span>${eChip(s)}</div>
     ${locked?'':`<div class="ebar"><span>⏱ Total <b id="eTotal">${eFmt(tot)}</b></span>${run?`<span class="muted small">En curso: ${esc((p.secs.find(x=>x.id===run)||{}).title||'')}</span>`:'<span class="muted small">Toca ▶ en cada actividad para cronometrarla</span>'}</div>`}
-    ${p.feedback.length?p.feedback.map(f=>`<section class="esec efb"><div class="ehead"><div><span class="ek">${E_LABEL.feedback}</span><b>${esc(f.title||'del instructor')}</b></div></div><div class="ebody">${eBlocks(f.blocks)}</div></section>`).join(''):''}
-    ${p.intro.length?`<div class="ebody eintro">${eBlocks(p.intro)}</div>`:''}
-    ${p.secs.map(secHtml).join('')}
-    <div class="eactions">${remota?`<div class="muted small">Sesión ${esc((E_CHIP[s.estado]||s.estado).toLowerCase())}: ${ent?'debajo de cada consigna ves tu respuesta y la corrección del instructor.':'tus respuestas están en «📤 Tu entrega».'}</div>`:locked?`<div class="muted small">Entregada el ${new Date(w.sent.at).toLocaleString('es',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}${E.outbox.some(o=>o.page===s.id)?' · se enviará cuando haya conexión':' · recibida'}</div>`
+    ${pi===0&&p.feedback.length?p.feedback.map(f=>`<section class="esec efb"><div class="ehead"><div><span class="ek">${E_LABEL.feedback}</span><b>${esc(f.title||'del instructor')}</b></div></div><div class="ebody">${eBlocks(f.blocks)}</div></section>`).join(''):''}
+    ${pi===0&&p.intro.length?`<div class="ebody eintro">${eBlocks(p.intro)}</div>`:''}
+    <div class="epagina">${(pags[pi]||[]).join('')}</div>
+    ${nav}
+    <div class="eactions"${pi<np-1?' hidden':''}>${remota?`<div class="muted small">Sesión ${esc((E_CHIP[s.estado]||s.estado).toLowerCase())}: ${ent?'debajo de cada consigna ves tu respuesta y la corrección del instructor.':'tus respuestas están en «📤 Tu entrega».'}</div>`:locked?`<div class="muted small">Entregada el ${new Date(w.sent.at).toLocaleString('es',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}${E.outbox.some(o=>o.page===s.id)?' · se enviará cuando haya conexión':' · recibida'}</div>`
       :`<button class="btn eprimary" data-e="entregar">Entregar</button>`}
       ${remota?'':'<button class="btn" data-e="copiar">Copiar respuestas para el chat</button>'}</div>
   </div>`;
@@ -2292,6 +2303,7 @@ function eClick(t){
   else if(a==='au-oir')auOir(t.dataset.id);
   else if(a==='au-del'){const w=eWork(eOpen);if(w.sent||!confirm('¿Borrar esta grabación?'))return;const an=w.ans[t.dataset.it]||{};an.r='';an.t=Date.now();bMark(eOpen,'a:'+t.dataset.it);eSave();bSoon(2500);render()}
   else if(a==='matdia'){const v=t.dataset.matdia;matQ=matQ.trim().toLowerCase()===v.toLowerCase()?'':v;const i=document.getElementById('matBuscar');if(i)i.value=matQ;matFiltrar()}
+  else if(a==='pag'){const n=(E.pag[eOpen]||0)+(+t.dataset.d);E.pag[eOpen]=Math.max(0,n);eSave();render();window.scrollTo({top:0});const g=document.querySelector('.epagina');if(g){g.classList.remove('aIn');void g.offsetWidth;g.classList.add('aIn')}}
   else if(a==='pleg'){const w=t.closest('.pleg'),k=t.dataset.k;PLEG[k]=!PLEG[k];w.classList.toggle('on',PLEG[k]);if(PLEG[k]){w.classList.add('abre');setTimeout(()=>w.classList.remove('abre'),900)}t.setAttribute('aria-expanded',PLEG[k])}
   else if(a==='ref2mat'){matQ=t.dataset.q||'';eSub='mat';render()}
   else if(a==='pin')tTogglePin(t.dataset.id);

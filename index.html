@@ -421,6 +421,7 @@ button:active:not(:disabled),.ecard:active,.lesson:active,.mode:active{transform
 .epag-n{flex-direction:row;justify-content:center}.epag-n small{flex-basis:100%;text-align:center}
 .epagina.aIn{animation:aIn .4s cubic-bezier(.2,.8,.2,1) both}
 .epista{margin-top:6px;font-size:.92em}.epista summary{cursor:pointer;color:var(--part);font-weight:700;list-style:none}.epista summary::-webkit-details-marker{display:none}.epista[open] summary{margin-bottom:4px}.epista>div{padding:6px 10px;border-radius:10px;background:color-mix(in srgb,var(--part) 10%,transparent)}
+.etreset{border:1px solid var(--line);background:var(--surface);border-radius:99px;width:34px;height:34px;margin-left:6px;font-size:1rem;color:var(--muted)}.etreset:hover{color:var(--text)}
 .pleg{margin-bottom:10px}
 /* Lecciones y Precisión: dos cuadros a la par; lo que se abre baja a lo ancho debajo de ambos */
 .duo{display:grid;grid-template-columns:1fr 1fr;column-gap:12px;row-gap:0;margin:20px 0 4px}
@@ -1750,7 +1751,7 @@ function renderSesion(){
       return eItemHtml(s.id,sec,sec.items[b.idx],b.idx,locked,c);
     }).join('');
     // 📘 Consulta lleva cronómetro solo si el instructor le puso tiempo sugerido («· N min»)
-    const timer=inter||(sec.kind==='consulta'&&sec.min&&!remota)?`<button class="etimer ${run===sec.id?'on':''}" data-e="timer" data-sec="${sec.id}" ${locked?'disabled':''}>${run===sec.id?'⏸':'▶'} <span data-tm="${sec.id}">${eFmt(eMs(w.tim[sec.id]))}</span></button>`:'';
+    const timer=inter||(sec.kind==='consulta'&&sec.min&&!remota)?`<button class="etimer ${run===sec.id?'on':''}" data-e="timer" data-sec="${sec.id}" ${locked?'disabled':''}>${run===sec.id?'⏸':'▶'} <span data-tm="${sec.id}">${eFmt(eMs(w.tim[sec.id]))}</span></button>${!locked&&run!==sec.id&&eMs(w.tim[sec.id])>0?`<button class="etreset" data-e="timer-reset" data-sec="${sec.id}" title="Poner el tiempo en 0" aria-label="Poner el tiempo en 0">↺</button>`:''}`:'';
     if(sec.kind==='consulta')return `<details class="esec econs" open><summary><span class="ek">${E_LABEL.consulta}</span> ${esc(sec.title)}</summary><div class="ebody">${body}</div></details>`;
     return `<section class="esec" data-k="${sec.kind}"><div class="ehead"><div><span class="ek">${E_LABEL[sec.oral?'oral':sec.kind]||''}</span><b>${esc(sec.kind==='texto'?sec.head:sec.title)}</b>${typeof cuenta!=='undefined'?cuenta:''}${sec.min?`<span class="muted small"> · sugerido ${sec.min} min</span>`:''}</div><div class="eheadr">${(sec.kind==='tarea'||sec.kind==='practica')&&!locked&&lupaOk(sec)?`<button class="elupa" data-e="lupa" data-sec="${sec.id}" title="Consultar Materia y Referencia sin salir" aria-label="Consultar Materia y Referencia">🔍</button>`:''}${timer}</div></div><div class="ebody">${body}</div></section>`;
   };
@@ -2335,6 +2336,7 @@ function eClick(t){
   else if(a==='volver'){const u=E.ultimo;if(!u||!E.ses[u.id])return;eOpen=u.id;view='sesion';render();bSync();requestAnimationFrame(()=>window.scrollTo(0,u.y||0))}
   else if(a==='back'){lupaCerrar();if(eOpen){const w=eWork(eOpen);if(eRunning(w)){eStopAll(w);eSave()}}view='estudio';eOpen=null;render()}
   else if(a==='timer'){eToggle(eOpen,t.dataset.sec);render()}
+  else if(a==='timer-reset'){if(!confirm('¿Poner el tiempo de esta actividad en 0?'))return;const sec=t.dataset.sec,w=eWork(eOpen);w.tim[sec]={acc:0,start:null,t:Date.now()};bMark(eOpen,'t:'+sec);eSave();bSoon(800);render()}
   else if(a==='entregar')eEntregar();
   else if(a==='copiar'){const s=E.ses[eOpen];if(s)eCopy(eTexto(s,eCollect(s)))}
 }

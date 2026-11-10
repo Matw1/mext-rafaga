@@ -763,8 +763,26 @@ function applyEvent(e){
 function evCmp(a,b){return a.t-b.t||(a.i<b.i?-1:a.i>b.i?1:0)}
 function rebuild(){derivedReset(S);S.ev.sort(evCmp);for(const e of S.ev)applyEvent(e);S.sessions.sort((a,b)=>a.d-b.d)}
 function addLocal(e){e.i=S.dev.id+'-'+e.t.toString(36)+'-'+rid().slice(0,4);e.d=S.dev.id;S.ev.push(e);S.outbox.push(e.i);return applyEvent(e)}
+/* Espacio y avisos de guardado: el navegador da ~5 MB a la app. Si un guardado falla (espacio lleno o bloqueado)
+   se muestra un aviso fijo arriba hasta que vuelva a funcionar: antes fallaba en silencio y lo escrito se perdía al cerrar. */
+const TAM={S:0,E:0},TAM_MAX=5e6,GUARDA={S:true,E:true};
+function guardaAviso(k,ok){
+  if(GUARDA[k]===ok)return;GUARDA[k]=ok;
+  if(typeof document==='undefined')return;
+  const mal=!GUARDA.S||!GUARDA.E;let el=document.getElementById('gAviso');
+  if(!mal){if(el)el.remove();return}
+  if(el)return;
+  el=document.createElement('div');el.id='gAviso';el.setAttribute('role','alert');
+  el.style.cssText='position:fixed;left:0;right:0;top:0;z-index:99999;background:#b3261e;color:#fff;padding:10px 14px;font-size:.9rem;line-height:1.35;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.35)';
+  el.textContent='⚠ No se pudo guardar en este dispositivo (espacio lleno o bloqueado). No cierres la app: usa «Copiar respuestas para el chat» en la sesión o «Exportar respaldo» en Ajustes.';
+  document.body.appendChild(el);
+}
+function espacioPct(){return Math.round(100*(TAM.S+TAM.E)/TAM_MAX)}
+function espacioHtml(){const p=espacioPct(),mb=((TAM.S+TAM.E)/1e6).toFixed(1).replace('.',',');
+  return `<div class="set"><span>Espacio usado en este dispositivo</span><span class="small" style="color:var(--${p>=90?'bad':p>=70?'warn':'muted'})">${mb} MB de ~5 MB · ${p}%</span></div>`}
+function espacioAviso(){const p=espacioPct();return p>=80?`<div class="card" role="alert" style="border-color:var(--warn)"><b>⚠ El espacio de la app está al ${p}%</b><div class="muted small">Si se llena, la app no podrá guardar lo nuevo. Exporta un respaldo en Ajustes y avisa para liberar espacio.</div></div>`:''}
 function load(){
-  let s=null;try{s=JSON.parse(localStorage.getItem(LS_KEY))}catch(e){}
+  let s=null;try{const raw=localStorage.getItem(LS_KEY);TAM.S=raw?raw.length:0;s=JSON.parse(raw)}catch(e){}
   const f=fresh();
   if(s&&s.v===2){s.settings=Object.assign(f.settings,s.settings);S=Object.assign(f,s)}
   else{S=f;if(s&&s.v===1){ // migración del formato anterior a un único snapshot 'b'
@@ -773,7 +791,7 @@ function load(){
       e.i=S.dev.id+'-legacy';e.d=S.dev.id;S.ev.push(e);S.outbox.push(e.i)}}}
   rebuild();if(!s||s.v!==2)save();return S;
 }
-function save(){try{const{items,buffer,cats,days,sessions,best,...p}=S;localStorage.setItem(LS_KEY,JSON.stringify(p))}catch(e){}}
+function save(){try{const{items,buffer,cats,days,sessions,best,...p}=S,j=JSON.stringify(p);localStorage.setItem(LS_KEY,j);TAM.S=j.length;guardaAviso('S',true)}catch(e){guardaAviso('S',false)}}
 let S=fresh();derivedReset(S);
 
 /* ---------- Sincronización (Worker → D1 → Notion) ----------
@@ -1082,7 +1100,7 @@ function renderHome(){
   $('#app').innerHTML=`${tabsHtml('juego')}
     <div class="row"><div class="brand"><span class="hanko">朱</span><div><b>MEXT Ráfaga${nivelBadge()}</b><small>Modo aburrimiento · 60–90 s</small></div></div><span class="sp"></span>
       <button class="icon-btn" data-act="prog" aria-label="Panel de progreso" title="Panel de progreso">📈</button><button class="icon-btn" data-act="stats" aria-label="Estadísticas" title="Estadísticas (S)">📊</button></div>
-    ${volverHtml()}
+    ${volverHtml()}${espacioAviso()}
     <section class="hero">
       <div class="ring" aria-label="${exam} días para el examen">
         <svg viewBox="0 0 100 100"><defs><linearGradient id="g1" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#ffb547"/><stop offset="1" stop-color="var(--accent)"/></linearGradient></defs>
@@ -1121,6 +1139,7 @@ function renderHome(){
         <div class="set"><span>Este dispositivo</span><span class="seg">${['Teléfono','PC'].map(n=>`<button data-dev="${n}" class="${S.dev.name===n?'on':''}">${n}</button>`).join('')}</span></div>
         <div class="row" style="flex-wrap:wrap"><button class="btn" data-act="syncsave">Guardar y sincronizar</button><span class="muted small">${S.lastSync?'Última: '+new Date(S.lastSync).toLocaleString('es',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'Nunca sincronizado'} · ${S.outbox.length} pend.</span></div>
       </div>
+      ${espacioHtml()}
       <div class="row" style="flex-wrap:wrap"><button class="btn" data-act="export">Exportar respaldo</button><button class="btn" data-act="import">Importar</button><span class="sp"></span><button class="btn" data-act="reset" style="color:var(--bad)">Borrar todo</button></div>
     </div></details>
     <div class="foot"><span class="kbd">Enter</span> empezar · <span class="kbd">1</span>–<span class="kbd">4</span> responder · <span class="kbd">Enter</span> seguir · <span class="kbd">Esc</span> salir · <span class="kbd">S</span> estadísticas<br>Agrega <span class="kbd">#go</span> a la URL para arrancar directo</div>`;
@@ -1200,8 +1219,9 @@ function renderEnd(){
 }
 function renderStats(){
   const buf=Object.entries(S.buffer).sort((a,b)=>b[1].f-a[1].f);
-  const miss=Object.entries(S.items).filter(([k,v])=>v.miss>0&&allKeys().includes(k)).sort((a,b)=>b[1].miss-a[1].miss).slice(0,8);
-  const ss=S.sessions.slice(-10).reverse(),allK=allKeys(),seen=Object.keys(S.items).filter(k=>allK.includes(k)).length;
+  const allK=allKeys(),hayK=new Set(allK); // la lista de preguntas se arma una sola vez (antes, una vez por cada fallo: la pantalla se congelaba)
+  const miss=Object.entries(S.items).filter(([k,v])=>v.miss>0&&hayK.has(k)).sort((a,b)=>b[1].miss-a[1].miss).slice(0,8);
+  const ss=S.sessions.slice(-10).reverse(),seen=Object.keys(S.items).filter(k=>hayK.has(k)).length;
   $('#app').innerHTML=`<div class="stack">
     <div class="row"><button class="icon-btn" data-act="home" aria-label="Inicio">←</button><b style="font-size:1.15rem">Estadísticas</b><span class="sp"></span><span class="kbd">Esc</span></div>
     <div class="kpis"><div class="kpi"><b>${S.best.score}</b><span>🏆 récord</span></div><div class="kpi"><b>${S.best.combo}</b><span>🔥 mejor combo</span></div><div class="kpi"><b>${seen}/${allK.length}</b><span>reactivos vistos</span></div></div>
@@ -1225,13 +1245,24 @@ function render(){applyTheme();const y=window.scrollY,cambio=view!==lastView||eO
 const E_KEY='mextRafaga.estudio.v1';
 let E={ses:{},work:{},outbox:[],lastFetch:0};
 let eState='off',eBusy=false,eOpen=null; // eOpen = id de la sesión abierta
-function eLoad(){try{const d=JSON.parse(localStorage.getItem(E_KEY));if(d&&d.ses)E=Object.assign({ses:{},work:{},outbox:[],lastFetch:0},d)}catch(e){}
+function eLoad(){try{const raw=localStorage.getItem(E_KEY);TAM.E=raw?raw.length:0;const d=JSON.parse(raw);if(d&&d.ses)E=Object.assign({ses:{},work:{},outbox:[],lastFetch:0},d)}catch(e){}
   // Versiones anteriores podían marcar como «al día» sesiones que solo bajaron a medias:
   // se olvidan esas marcas una vez para volver a descargar todo (se conserva lo guardado mientras tanto).
   if((E.cv||0)<2){for(const s of Object.values(E.ses))s.edited=null;E.cv=2;eSave()}
   if(E.cv<3){const now=Date.now();for(const[sid,w]of Object.entries(E.work)){if(w.sent)continue;
-    for(const[it,a]of Object.entries(w.ans)){a.t=a.t||now;bMark(sid,'a:'+it)}for(const[sec,tm]of Object.entries(w.tim)){tm.t=tm.t||now;bMark(sid,'t:'+sec)}}E.cv=3;eSave()}}
-function eSave(){try{localStorage.setItem(E_KEY,JSON.stringify(E))}catch(e){}}
+    for(const[it,a]of Object.entries(w.ans)){a.t=a.t||now;bMark(sid,'a:'+it)}for(const[sec,tm]of Object.entries(w.tim)){tm.t=tm.t||now;bMark(sid,'t:'+sec)}}E.cv=3;eSave()}
+  eRecuperaCron()}
+function eSave(){try{const j=JSON.stringify(E);localStorage.setItem(E_KEY,j);TAM.E=j.length;guardaAviso('E',true)}catch(e){guardaAviso('E',false)}}
+/* Cronómetro olvidado: la app deja un «latido» cada 15 s mientras está viva. Si estuvo cerrada o dormida más de
+   2 min con un cronómetro corriendo, ese cronómetro se corta en el último latido (antes seguía contando horas). */
+const HB_KEY='mextRafaga.hb';
+function eLatido(){try{localStorage.setItem(HB_KEY,String(Date.now()))}catch(e){}}
+function eRecuperaCron(){let n=0;
+  try{const hb=+localStorage.getItem(HB_KEY)||0;if(!hb||Date.now()-hb<120000)return 0;
+    for(const[sid,w]of Object.entries(E.work)){if(w.sent)continue;
+      for(const[k,t]of Object.entries(w.tim||{}))if(t.start){t.acc=(t.acc||0)+Math.max(0,hb-t.start);t.start=null;t.t=Date.now();bMark(sid,'t:'+k);n++}}
+    if(n)eSave()}catch(e){}
+  return n}
 const eWork=id=>E.work[id]||(E.work[id]={ans:{},tim:{},sent:null});
 
 /* ---------- Lectura del formato del instructor ---------- */
@@ -1520,7 +1551,7 @@ function eDiff(a,b){
   const ops=[];let i=0,j=0; // '=' igual · '-' sobra/está mal en la respuesta · '+' falta en la respuesta
   while(i<n&&j<m){if(A[i]===B[j]){ops.push(['=',A[i]]);i++;j++}else if(D[i+1][j]>=D[i][j+1])ops.push(['-',A[i++]]);else ops.push(['+',B[j++]])}
   while(i<n)ops.push(['-',A[i++]]);while(j<m)ops.push(['+',B[j++]]);
-  const blanco=ch=>/s/.test(ch);
+  const blanco=ch=>/\s/.test(ch);
   let sa='',sb='',ma=false,mb=false,falta=false,prev='';
   for(const[o,ch]of ops){
     if(o!=='-'&&ma){sa+='</span>';ma=false}
@@ -2363,10 +2394,19 @@ function popAplicar(){const b=popSel&&document.querySelector(popSel);popSel='';i
 /* ---------- Actualización de la app ---------- */
 let swReg=null,recargaPendiente=false;
 function buscarVersion(){try{swReg&&swReg.update()}catch(e){}}
+/* La versión nueva espera a que termines lo que no se puede recuperar: una grabación 🎙️ en curso, una ráfaga a medias,
+   o que estés escribiendo (15 s sin teclear; nunca a mitad de la conversión a kanji). Se reintenta cada 5 s. */
+let ultEscribe=0,componiendo=false;
+if(typeof document!=='undefined'){
+  document.addEventListener('input',()=>{ultEscribe=Date.now()},true);
+  document.addEventListener('compositionstart',()=>{componiendo=true;ultEscribe=Date.now()},true);
+  document.addEventListener('compositionend',()=>{componiendo=false;ultEscribe=Date.now()},true);
+}
+function recargaOcupado(){return !!auRec||componiendo||Date.now()-ultEscribe<15000||(view==='drill'&&sess&&sess.state!=='end')}
 function intentarRecarga(){
-  if(!recargaPendiente)return;
-  // Se aplica enseguida, también a mitad de una sesión: antes de recargar se guarda todo (respuestas y cronómetros)
-  recargaPendiente=false;try{bCorriendo();eSave();save()}catch(e){}location.reload();
+  if(!recargaPendiente||recargaOcupado())return;
+  // También a mitad de una sesión: antes de recargar se guarda todo (respuestas y cronómetros)
+  recargaPendiente=false;try{bCorriendo();eSave();save();eLatido()}catch(e){}location.reload();
 }
 
 /* ---------- Panel de progreso ----------
@@ -2512,7 +2552,7 @@ function onKey(e){
   if(e.target&&e.target.id==='prodIn'){if(k==='Enter'&&!e.isComposing){e.preventDefault();prodCheck()}return} // Enter durante la conversión a kanji no envía
   if(view==='drill'&&sess&&sess.state==='judge'){if(k==='1')answer(0,{ok:false,typed:sess.typed});else if(k==='2')answer(0,{ok:true,exact:false,typed:sess.typed});return}
   if(e.target&&e.target.matches&&e.target.matches('input,textarea,select'))return;
-  if(view==='sesion'){if(k==='Escape'){view='estudio';eOpen=null;render()}return}
+  if(view==='sesion'){if(k==='Escape')eClick({dataset:{e:'back'}});return} // igual que ←: cierra la 🔍 y detiene el cronómetro
   if(view==='estudio'){if(k==='Escape'){view='home';render()}return}
   if(view==='drill'&&sess){
     if(sess.state==='q'&&/^[1-4]$/.test(k)&&+k<=sess.cur.opts.length){e.preventDefault();answer(+k-1)}
@@ -2536,7 +2576,7 @@ if(typeof document!=='undefined'){
     r.readAsText(f);e.target.value='';
   });
   try{load()}catch(e){S=fresh();derivedReset(S)}
-  eLoad();
+  eLoad();eLatido();setInterval(eLatido,15000);
   document.addEventListener('focusin',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.it&&t.matches('textarea,input'))eAutoTimer(t)});
   document.addEventListener('input',e=>{if(e.target.id==='eBuscar')return eFiltrar(e.target.value);if(e.target.id==='matBuscar'){matQ=e.target.value;return matFiltrar()}if(e.target.dataset&&e.target.dataset.a&&e.target.type!=='checkbox')eInput(e.target)});
   document.addEventListener('change',e=>{if(e.target.dataset&&e.target.dataset.a&&e.target.type==='checkbox')eInput(e.target)});
@@ -2554,7 +2594,7 @@ if(typeof document!=='undefined'){
   addEventListener('offline',()=>{syncState=syncConfigured()?'offline':'off';refreshSync()});
   // versión nueva de la app: se revisa cada minuto mientras está a la vista (antes solo al volver a abrirla)
   setInterval(()=>{if(!document.hidden)buscarVersion()},60000);addEventListener('online',buscarVersion);
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden){syncNow();eSync();bSync();buscarVersion()}else{bCorriendo();eSave();bSync(true)}});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden){const cortado=eRecuperaCron();eLatido();if(cortado&&view==='sesion')render();syncNow();eSync();bSync();buscarVersion()}else{eLatido();bCorriendo();eSave();bSync(true)}});
   bSync();setInterval(()=>{if(!document.hidden&&view!=='drill')bSync()},15000);
   setInterval(()=>{if(!document.hidden&&view!=='drill')eSync()},180000);
   setInterval(()=>{if(view==='home'||view==='stats')syncNow()},120000);

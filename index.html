@@ -30,7 +30,11 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;color:var(--text);background-color:var(--bg)}
 body{font-family:"Nunito","Zen Maru Gothic",system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP","Hiragino Sans","Yu Gothic UI","Meiryo",sans-serif;font-size:16px;line-height:1.45;min-height:100dvh;
-  background-image:radial-gradient(900px 420px at 50% -120px,var(--glow),transparent 70%),var(--pat,none);background-attachment:fixed}
+  background-color:transparent}
+/* Fondo (degradado + patrón) en una capa fija propia: con «background-attachment:fixed» el teléfono lo repintaba en cada cuadro al deslizar */
+body::before{content:"";position:fixed;top:0;left:0;width:100%;height:100vh;height:100lvh;z-index:-2;pointer-events:none;
+  background-image:radial-gradient(900px 420px at 50% -120px,var(--glow),transparent 70%),var(--pat,none)}
+html.fondo body::before{display:none}
 #app{max-width:780px;margin:0 auto;padding:14px 16px calc(28px + env(safe-area-inset-bottom))}
 button{font:inherit;color:inherit;cursor:pointer}
 .row{display:flex;align-items:center;gap:10px}
@@ -72,8 +76,10 @@ h3{font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mu
   background:linear-gradient(120deg,#e8453a,#c4252b 55%,#8e1a3a);box-shadow:0 10px 30px var(--glow),inset 0 1px 0 rgba(255,255,255,.25);overflow:hidden}
 .start::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.22) 50%,transparent 70%);transform:translateX(-100%);animation:shine 3.2s ease-in-out infinite}
 @keyframes shine{0%,55%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
-.start .play{flex:none;width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.18);display:grid;place-items:center;font-size:1.4rem;animation:pulse 2s ease-in-out infinite}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,.35)}50%{box-shadow:0 0 0 10px rgba(255,255,255,0)}}
+.start .play{position:relative;flex:none;width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.18);display:grid;place-items:center;font-size:1.4rem}
+/* latido del ▶: un aro que crece y se desvanece (transform + opacidad: no repinta la pantalla, a diferencia de animar una sombra) */
+.start .play::after{content:"";position:absolute;inset:0;border-radius:50%;border:3px solid rgba(255,255,255,.55);pointer-events:none;animation:pulse 2s ease-out infinite}
+@keyframes pulse{0%{transform:scale(1);opacity:.6}60%,100%{transform:scale(1.4);opacity:0}}
 .start b{display:block;font-size:1.3rem}
 .start small{opacity:.85;font-size:.85rem}
 .start:active{transform:scale(.99)}
@@ -348,6 +354,8 @@ button.pill{cursor:pointer;font-family:inherit}
 #fondo::after{content:"";position:absolute;inset:0;background:var(--bg);opacity:var(--fvel,.35);transition:opacity .2s}
 html.fondo body{background:transparent}
 html.fondo .card,html.fondo .ecard,html.fondo .lesson,html.fondo .mode,html.fondo .icon-btn,html.fondo .pill{-webkit-backdrop-filter:blur(14px) saturate(1.3);backdrop-filter:blur(14px) saturate(1.3)}
+/* En el teléfono, desenfocar decenas de elementos pequeños baja los cuadros al deslizar: ahí el desenfoque queda solo en las tarjetas grandes */
+@media (pointer:coarse),(max-width:700px){html.fondo .lesson,html.fondo .mode,html.fondo .icon-btn,html.fondo .pill{-webkit-backdrop-filter:none;backdrop-filter:none;background-image:linear-gradient(var(--surface),var(--surface))}}
 html.fondo .start{background:linear-gradient(120deg,color-mix(in srgb,var(--accent) 62%,#000),color-mix(in srgb,var(--accent) 45%,#000) 55%,color-mix(in srgb,var(--accent2) 38%,#000))}
 html.fondo h3,html.fondo .foot{text-shadow:0 0 6px var(--bg),0 0 2px var(--bg)}
 .fgal{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
@@ -916,7 +924,7 @@ function startSession(mode){
   sess={prod:esProd,maxQ:esProd?Math.min(8,Math.max(3,pool.length*2)):0,id:rid()+Date.now().toString(36),mode,pool,qi:0,left:S.settings.dur*1000,score:0,combo:0,maxCombo:0,n:0,ok:0,byCat:{},sched:[],recent:[],freed:0,cur:null,state:'q',qEl:0,qLim:0};
   // errores pendientes de esta categoría: se intercalan cada 2 preguntas
   Object.keys(S.buffer).filter(k=>pool.includes(k)).sort(()=>Math.random()-.5).forEach((k,i)=>sess.sched.push({key:k,at:mode==='buf'?i:1+i*2}));
-  view='drill';next();
+  view='drill';next();tickStart();
 }
 function next(){
   let key=pickNext(),q=build(key),guard=0;
@@ -978,8 +986,10 @@ function tick(t){
     if(sess.qLim&&sess.qEl>=sess.qLim)answer(-1);
     updateClock();
   }
-  requestAnimationFrame(tick);
+  if(view==='drill')requestAnimationFrame(tick);else tickOn=false; // fuera de una ráfaga el reloj se apaga (antes corría 60 veces por segundo siempre)
 }
+let tickOn=false;
+function tickStart(){if(tickOn)return;tickOn=true;lastT=0;requestAnimationFrame(tick)}
 function updateClock(){
   const fg=$('#tfg'),tx=$('#ttx'),tr=$('#tring'),qt=$('#qt'),lt=$('#lastTag');
   const f=sess.left/(S.settings.dur*1000);
@@ -2587,7 +2597,7 @@ if(typeof document!=='undefined'){
   document.addEventListener('input',e=>{if(e.target.id!=='fVel')return;FONDO.vel=+e.target.value;try{localStorage.setItem('rafaga-fondo-vel',FONDO.vel)}catch(_){}applyTheme()});
   setInterval(eTick,1000);
   fondoInit();
-  render();requestAnimationFrame(tick);
+  render();
   syncNow();
   addEventListener('online',()=>{syncNow();eSync();bSync()});
   eSync();

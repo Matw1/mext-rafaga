@@ -466,6 +466,89 @@ button:active:not(:disabled),.ecard:active,.lesson:active,.mode:active{transform
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <input id="imp" type="file" accept="application/json" class="hide">
 <script>
+/* ---------- Almacén de la app ----------
+   Antes todo (historial, sesiones, respuestas) vivía en localStorage, que el navegador limita a ~5 MB.
+   Ahora vive en IndexedDB (sin ese tope). Este cargador corre ANTES que la app:
+     1. Abre el almacén nuevo y lee todo a memoria; después arranca la app, que sigue leyendo «de inmediato» como siempre.
+     2. La primera vez migra: (a) guarda una copia de seguridad de todo en un almacén aparte, (b) copia los datos,
+        (c) los vuelve a leer y compara letra por letra, y solo entonces marca «mextRafaga.almacen = idb».
+        NO borra nada de localStorage: lo viejo queda intacto como estaba el día de la migración.
+     3. Si algo falla, la app sigue con el almacén viejo, igual que antes.
+   Vuelta atrás: abrir la app con «?almacen=viejo» devuelve los datos actuales a localStorage (si caben) y se queda ahí;
+   «?almacen=nuevo» vuelve a migrar. */
+(function(){
+  const CLAVES=["mextRafaga.v1","mextRafaga.estudio.v1","mextRafaga.estudio.v1.ses"],FLAG="mextRafaga.almacen";
+  const BD="rafaga-datos",RESP="rafaga-respaldo";
+  const abrir=n=>new Promise((ok,no)=>{let r;try{r=indexedDB.open(n,1)}catch(e){return no(e)}
+    r.onupgradeneeded=()=>r.result.createObjectStore("kv");r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error||new Error("no abre"));r.onblocked=()=>no(new Error("bloqueado"))});
+  const leer=(db,ks)=>new Promise((ok,no)=>{const t=db.transaction("kv"),st=t.objectStore("kv"),o={};
+    ks.forEach(k=>{const q=st.get(k);q.onsuccess=()=>{if(q.result!==undefined)o[k]=q.result}});
+    t.oncomplete=()=>ok(o);t.onerror=t.onabort=()=>no(t.error||new Error("lectura"))});
+  const escribir=(db,o,relax)=>new Promise((ok,no)=>{let t;
+    try{t=db.transaction("kv","readwrite",relax?{}:{durability:"strict"})}catch(e){try{t=db.transaction("kv","readwrite")}catch(e2){return no(e2)}}
+    const st=t.objectStore("kv");for(const k in o){if(o[k]==null)st.delete(k);else st.put(o[k],k)}
+    t.oncomplete=()=>ok();t.onerror=t.onabort=()=>no(t.error||new Error("escritura"))});
+  const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
+  const cola={};let enCurso=null,agendado=false;
+  const avisar=(k,ok)=>{try{A.aviso&&A.aviso(k,ok)}catch(e){}};
+  function vaciar(){agendado=false;if(enCurso)return;
+    const lote={},ks=[];let relax=true;
+    for(const k in cola){const c=cola[k];if(!c.sucio)continue;lote[k]=c.v;c.sucio=false;ks.push(k);if(!c.relax)relax=false}
+    if(!ks.length)return;
+    enCurso=escribir(A.db,lote,relax).then(()=>{A.err="";ks.forEach(k=>{if(!cola[k].sucio)avisar(k,true)})},
+      e=>{A.err=String(e&&e.message||e);ks.forEach(k=>{if(!cola[k].sucio){cola[k].sucio=true}avisar(k,false)});setTimeout(agendar,5000)})
+      .then(()=>{enCurso=null;if(Object.values(cola).some(c=>c.sucio)&&!A.err)agendar()});}
+  function agendar(){if(agendado)return;agendado=true;Promise.resolve().then(vaciar)}
+  const A=window.ALM={modo:"ls",mem:{},CLAVES,FLAG,db:null,err:"",migrado:0,previaT:0,volcar:false,aviso:null,
+    get(k){return this.modo==="idb"?(k in this.mem?this.mem[k]:null):lsGet(k)},
+    // Guarda un valor (null = quitarlo). En el almacén viejo es inmediato; en el nuevo va a disco enseguida, en segundo plano:
+    // lo guardado en el mismo instante entra junto (todo o nada). «aviso(clave, ok)» dice si quedó guardado.
+    set(k,v,relax){
+      if(this.modo!=="idb"){let ok=true;try{if(v==null)localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){ok=false}avisar(k,ok);return}
+      if(v==null)delete this.mem[k];else this.mem[k]=v;
+      const c=cola[k]||(cola[k]={});c.v=v;c.sucio=true;c.relax=!!relax;agendar()},
+    async listo(){await Promise.resolve();while(enCurso||agendado){if(enCurso)await enCurso;else await Promise.resolve()}},
+    async respaldo(){const db=await abrir(RESP);try{return (await leer(db,["pre-migracion"]))["pre-migracion"]||null}finally{db.close()}},
+  };
+  // La app arranca solo cuando la página terminó de leerse entera (si no, su código podría llegar cortado)
+  const domListo=new Promise(z=>{if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>z(),{once:true});else z()});
+  async function correr(){await domListo;const c=document.getElementById("rafaga-codigo"),sc=document.createElement("script");sc.textContent=c.textContent;document.body.appendChild(sc)}
+  async function falla(msg){await domListo;document.getElementById("app").innerHTML='<div style="font:16px system-ui;padding:24px;line-height:1.5"><h2>No se pudo abrir la app</h2><p>'+msg+'</p><p>Tus datos no se borraron. Cierra otras pestañas de la app y vuelve a intentar.</p><button onclick="location.reload()" style="font:inherit;padding:10px 18px">Reintentar</button><p style="color:#888;font-size:13px">'+String(A.err).replace(/[<&]/g,"")+'</p></div>'}
+  (async function(){
+    const q=new URLSearchParams(location.search).get("almacen");let flag=lsGet(FLAG);
+    try{A.db=await abrir(BD)}catch(e){A.db=null;A.err="almacén nuevo no disponible: "+(e&&e.message||e)}
+    if(flag==="idb"){
+      if(!A.db)return falla("El almacenamiento de la app no abrió.");
+      try{A.mem=await leer(A.db,CLAVES)}catch(e){A.err=String(e&&e.message||e);return falla("El almacenamiento de la app no se pudo leer.")}
+      A.modo="idb";A.volcar=q==="viejo";
+      abrir(RESP).then(db=>leer(db,["pre-migracion-t"]).then(o=>{A.previaT=o["pre-migracion-t"]||0;db.close()})).catch(()=>{});
+      return correr()}
+    if(q==="nuevo"&&flag==="ls")flag=null;
+    if(flag==null&&A.db&&q!=="viejo"){ // primera vez: migrar
+      try{
+        const datos={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&(k.startsWith("mextRafaga")||k.startsWith("rafaga-")))datos[k]=localStorage.getItem(k)}
+        const t=Date.now(),rdb=await abrir(RESP);
+        // (a) copia de seguridad de todo, en un almacén aparte, y se comprueba
+        // (si ya hubo una migración antes, su copia original se conserva y esta se guarda como «última»)
+        const ya=(await leer(rdb,["pre-migracion-t"]))["pre-migracion-t"],kc=ya?"migracion-ultima":"pre-migracion";
+        await escribir(rdb,ya?{[kc]:{t,datos}}:{[kc]:{t,datos},"pre-migracion-t":t});
+        const chk=(await leer(rdb,[kc]))[kc];rdb.close();
+        if(!chk||Object.keys(chk.datos).length!==Object.keys(datos).length||Object.keys(datos).some(k=>chk.datos[k]!==datos[k]))throw new Error("la copia de seguridad no coincide");
+        // (b) copiar y (c) volver a leer y comparar
+        const lote={};for(const k of CLAVES)lote[k]=datos[k]!=null?datos[k]:null;
+        await escribir(A.db,lote);
+        const leido=await leer(A.db,CLAVES);
+        for(const k of CLAVES)if((lote[k]==null?null:lote[k])!==(leido[k]===undefined?null:leido[k]))throw new Error("no coincide "+k);
+        // solo ahora se cambia de almacén; lo viejo NO se borra
+        localStorage.setItem(FLAG,"idb");if(lsGet(FLAG)!=="idb")throw new Error("no se pudo marcar el cambio");
+        A.mem=leido;A.modo="idb";A.migrado=t;A.previaT=ya||t;
+      }catch(e){A.err="no se pudo migrar: "+(e&&e.message||e);A.modo="ls"}
+    }
+    correr();
+  })();
+})();
+</script>
+<script type="text/plain" id="rafaga-codigo">
 "use strict";
 /* =========================================================
    MEXT Ráfaga — micro-drills de 60–90 s para el examen MEXT
@@ -774,6 +857,7 @@ function addLocal(e){e.i=S.dev.id+'-'+e.t.toString(36)+'-'+rid().slice(0,4);e.d=
 /* Espacio y avisos de guardado: el navegador da ~5 MB a la app. Si un guardado falla (espacio lleno o bloqueado)
    se muestra un aviso fijo arriba hasta que vuelva a funcionar: antes fallaba en silencio y lo escrito se perdía al cerrar. */
 const TAM={S:0,E:0},TAM_MAX=5e6,GUARDA={S:true,E:true};
+ALM.aviso=(k,ok)=>guardaAviso(k==='mextRafaga.v1'?'S':'E',ok); // el almacén avisa si cada guardado llegó a disco
 function guardaAviso(k,ok){
   if(GUARDA[k]===ok)return;GUARDA[k]=ok;
   if(typeof document==='undefined')return;
@@ -785,12 +869,15 @@ function guardaAviso(k,ok){
   el.textContent='⚠ No se pudo guardar en este dispositivo (espacio lleno o bloqueado). No cierres la app: usa «Copiar respuestas para el chat» en la sesión o «Exportar respaldo» en Ajustes.';
   document.body.appendChild(el);
 }
-function espacioPct(){return Math.round(100*(TAM.S+TAM.E)/TAM_MAX)}
+function espacioPct(){return ALM.modo==='idb'?0:Math.round(100*(TAM.S+TAM.E)/TAM_MAX)} // el almacén nuevo no tiene el tope de 5 MB
 function espacioHtml(){const p=espacioPct(),mb=((TAM.S+TAM.E)/1e6).toFixed(1).replace('.',',');
-  return `<div class="set"><span>Espacio usado en este dispositivo</span><span class="small" style="color:var(--${p>=90?'bad':p>=70?'warn':'muted'})">${mb} MB de ~5 MB · ${p}%</span></div>`}
+  const fch=t=>new Date(t).toLocaleDateString('es',{day:'numeric',month:'short'});
+  return `<div class="set"><span>Espacio usado en este dispositivo</span>${ALM.modo==='idb'?`<span class="small muted">${mb} MB · almacén nuevo, sin el tope de 5 MB</span>`:`<span class="small" style="color:var(--${p>=90?'bad':p>=70?'warn':'muted'})">${mb} MB de ~5 MB · ${p}%</span>`}</div>
+      ${ALM.modo!=='idb'&&ALM.err?`<div class="muted small">Sigues en el almacén anterior (${esc(ALM.err)}).</div>`:''}
+      <div class="row" style="flex-wrap:wrap"><button class="btn" data-act="copia">⬇ Copia de seguridad completa</button>${ALM.previaT?`<button class="btn" data-act="copia-previa">⬇ Copia previa al cambio de almacén (${fch(ALM.previaT)})</button>`:''}</div>`}
 function espacioAviso(){const p=espacioPct();return p>=80?`<div class="card" role="alert" style="border-color:var(--warn)"><b>⚠ El espacio de la app está al ${p}%</b><div class="muted small">Si se llena, la app no podrá guardar lo nuevo. Exporta un respaldo en Ajustes y avisa para liberar espacio.</div></div>`:''}
 function load(){
-  let s=null;try{const raw=localStorage.getItem(LS_KEY);TAM.S=raw?raw.length:0;s=JSON.parse(raw)}catch(e){}
+  let s=null;try{const raw=ALM.get(LS_KEY);TAM.S=raw?raw.length:0;s=JSON.parse(raw)}catch(e){}
   const f=fresh();
   if(s&&s.v===2){s.settings=Object.assign(f.settings,s.settings);S=Object.assign(f,s)}
   else{S=f;if(s&&s.v===1){ // migración del formato anterior a un único snapshot 'b'
@@ -799,7 +886,7 @@ function load(){
       e.i=S.dev.id+'-legacy';e.d=S.dev.id;S.ev.push(e);S.outbox.push(e.i)}}}
   rebuild();if(!s||s.v!==2)save();return S;
 }
-function save(){try{const{items,buffer,cats,days,sessions,best,...p}=S,j=JSON.stringify(p);localStorage.setItem(LS_KEY,j);TAM.S=j.length;guardaAviso('S',true)}catch(e){guardaAviso('S',false)}}
+function save(){try{const{items,buffer,cats,days,sessions,best,...p}=S,j=JSON.stringify(p);ALM.set(LS_KEY,j);TAM.S=j.length}catch(e){guardaAviso('S',false)}}
 let S=fresh();derivedReset(S);
 
 /* ---------- Sincronización (Worker → D1 → Notion) ----------
@@ -1255,14 +1342,28 @@ function render(){applyTheme();const y=window.scrollY,cambio=view!==lastView||eO
 const E_KEY='mextRafaga.estudio.v1';
 let E={ses:{},work:{},outbox:[],lastFetch:0};
 let eState='off',eBusy=false,eOpen=null; // eOpen = id de la sesión abierta
-function eLoad(){try{const raw=localStorage.getItem(E_KEY);TAM.E=raw?raw.length:0;const d=JSON.parse(raw);if(d&&d.ses)E=Object.assign({ses:{},work:{},outbox:[],lastFetch:0},d)}catch(e){}
+// En el almacén nuevo las sesiones del instructor (lo pesado, y que se puede volver a bajar) van aparte de tus respuestas.
+const DIARIO='mextRafaga.diario';let sesSucio=false,sesLen=null; // sesSucio: cambió el contenido de alguna sesión (solo entonces se reescribe esa parte)
+function eLoad(){let pend=false;
+  try{const raw=ALM.get(E_KEY),rs=ALM.modo==='idb'?ALM.get(E_KEY+'.ses'):null;TAM.E=(raw?raw.length:0)+(rs?rs.length:0);const d=JSON.parse(raw);if(d&&(d.ses||d.work))E=Object.assign({ses:{},work:{},outbox:[],lastFetch:0},d);if(rs)E.ses=JSON.parse(rs)}catch(e){}
+  // Diario: copia inmediata de la sesión que tienes abierta (respuestas, cronómetros y su entrega en cola). Si la app se cerró
+  // de golpe antes de que el almacén nuevo terminara de guardar, lo último se recupera de aquí.
+  if(ALM.modo==='idb')try{const dj=JSON.parse(localStorage.getItem(DIARIO)||'null');if(dj&&dj.k&&dj.t>(E.gt||0)){if(dj.work)E.work[dj.k]=dj.work;
+    const hay=new Set(E.outbox.map(o=>o.id));for(const o of dj.out||[])if(!hay.has(o.id))E.outbox.push(o);pend=true}}catch(e){}
   // Versiones anteriores podían marcar como «al día» sesiones que solo bajaron a medias:
   // se olvidan esas marcas una vez para volver a descargar todo (se conserva lo guardado mientras tanto).
-  if((E.cv||0)<2){for(const s of Object.values(E.ses))s.edited=null;E.cv=2;eSave()}
+  if((E.cv||0)<2){for(const s of Object.values(E.ses))s.edited=null;E.cv=2;sesSucio=true;eSave()}
   if(E.cv<3){const now=Date.now();for(const[sid,w]of Object.entries(E.work)){if(w.sent)continue;
     for(const[it,a]of Object.entries(w.ans)){a.t=a.t||now;bMark(sid,'a:'+it)}for(const[sec,tm]of Object.entries(w.tim)){tm.t=tm.t||now;bMark(sid,'t:'+sec)}}E.cv=3;eSave()}
+  if(pend)eSave();
   eRecuperaCron()}
-function eSave(){try{const j=JSON.stringify(E);localStorage.setItem(E_KEY,j);TAM.E=j.length;guardaAviso('E',true)}catch(e){guardaAviso('E',false)}}
+function eSave(){try{const t=Date.now();E.gt=t;
+    if(ALM.modo==='idb'){const{ses,...r}=E;
+      if(sesSucio||sesLen==null){const js=JSON.stringify(ses);ALM.set(E_KEY+'.ses',js,true);sesLen=js.length;sesSucio=false}
+      const j=JSON.stringify(r);ALM.set(E_KEY,j);TAM.E=j.length+sesLen;
+      try{if(eOpen)localStorage.setItem(DIARIO,JSON.stringify({k:eOpen,t,work:E.work[eOpen],out:E.outbox.filter(o=>o.page===eOpen)}))}catch(e){}}
+    else{const j=JSON.stringify(E);ALM.set(E_KEY,j);TAM.E=j.length}
+  }catch(e){guardaAviso('E',false)}}
 /* Cronómetro olvidado: la app deja un «latido» cada 15 s mientras está viva. Si estuvo cerrada o dormida más de
    2 min con un cronómetro corriendo, ese cronómetro se corta en el último latido (antes seguía contando horas). */
 const HB_KEY='mextRafaga.hb';
@@ -1444,7 +1545,7 @@ async function eSync(manual){
       for(const s of r.sesiones||[]){const old=E.ses[s.id];
         // si quedó pendiente, conserva lo guardado y su fecha de edición para volver a pedirla
         parcial[s.id]=s.blocks?{...s}:{...s,blocks:old&&old.blocks||null,edited:old&&old.blocks?old.edited:null}}
-      E.ses=parcial;eSave();if(r.more&&view==='estudio')eRefresh();
+      E.ses=parcial;sesSucio=true;E.sinNotion=r.sinNotion||[];eSave();if(r.more&&view==='estudio')eRefresh();
     }while(r.more&&++guard<30);
     const next={};
     for(const s of r.sesiones||[])next[s.id]=E.ses[s.id];
@@ -1455,7 +1556,7 @@ async function eSync(manual){
     for(const[id,s]of Object.entries(E.ses)){if(next[id])continue;const w=E.work[id];
       const sinEntregar=w&&!w.sent&&Object.keys(w.ans||{}).length;
       if(sinEntregar||enCola.has(id)||(r.sesiones||[]).length>=40&&s.fecha<oldest)next[id]=s}
-    E.ses=next;E.lastFetch=Date.now();eState='ok';eSave();
+    E.ses=next;sesSucio=true;E.lastFetch=Date.now();eState='ok';eSave();
     if(manual)toast('Sesiones actualizadas');
   }catch(err){eState=err.badkey?'badkey':(navigator.onLine===false||err.name==='TypeError'||err.name==='AbortError')?'offline':'error';eErr=err.message;if(manual)toast(eState==='offline'?'Sin conexión: se usará lo guardado':'No se pudo actualizar: '+err.message)}
   finally{eBusy=false;const typing=document.activeElement&&document.activeElement.matches('textarea,input');if(view==='estudio'||view==='tabla'||((view==='home'||view==='sesion')&&!typing))render();else eRefresh()}
@@ -1813,7 +1914,7 @@ function renderSesion(){
     <div class="epagina">${(pags[pi]||[]).join('')}</div>
     ${pi===np-1&&p.feedback.length?p.feedback.map(f=>`<details class="esec efb" open><summary><span class="ek">${E_LABEL.feedback}</span> <b>Resumen ${esc(f.title||'del instructor')}</b></summary><div class="ebody">${eBlocks(f.blocks)}</div></details>`).join(''):''}
     ${nav}
-    <div class="eactions"${pi<np-1?' hidden':''}>${remota?`<div class="muted small">Sesión ${esc((E_CHIP[s.estado]||s.estado).toLowerCase())}: ${ent?'debajo de cada consigna ves tu respuesta y la corrección del instructor.':'tus respuestas están en «📤 Tu entrega».'}</div>`:locked?`<div class="muted small">Entregada el ${new Date(w.sent.at).toLocaleString('es',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}${E.outbox.some(o=>o.page===s.id)?' · se enviará cuando haya conexión':' · recibida'}</div>`
+    <div class="eactions"${pi<np-1?' hidden':''}>${remota?`<div class="muted small">Sesión ${esc((E_CHIP[s.estado]||s.estado).toLowerCase())}: ${ent?'debajo de cada consigna ves tu respuesta y la corrección del instructor.':'tus respuestas están en «📤 Tu entrega».'}</div>`:locked?`<div class="muted small">Entregada el ${new Date(w.sent.at).toLocaleString('es',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}${E.outbox.some(o=>o.page===s.id)?' · se enviará cuando haya conexión':(E.sinNotion||[]).includes(s.id)?' · ⚠ todavía no llegó a Notion; se reintenta sola (si mañana sigue así, avisa)':' · recibida'}</div>`
       :`<button class="btn eprimary" data-e="entregar">Entregar</button>`}
       ${remota?'':'<button class="btn" data-e="copiar">Copiar respuestas para el chat</button>'}</div>
   </div>`;
@@ -2416,7 +2517,9 @@ function recargaOcupado(){return !!auRec||componiendo||Date.now()-ultEscribe<150
 function intentarRecarga(){
   if(!recargaPendiente||recargaOcupado())return;
   // También a mitad de una sesión: antes de recargar se guarda todo (respuestas y cronómetros)
-  recargaPendiente=false;try{bCorriendo();eSave();save();eLatido()}catch(e){}location.reload();
+  recargaPendiente=false;try{bCorriendo();eSave();save();eLatido()}catch(e){}
+  // se recarga cuando el almacén confirmó el guardado (o a los 2 s, por si acaso)
+  let ya=false;const ir=()=>{if(!ya){ya=true;location.reload()}};ALM.listo().then(ir,ir);setTimeout(ir,2000);
 }
 
 /* ---------- Panel de progreso ----------
@@ -2517,6 +2620,38 @@ function renderProg(){
 }
 
 /* ---------- Eventos ---------- */
+/* Copia de seguridad completa: todo lo de este dispositivo (historial, sesiones, respuestas, borradores, ajustes) en un archivo.
+   «previa» = la copia automática que se hizo justo antes de cambiar de almacén. Se restaura con «Importar». */
+function descargar(nombre,obj){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(obj)],{type:'application/json'}));a.download=nombre;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),60000)}
+function sTexto(){const{items,buffer,cats,days,sessions,best,...p}=S;return JSON.stringify(p)}
+async function copiaCompleta(previa){
+  try{
+    if(previa){const r=await ALM.respaldo();if(!r){toast('No hay copia previa en este dispositivo');return}
+      descargar(`mext-rafaga-copia-previa-${today(new Date(r.t))}.json`,{app:'mext-rafaga',tipo:'previa',t:r.t,datos:r.datos});return}
+    const datos={};try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&(k.startsWith('mextRafaga')||k.startsWith('rafaga-'))&&!ALM.CLAVES.includes(k)&&k!==DIARIO)datos[k]=localStorage.getItem(k)}}catch(e){}
+    datos[LS_KEY]=sTexto();datos[E_KEY]=JSON.stringify(E);
+    descargar(`mext-rafaga-copia-completa-${today()}.json`,{app:'mext-rafaga',tipo:'completa',t:Date.now(),datos});
+    toast('Copia de seguridad descargada');
+  }catch(e){toast('No se pudo hacer la copia: '+(e.message||e))}
+}
+async function restaurarCopia(o){
+  const d=o.datos||{},n=[LS_KEY,E_KEY].filter(k=>typeof d[k]==='string').length;
+  if(!n){toast('Esa copia no trae datos');return}
+  if(!confirm(`¿Restaurar la copia del ${new Date(o.t).toLocaleString('es')}?\n\nReemplaza lo que hay ahora en ESTE dispositivo (historial, sesiones y respuestas) por lo de la copia. Si dudas, descarga antes una «Copia de seguridad completa».`))return;
+  for(const k of[LS_KEY,E_KEY])if(typeof d[k]==='string')ALM.set(k,d[k]);
+  if(ALM.modo==='idb'&&typeof d[E_KEY]==='string')ALM.set(E_KEY+'.ses',null); // las sesiones vienen dentro de la copia del estudio
+  try{localStorage.removeItem(DIARIO)}catch(e){}
+  await ALM.listo();if(!GUARDA.S||!GUARDA.E){toast('No se pudo guardar la copia restaurada');return}
+  restaurarCopia.hecho=true;location.reload();
+}
+// Vuelta atrás (abrir con «?almacen=viejo»): devuelve los datos actuales al almacén anterior, si caben, y se queda ahí.
+function almVolver(){
+  const v={[LS_KEY]:sTexto(),[E_KEY]:JSON.stringify(E)};
+  try{for(const k in v){localStorage.setItem(k,v[k]);if(localStorage.getItem(k)!==v[k])throw new Error('no coincide')}
+    try{localStorage.removeItem(DIARIO)}catch(_){}
+    localStorage.setItem(ALM.FLAG,'ls');ALM.modo='ls';ALM.volcar=false;toast('Listo: la app volvió al almacén anterior');render()}
+  catch(e){ALM.volcar=false;toast('No cabe en el almacén anterior: sigues en el nuevo, sin perder nada')}
+}
 function exportData(){
   const a=document.createElement('a');
   const{items,buffer,cats,days,sessions,best,...p}=S;a.href=URL.createObjectURL(new Blob([JSON.stringify(p)],{type:'application/json'}));
@@ -2548,6 +2683,8 @@ function onClick(e){
     case 'prodok':answer(0,{ok:true,exact:false,typed:sess.typed});break;
     case 'prodnext':cont();break;
     case 'export':exportData();break;
+    case 'copia':copiaCompleta(false);break;
+    case 'copia-previa':copiaCompleta(true);break;
     case 'fondoadd':{const i=document.getElementById('fImg');if(i)i.click();break}
     case 'syncpill':{const det=document.querySelector('details.card');if(!syncConfigured()&&det){det.open=true;det.scrollIntoView({behavior:'smooth'})}else syncNow(true);break}
     case 'syncsave':S.settings.syncUrl=$('#sUrl').value.trim();S.settings.syncKey=$('#sKey').value.trim();save();
@@ -2579,6 +2716,7 @@ if(typeof document!=='undefined'){
   $('#imp').addEventListener('change',e=>{
     const f=e.target.files[0];if(!f)return;const r=new FileReader();
     r.onload=()=>{try{const d=JSON.parse(r.result);
+      if(d&&d.app==='mext-rafaga'&&d.datos){restaurarCopia(d);return}
       if(d.v===2&&Array.isArray(d.ev)){const have=new Set(S.ev.map(e=>e.i));for(const e of d.ev)if(!have.has(e.i)){S.ev.push(e);S.outbox.push(e.i)}}
       else if(d.v===1){const e={t:1,k:'b',snap:{items:d.items,buffer:d.buffer,cats:d.cats,days:d.days,sessions:d.sessions,best:d.best}};e.i=S.dev.id+'-imp-'+rid();e.d=S.dev.id;S.ev.push(e);S.outbox.push(e.i)}
       else throw 0;
@@ -2598,6 +2736,7 @@ if(typeof document!=='undefined'){
   setInterval(eTick,1000);
   fondoInit();
   render();
+  if(ALM.volcar)almVolver();
   syncNow();
   addEventListener('online',()=>{syncNow();eSync();bSync()});
   eSync();

@@ -68,6 +68,17 @@ h3{font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mu
 .ring .in small{font-size:.7rem;color:var(--muted)}
 .eyebrow{font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);font-weight:800}
 .hero .h{font-size:1.05rem;font-weight:700;margin:4px 0 10px}
+.hero .hsub{display:block;font-size:.78rem;font-weight:600;color:var(--muted);margin-top:2px}
+/* 🗓 Hoy: lo que toca, en un solo lugar */
+.hoy{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.hoy-h{font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.hoy-b{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:1px solid var(--line);background:var(--surface2);border-radius:14px;padding:11px 14px;color:inherit;font:inherit;cursor:pointer}
+.hoy-b.pri{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.hoy-b .ic{flex:none;width:28px;text-align:center;font-size:1.25rem}
+.hoy-b .tx{flex:1;min-width:0}.hoy-b b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.25}
+.hoy-b small{display:block;color:var(--muted);font-size:.8rem}
+.hoy-b .chev{flex:none;color:var(--muted);font-size:1.2rem}
+.hoy-f{font-size:.78rem;color:var(--muted);padding:0 2px}
 .pills{display:flex;flex-wrap:wrap;gap:6px}
 .pill{display:inline-flex;align-items:center;gap:5px;font-size:.8rem;font-weight:700;padding:4px 10px;border-radius:99px;background:var(--surface);border:1px solid var(--line);font-variant-numeric:tabular-nums}
 
@@ -1190,6 +1201,39 @@ let volverT=null;
 window.addEventListener('scroll',()=>{if(view!=='sesion'||!eOpen)return;clearTimeout(volverT);volverT=setTimeout(()=>{
   let sec='';for(const el of document.querySelectorAll('.esec')){if(el.getBoundingClientRect().top>140)break;const b=el.querySelector('.ehead b, summary');if(b)sec=b.textContent.trim()}
   E.ultimo={id:eOpen,y:Math.round(window.scrollY),sec:sec.slice(0,60),t:Date.now()};eSave()},400)},{passive:true});
+/* 🗓 Hoy: lo que toca, en un solo lugar: la sesión del día (o la pendiente), el repaso de errores y la lección nueva.
+   Solo muestra y lleva; no califica ni inventa metas: el tiempo diario sale de las horas que anota el instructor. */
+function hoyHtml(){
+  const fila=(attrs,ic,tit,sub,pri)=>`<button class="hoy-b${pri?' pri':''}" ${attrs}><span class="ic">${ic}</span><span class="tx"><b>${tit}</b><small>${sub}</small></span><span class="chev" aria-hidden="true">›</span></button>`;
+  const list=Object.values(E.ses).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const s=list.find(x=>x.fecha===today())||list.find(x=>x.estado==='Publicada'&&!(E.work[x.id]&&E.work[x.id].sent));
+  let h='';
+  if(s){const w=E.work[s.id],n=(s.blocks?eParse(s.blocks).secs:[]).filter(x=>x.kind==='tarea'||x.kind==='practica'||x.kind==='fuera').length;
+    const hecho=w&&Object.values(w.ans||{}).some(a=>String(a.r||'').trim()||a.hecho),pi=Math.min(((E.pag||{})[s.id]||0)+1,Math.max(1,n));
+    let sub,pri=false;
+    if(s.estado==='Corregida')sub='Corregida por el instructor'+(typeof s.nota==='number'&&s.nota>=0?' · '+String(Math.round(s.nota*10)/10).replace('.',',')+'/10':'');
+    else if((w&&w.sent)||s.estado==='Entregada')sub='Entregada · esperando la corrección';
+    else if(hecho){sub=`A medias · vas en la actividad ${pi} de ${n}`;pri=true}
+    else{sub='Por hacer'+(n?` · ${n} actividad${n>1?'es':''}`:'');pri=true}
+    const seguir=pri&&hecho&&E.ultimo&&E.ultimo.id===s.id; // vuelve al punto exacto donde ibas
+    h+=fila(`data-e="${seguir?'volver':'open'}" data-id="${esc(s.id)}"`,'📝',esc((s.fecha===today()?'':'Pendiente · ')+(s.titulo||'Sesión')),sub,pri);
+  }else h+=fila('data-e="tab-estudio"','📝','Aún no hay sesión para hoy','Toca para abrir Estudio y actualizar',false);
+  if(Object.keys(S.buffer).length)h+=fila('data-mode="buf"','↻','Repasar errores','Una ráfaga corta con lo que fallaste',false);
+  const nueva=lessons().find(x=>!lessonKeys(x.id).some(k=>S.items[k]));
+  if(nueva)h+=fila(`data-mode="day:${esc(nueva.id)}"`,'日','Lección nueva',esc(nueva.titulo||'Día estudiado'),false);
+  const td=S.days[today()]||{n:0},r=eRitmo(),st=streak(),pie=[];
+  if(r)pie.push(`⏱ Debes estudiar ${r.min>=60?Math.floor(r.min/60)+' h '+(r.min%60)+' min':r.min+' min'}/día`);
+  if(td.n)pie.push(`✓ ${td.n} respuestas hoy`);
+  if(st>1)pie.push(`🔥 ${st} días seguidos`);
+  return `<section class="card hoy"><div class="hoy-h">Hoy · ${new Date().toLocaleDateString('es',{weekday:'long',day:'numeric',month:'short'}).replace('.','')}</div>${h}${pie.length?`<div class="hoy-f">${pie.join(' · ')}</div>`:''}</section>`;
+}
+/* Titular del inicio: la fase y su dominio salen de lo que el instructor pone en Notion (Fase, temas en 100 %, Dominio %).
+   Antes era una fecha de «checkpoint» fija en el código. */
+function faseTitular(){
+  const d=eDominioFase();if(!d)return 'Camino al examen';
+  const n=eHace(d.fecha),v=String(d.v).replace('.',',');
+  return `${esc(d.fase)} · <span style="color:var(--accent)">${v}% dominado</span><small class="hsub">${d.temas?`${d.dom} de ${d.n} temas`:'según el instructor'}${n?` · dato de hace ${n} días`:''}</small>`;
+}
 function renderHome(){
   const td=S.days[today()]||{n:0,ok:0},bufN=Object.keys(S.buffer).length,m=S.settings.mode;
   const exam=daysTo('2027-07-15'),cp=daysTo('2026-11-26'),total=daysTo('2027-07-15')-daysTo('2026-07-29');
@@ -1197,7 +1241,7 @@ function renderHome(){
   $('#app').innerHTML=`${tabsHtml('juego')}
     <div class="row"><div class="brand"><span class="hanko">朱</span><div><b>MEXT Ráfaga${nivelBadge()}</b><small>Modo aburrimiento · 60–90 s</small></div></div><span class="sp"></span>
       <button class="icon-btn" data-act="prog" aria-label="Panel de progreso" title="Panel de progreso">📈</button><button class="icon-btn" data-act="stats" aria-label="Estadísticas" title="Estadísticas (S)">📊</button></div>
-    ${volverHtml()}${espacioAviso()}
+    ${espacioAviso()}${hoyHtml()}
     <section class="hero">
       <div class="ring" aria-label="${exam} días para el examen">
         <svg viewBox="0 0 100 100"><defs><linearGradient id="g1" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#ffb547"/><stop offset="1" stop-color="var(--accent)"/></linearGradient></defs>
@@ -1207,8 +1251,8 @@ function renderHome(){
       </div>
       <div>
         <div class="eyebrow">試験 · 15 jul 2027</div>
-        <div class="h">${cp>0?`Checkpoint Fase 1 (50%) en <span style="color:var(--accent)">${cp} días</span>`:'Fase 2 en marcha'}</div>
-        <div class="pills">${dominioPill()}${temaPill()}${ritmoPill()}<span class="pill">🔥 ${streak()} días</span><span class="pill">✓ ${td.n} hoy${td.n?' · '+Math.round(100*td.ok/td.n)+'%':''}</span><span class="pill" style="color:var(--warn)">↻ ${bufN}</span><button class="pill" id="syncPill" data-act="syncpill" data-s="${syncLabel()[1]}">${syncLabel()[0]}</button></div>
+        <div class="h">${faseTitular()}</div>
+        <div class="pills">${temaPill()}<button class="pill" id="syncPill" data-act="syncpill" data-s="${syncLabel()[1]}">${syncLabel()[0]}</button></div>
       </div>
     </section>
     <button class="start" data-act="start"><span class="play">▶</span><span><b>Ráfaga de ${S.settings.dur} s</b><small>${mode[1]} · Enter</small></span></button>
@@ -1219,8 +1263,8 @@ function renderHome(){
     <div class="modes">${MODES.map(([k,n,s])=>{
       const p=CATS[k]?catAcc(k):null;
       return `<button class="mode ${k===m?'on':''}" data-mode="${k}" style="--c:var(--${k})">
-        <span class="glyph">${CUI[k].g}</span><span class="mn">${n}</span><span class="ms">${k==='buf'?(bufN?bufN+' por liberar':'Vacío 🎉'):s}</span>
-        ${k==='buf'&&bufN?`<span class="badge">${bufN}</span>`:p!=null?`<span class="acc">${Math.round(p*100)}%</span>`:''}
+        <span class="glyph">${CUI[k].g}</span><span class="mn">${n}</span><span class="ms">${k==='buf'?(bufN?'Pendientes de repasar':'Vacío 🎉'):s}</span>
+        ${k==='buf'?'':p!=null?`<span class="acc">${Math.round(p*100)}%</span>`:''}
         ${p!=null?`<span class="mb" style="width:${p*100}%"></span>`:''}</button>`}).join('')}</div>
     <h3>Ajustes</h3>
     <details class="card" data-aj ${ajAbierto?'open':''}><summary>⚙️ Duración, presión, furigana, tema y respaldo</summary><div class="stack" style="margin-top:14px">
@@ -2076,11 +2120,11 @@ function lessonsHtml(){
   const acc=keys=>{let n=0,ok=0;for(const k of keys){const it=S.items[k];if(it){n+=it.n;ok+=it.ok}}return n?ok/n:null};
   const card=(mode,title,sub,keys,isNew,pmode,pn)=>{const p=acc(keys);return `<div class="lrow"><button class="lesson ${S.settings.mode===mode?'on':''}" data-mode="${esc(mode)}">
       <span class="glyph" style="--c:var(--dia)">日</span><span class="lt"><b>${esc(title)}</b><span class="muted small">${sub}${isNew?' · <span class="lnew">nueva</span>':''}</span></span>
-      <span class="pct">${p==null?'▶':Math.round(p*100)+'%'}</span>${p!=null?`<span class="mb" style="width:${p*100}%;background:var(--dia)"></span>`:''}</button>${pmode&&pn?`<button class="lprod" data-mode="${esc(pmode)}" title="Escribir las respuestas" aria-label="Producción: escribir">✏️<small>${pn}</small></button>`:''}</div>`};
+      <span class="pct">${p==null?'▶':Math.round(p*100)+'%'}</span>${p!=null?`<span class="mb" style="width:${p*100}%;background:var(--dia)"></span>`:''}</button>${pmode&&pn?`<button class="lprod" data-mode="${esc(pmode)}" title="Escribir las respuestas" aria-label="Producción: escribir">✏️${mode==='days'?'':`<small>${pn}</small>`}</button>`:''}</div>`};
   const pAll=prodKeys();
-  return plegHtml('lec',`<span class="glyph" style="--c:var(--dia)">📅</span><span class="lt"><b>Lecciones de días estudiados</b><span class="muted small">${L.length} día${L.length>1?'s':''} · ${allK.length} preguntas${pAll.length?` · ✏️ ${pAll.length} para escribir`:''}</span></span>`,`<div class="lessons">
-    ${pAll.length?`<button class="lesson lp ${S.settings.mode==='prod'?'on':''}" data-mode="prod"><span class="glyph" style="--c:var(--esc)">書</span><span class="lt"><b>✏️ Producción: escribir</b><span class="muted small">${pAll.length} tarjetas · tus errores corregidos y las preguntas del juego</span></span><span class="pct">▶</span></button>`:''}
-    ${L.length>1?card('days','Todas las lecciones',`${L.length} días · ${allK.length} preguntas`,allK,false,'prod',pAll.length):''}
+  return plegHtml('lec',`<span class="glyph" style="--c:var(--dia)">📅</span><span class="lt"><b>Lecciones de días estudiados</b><span class="muted small">${L.length} día${L.length>1?'s':''} con lección</span></span>`,`<div class="lessons">
+    ${pAll.length?`<button class="lesson lp ${S.settings.mode==='prod'?'on':''}" data-mode="prod"><span class="glyph" style="--c:var(--esc)">書</span><span class="lt"><b>✏️ Producción: escribir</b><span class="muted small">Tus errores corregidos y las preguntas del juego · 8 por ronda</span></span><span class="pct">▶</span></button>`:''}
+    ${L.length>1?card('days','Todas las lecciones',`${L.length} días`,allK,false,'prod',pAll.length):''}
     ${L.map(s=>{const ks=lessonKeys(s.id);const pk=prodKeys(s.id).length;return card('day:'+s.id,s.titulo||'Día estudiado',`${esc(eFechaCorta(s.fecha))} · ${ks.length} preguntas`,ks,!ks.some(k=>S.items[k]),'prod:'+s.id,pk)}).join('')}
   </div>`);
 }

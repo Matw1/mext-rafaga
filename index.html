@@ -376,6 +376,25 @@ body.bnav #toast{bottom:calc(84px + env(safe-area-inset-bottom))}
 .hoy-b.pri b{font-size:1.06rem}.hoy-b.pri small{color:rgba(255,255,255,.86)}.hoy-b.pri .chev{color:#fff}
 .hoy-b.pri .ic{background:rgba(255,255,255,.18);color:#fff}
 @media (hover:hover) and (pointer:fine){.hoy-b:hover{transform:translateY(-2px)}.hoy-b.pri:hover{box-shadow:0 14px 32px var(--glow)}}
+/* ===== Rediseño 21-nov (2): pantallas internas ===== */
+/* Estudio: pestañas como chips que se deslizan, la activa con el color de la app */
+.esub{gap:6px;padding:2px 2px 4px;margin:4px -2px 14px;background:none;border:0;border-radius:0;overflow-x:auto}
+.esub button{flex:0 0 auto;border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:8px 15px;min-height:40px;color:var(--muted);font-weight:800;font-size:.88rem}
+.esub button.on{background:var(--accent);border-color:var(--accent);color:var(--accent-t);box-shadow:0 4px 14px var(--glow)}
+/* Sesión: barra del cronómetro como píldora flotante, etiquetas de actividad con su color */
+.ebar{margin:12px 0;padding:9px 14px;border:1px solid var(--line);border-radius:14px;background:color-mix(in srgb,var(--surface) 92%,transparent);box-shadow:var(--shadow);gap:8px 12px}
+.ebar .muted.small{font-size:.75rem}
+.esec{border-radius:18px;padding:16px;box-shadow:var(--shadow)}
+.esec .ek{display:inline-flex;align-items:center;gap:4px;width:max-content;padding:3px 10px;margin-bottom:4px;border-radius:99px;font-size:.7rem;font-weight:800;letter-spacing:.03em;color:var(--kc,var(--part));background:color-mix(in srgb,var(--kc,var(--part)) 12%,transparent)}
+.esec[data-k="tarea"]{--kc:var(--jita)}.esec[data-k="practica"]{--kc:var(--ctr)}.esec[data-k="fuera"]{--kc:var(--syn)}.econs{--kc:var(--dia)}
+.esec .ehead b{font-size:1.05rem}
+
+.etimer{border-radius:99px;font-weight:800}
+/* Progreso: sin la ayuda «Toca un punto…» cuando el gráfico está vacío */
+.chart:has(.cvacio) .ccap{display:none}
+.chart h3{color:var(--text);letter-spacing:.06em}
+/* Atajos de teclado: solo en PC */
+@media (hover:none),(pointer:coarse){.kbd,.foot{display:none!important}}
 /* ===== Fondo propio (imagen de este dispositivo; la paleta sale de la imagen) ===== */
 #fondo{position:fixed;top:0;left:0;width:100%;height:100vh;height:100lvh;z-index:-1;background:var(--bg) center/cover no-repeat;pointer-events:none;animation:aFade .6s both}
 #fondo::after{content:"";position:absolute;inset:0;background:var(--bg);opacity:var(--fvel,.35);transition:opacity .2s}
@@ -1396,6 +1415,7 @@ const ICO={casa:SVG_('<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1
   sube:SVG_('<path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/>'),
   barras:SVG_('<path d="M5 20V11M12 20V4M19 20v-6"/>'),
   repite:SVG_('<path d="M20 11a8 8 0 0 0-14.3-4.9L4 8"/><path d="M4 3v5h5"/><path d="M4 13a8 8 0 0 0 14.3 4.9L20 16"/><path d="M20 21v-5h-5"/>')};
+new MutationObserver(()=>{cancelAnimationFrame(bnavPintar.r);bnavPintar.r=requestAnimationFrame(bnavPintar)}).observe(document.getElementById('app'),{childList:true});
 function bnavPintar(){let el=document.getElementById('bnav');const ver=!['drill','sesion','simu','tabla'].includes(view);
   document.body.classList.toggle('bnav',ver);
   if(!ver){if(el)el.remove();return}
@@ -2261,7 +2281,7 @@ function renderSimHoja(){
 }
 
 /* ---------- Referencia: todo el material 📘 Consulta ya explicado ---------- */
-function eSubTabs(){return `<div class="seg esub"><button data-e="sub-ses" class="${eSub==='ses'?'on':''}">Sesiones</button><button data-e="sub-ref" class="${eSub==='ref'?'on':''}">📘 Referencia</button><button data-e="sub-mat" class="${eSub==='mat'?'on':''}">📊 Materia</button><button data-e="sub-sim" class="${eSub==='sim'?'on':''}">📋 Simulacros</button><button data-e="sub-tem" class="${eSub==='tem'?'on':''}">🗺️ Temas</button></div>`}
+function eSubTabs(){return `<div class="seg esub"><button data-e="sub-ses" class="${eSub==='ses'?'on':''}">Sesiones</button><button data-e="sub-ref" class="${eSub==='ref'?'on':''}">Referencia</button><button data-e="sub-mat" class="${eSub==='mat'?'on':''}">Materia</button><button data-e="sub-sim" class="${eSub==='sim'?'on':''}">Simulacros</button><button data-e="sub-tem" class="${eSub==='tem'?'on':''}">Temas</button></div>`}
 function bText(list){let s='';for(const b of list||[]){s+=' '+ptxt(b.rt);if(b.cells)s+=' '+b.cells.map(ptxt).join(' ');if(b.kids)s+=bText(b.kids)}return s}
 function renderRef(){
   const items=[];

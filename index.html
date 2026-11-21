@@ -360,6 +360,22 @@ button.pill{cursor:pointer;font-family:inherit}
 .ehoy .edia small{color:rgba(255,255,255,.85)}.ehoy .edia b{font-size:1.8rem}
 .ehoy .efecha{color:var(--part)}.ecard.eses.ehoy .etit{font-size:1.16rem}
 .echip,.enota{font-family:"Nunito",sans-serif;font-weight:800}
+/* ===== Rediseño 21-nov: barra de navegación abajo + «Hoy» como tarjeta principal ===== */
+#bnav{position:fixed;left:0;right:0;bottom:0;z-index:45;display:flex;justify-content:center;padding:6px 10px calc(6px + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--surface) 94%,transparent);border-top:1px solid var(--line);box-shadow:0 -6px 20px rgba(0,0,0,.06)}
+#bnav .in{display:flex;gap:4px;width:100%;max-width:560px}
+#bnav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;border:0;background:none;color:var(--muted);font:inherit;font-size:.7rem;font-weight:800;letter-spacing:.01em;padding:7px 0 5px;border-radius:14px;min-height:54px;transition:color .2s,background-color .2s}
+#bnav button.on{color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent)}
+#bnav button:active{transform:scale(.94)}
+body.bnav #app{padding-bottom:calc(92px + env(safe-area-inset-bottom))}
+body.bnav #toast{bottom:calc(84px + env(safe-area-inset-bottom))}
+.hoy{background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 13%,var(--surface)),var(--surface) 60%);border-color:color-mix(in srgb,var(--accent) 28%,var(--line));padding:18px;gap:10px}
+.hoy-h{color:var(--accent);font-size:.74rem}
+.hoy-b{border-radius:16px;padding:13px 14px;background:color-mix(in srgb,var(--surface2) 70%,transparent)}
+.hoy-b .ic{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent);font-size:1.1rem}
+.hoy-b.pri{border:0;box-shadow:0 10px 26px var(--glow);padding:16px;color:#fff;background:linear-gradient(120deg,color-mix(in srgb,var(--accent) 92%,#000),color-mix(in srgb,var(--accent) 68%,#000))}
+.hoy-b.pri b{font-size:1.06rem}.hoy-b.pri small{color:rgba(255,255,255,.86)}.hoy-b.pri .chev{color:#fff}
+.hoy-b.pri .ic{background:rgba(255,255,255,.18);color:#fff}
+@media (hover:hover) and (pointer:fine){.hoy-b:hover{transform:translateY(-2px)}.hoy-b.pri:hover{box-shadow:0 14px 32px var(--glow)}}
 /* ===== Fondo propio (imagen de este dispositivo; la paleta sale de la imagen) ===== */
 #fondo{position:fixed;top:0;left:0;width:100%;height:100vh;height:100lvh;z-index:-1;background:var(--bg) center/cover no-repeat;pointer-events:none;animation:aFade .6s both}
 #fondo::after{content:"";position:absolute;inset:0;background:var(--bg);opacity:var(--fvel,.35);transition:opacity .2s}
@@ -1216,9 +1232,9 @@ function hoyHtml(){
     else if(hecho){sub=`A medias · vas en la actividad ${pi} de ${n}`;pri=true}
     else{sub='Por hacer'+(n?` · ${n} actividad${n>1?'es':''}`:'');pri=true}
     const seguir=pri&&hecho&&E.ultimo&&E.ultimo.id===s.id; // vuelve al punto exacto donde ibas
-    h+=fila(`data-e="${seguir?'volver':'open'}" data-id="${esc(s.id)}"`,'📝',esc((s.fecha===today()?'':'Pendiente · ')+(s.titulo||'Sesión')),sub,pri);
-  }else h+=fila('data-e="tab-estudio"','📝','Aún no hay sesión para hoy','Toca para abrir Estudio y actualizar',false);
-  if(Object.keys(S.buffer).length)h+=fila('data-mode="buf"','↻','Repasar errores','Una ráfaga corta con lo que fallaste',false);
+    h+=fila(`data-e="${seguir?'volver':'open'}" data-id="${esc(s.id)}"`,ICO.libro,esc((s.fecha===today()?'':'Pendiente · ')+(s.titulo||'Sesión')),sub,pri);
+  }else h+=fila('data-e="tab-estudio"',ICO.libro,'Aún no hay sesión para hoy','Toca para abrir Estudio y actualizar',false);
+  if(Object.keys(S.buffer).length)h+=fila('data-mode="buf"',ICO.repite,'Repasar errores','Una ráfaga corta con lo que fallaste',false);
   const nueva=lessons().find(x=>!lessonKeys(x.id).some(k=>S.items[k]));
   if(nueva)h+=fila(`data-mode="day:${esc(nueva.id)}"`,'日','Lección nueva',esc(nueva.titulo||'Día estudiado'),false);
   const td=S.days[today()]||{n:0},r=eRitmo(),st=streak(),pie=[];
@@ -1236,11 +1252,10 @@ function faseTitular(){
 }
 function renderHome(){
   const td=S.days[today()]||{n:0,ok:0},bufN=Object.keys(S.buffer).length,m=S.settings.mode;
-  const exam=daysTo('2027-07-15'),cp=daysTo('2026-11-26'),total=daysTo('2027-07-15')-daysTo('2026-07-29');
+  const exam=daysTo('2027-06-15'),cp=daysTo('2026-11-26'),total=daysTo('2027-06-15')-daysTo('2026-07-29');
   const prog=Math.min(1,Math.max(0,1-exam/total)),C=2*Math.PI*44,mode=[m,modeLabel(m)];
   $('#app').innerHTML=`${tabsHtml('juego')}
-    <div class="row"><div class="brand"><span class="hanko">朱</span><div><b>MEXT Ráfaga${nivelBadge()}</b><small>Modo aburrimiento · 60–90 s</small></div></div><span class="sp"></span>
-      <button class="icon-btn" data-act="prog" aria-label="Panel de progreso" title="Panel de progreso">📈</button><button class="icon-btn" data-act="stats" aria-label="Estadísticas" title="Estadísticas (S)">📊</button></div>
+    <div class="row"><div class="brand"><span class="hanko">朱</span><div><b>MEXT Ráfaga${nivelBadge()}</b><small>Modo aburrimiento · 60–90 s</small></div></div></div>
     ${espacioAviso()}${hoyHtml()}
     <section class="hero">
       <div class="ring" aria-label="${exam} días para el examen">
@@ -1250,7 +1265,7 @@ function renderHome(){
         <div class="in"><div><b>${exam}</b><small>días</small></div></div>
       </div>
       <div>
-        <div class="eyebrow">試験 · 15 jul 2027</div>
+        <div class="eyebrow">試験 · 15 jun 2027</div>
         <div class="h">${faseTitular()}</div>
         <div class="pills">${temaPill()}<button class="pill" id="syncPill" data-act="syncpill" data-s="${syncLabel()[1]}">${syncLabel()[0]}</button></div>
       </div>
@@ -1373,8 +1388,24 @@ function renderStats(){
   </div>`;
 }
 let lastView=null,lastOpen=null;
+/* Íconos de línea (mismo grosor en toda la app) y barra de navegación fija abajo, al alcance del pulgar.
+   Se esconde donde estorba: en la ráfaga, dentro de una sesión, en el simulacro y en la tabla a pantalla completa. */
+const SVG_=d=>`<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const ICO={casa:SVG_('<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>'),
+  libro:SVG_('<path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5z"/><path d="M5 19.5A1.5 1.5 0 0 0 6.5 21H19"/><path d="M9 7h6"/>'),
+  sube:SVG_('<path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/>'),
+  barras:SVG_('<path d="M5 20V11M12 20V4M19 20v-6"/>'),
+  repite:SVG_('<path d="M20 11a8 8 0 0 0-14.3-4.9L4 8"/><path d="M4 3v5h5"/><path d="M4 13a8 8 0 0 0 14.3 4.9L20 16"/><path d="M20 21v-5h-5"/>')};
+function bnavPintar(){let el=document.getElementById('bnav');const ver=!['drill','sesion','simu','tabla'].includes(view);
+  document.body.classList.toggle('bnav',ver);
+  if(!ver){if(el)el.remove();return}
+  if(!el){el=document.createElement('nav');el.id='bnav';el.setAttribute('aria-label','Navegación');document.body.appendChild(el)}
+  const act=view==='estudio'?'estudio':view==='prog'?'prog':view==='stats'?'stats':'home';
+  const b=(k,at,ic,t)=>`<button ${at} class="${act===k?'on':''}"${act===k?' aria-current="page"':''}>${ic}<span>${t}</span></button>`;
+  const h=`<div class="in">${b('home','data-e="tab-juego"',ICO.casa,'Inicio')}${b('estudio','data-e="tab-estudio"',ICO.libro,'Estudio')}${b('prog','data-act="prog"',ICO.sube,'Progreso')}${b('stats','data-act="stats"',ICO.barras,'Estadísticas')}</div>`;
+  if(el.innerHTML!==h)el.innerHTML=h}
 function render(){applyTheme();const y=window.scrollY,cambio=view!==lastView||eOpen!==lastOpen;if(view==='tabla')return renderTablaDia();if(view==='home')renderHome();else if(view==='drill')renderDrill();else if(view==='end')renderEnd();else if(view==='estudio')renderEstudio();else if(view==='sesion')renderSesion();else if(view==='prog')renderProg();else if(view==='simu')renderSimHoja();else renderStats();
-  if(view!=='drill'&&(view!==lastView||eOpen!==lastOpen))window.scrollTo(0,0);else if(view==='sesion'||view==='estudio')window.scrollTo(0,y);lastView=view;lastOpen=eOpen;ladoPintar();tocPintar();
+  if(view!=='drill'&&(view!==lastView||eOpen!==lastOpen))window.scrollTo(0,0);else if(view==='sesion'||view==='estudio')window.scrollTo(0,y);lastView=view;lastOpen=eOpen;ladoPintar();tocPintar();bnavPintar();
   if(cambio&&view!=='drill'){const a=document.getElementById('app');a.classList.remove('enter');void a.offsetWidth;a.classList.add('enter');clearTimeout(render.t);render.t=setTimeout(()=>a.classList.remove('enter'),1400)}}
 
 /* =========================================================
@@ -1629,7 +1660,8 @@ function eNota(s){
   const v=Math.min(10,Math.round(s.nota*10)/10);
   return `<span class="enota" data-n="${notaNivel(v)}" title="Calificación del instructor (referencia)">${String(v).replace('.',',')}/10</span>`;
 }
-function tabsHtml(on){return `<nav class="tabs" role="tablist"><button role="tab" aria-selected="${on==='juego'}" data-e="tab-juego" class="${on==='juego'?'on':''}">🎮 Juego</button><button role="tab" aria-selected="${on==='estudio'}" data-e="tab-estudio" class="${on==='estudio'?'on':''}">📝 Estudio</button></nav>`}
+function tabsHtml(on){return ''} // la navegación ahora es la barra de abajo (bnavPintar)
+function tabsHtmlViejo(on){return `<nav class="tabs" role="tablist"><button role="tab" aria-selected="${on==='juego'}" data-e="tab-juego" class="${on==='juego'?'on':''}">🎮 Juego</button><button role="tab" aria-selected="${on==='estudio'}" data-e="tab-estudio" class="${on==='estudio'?'on':''}">📝 Estudio</button></nav>`}
 /* Tarjeta de sesión: «Día 35 — Título» → número grande a la izquierda y el título limpio */
 function eSesCard(s,hoy){const m=/^\s*D[ií]a\s*(\d+)\s*[—–:-]+\s*(.*)$/i.exec(s.titulo||''),f=new Date(s.fecha+'T12:00:00');
   const num=m?m[1]:String(f.getDate()),pre=m?'Día':f.toLocaleDateString('es',{month:'short'}).replace('.',''),tit=m?m[2]:(s.titulo||'Sesión');
@@ -2035,7 +2067,7 @@ function eRitmo(){
   let best=null;
   for(const s of Object.values(E.ses)){if(typeof s.horas!=='number')continue;if(!best||s.fecha>best.fecha||(s.fecha===best.fecha&&(s.edited||'')>(best.edited||'')))best=s}
   if(!best)return null;
-  const meta=typeof best.meta==='number'&&best.meta>0?best.meta:500,dias=daysTo('2027-07-15');
+  const meta=typeof best.meta==='number'&&best.meta>0?best.meta:500,dias=daysTo('2027-06-15');
   if(dias<=0)return null;
   const falta=Math.max(0,meta-best.horas),min=Math.ceil(falta*60/dias);
   return{min,horas:best.horas,meta,dias,fecha:best.fecha};
@@ -2569,7 +2601,7 @@ function intentarRecarga(){
 /* ---------- Panel de progreso ----------
    Un gráfico por pregunta, una sola serie cada uno (más su línea de referencia), marcas finas,
    etiquetas solo donde importan, valor al tocar/pasar y tabla «Ver datos» para cada gráfico. */
-const P_INICIO='2026-07-29',P_EXAMEN='2027-07-15';
+const P_INICIO='2026-07-29',P_EXAMEN='2027-06-15';
 const dms=f=>new Date(f+'T12:00:00').getTime();
 function verTip(el){const c=el.closest('.chart');if(!c)return;c.querySelectorAll('.sel').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');const cap=c.querySelector('.ccap');if(cap)cap.textContent=el.dataset.tip}
 function tabla(cols,rows){return `<details class="cdatos"><summary>Ver datos</summary><div class="etw"><table><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr>${rows.map(r=>`<tr>${r.map(v=>`<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</table></div></details>`}
@@ -2636,7 +2668,7 @@ function renderProg(){
     const ideal=t=>ini.horas+(meta-ini.horas)*(t-t0)/(tE-t0),delta=ult.horas-ideal(dms(ult.fecha));
     const x0=dms(hs[0].fecha)-3*864e5,x1=Math.max(dms(ult.fecha),Date.now())+3*864e5,mx=Math.max(ideal(x1),ult.horas)*1.15;
     const paso=mx>80?20:mx>40?10:5,maxY=Math.ceil(mx/paso)*paso;
-    const hero=`<div class="chero"><b class="${delta>=0?'pos':'neg'}">${delta>=0?'+':'−'}${Math.abs(delta).toFixed(1).replace('.',',')} h</b><span class="muted small">${delta>=0?'adelantado':'atrasado'} respecto al ritmo necesario desde el ${eFechaCorta(ini.fecha)} para llegar a ${meta} h el 15 jul 2027</span></div>`;
+    const hero=`<div class="chero"><b class="${delta>=0?'pos':'neg'}">${delta>=0?'+':'−'}${Math.abs(delta).toFixed(1).replace('.',',')} h</b><span class="muted small">${delta>=0?'adelantado':'atrasado'} respecto al ritmo necesario desde el ${eFechaCorta(ini.fecha)} para llegar a ${meta} h el 15 jun 2027</span></div>`;
     html+=card('Horas de estudio','Tus horas reales (instructor) · punteada = ritmo necesario',hero+lineas(hs.map(s=>({t:dms(s.fecha),v:s.horas,tip:`${eFechaCorta(s.fecha)} · ${s.horas} h (necesarias: ${ideal(dms(s.fecha)).toFixed(1)} h)`})),{max:maxY,paso,fmt:v=>Math.round(v)+'h',x0,x1,ref2:{t0:x0,v0:ideal(x0),t1:x1,v1:ideal(x1)},color:'var(--jita)'})
       +`<div class="cleg"><span><i style="background:var(--jita)"></i>Tus horas</span><span><i class="dash"></i>Ritmo necesario</span></div>`
       +tabla(['Fecha','Horas reales','Necesarias'],hs.map(s=>[s.fecha,String(s.horas),ideal(dms(s.fecha)).toFixed(1)])));
